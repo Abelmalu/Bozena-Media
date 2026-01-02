@@ -1,4 +1,4 @@
-module helow
+module github.com/abelmalu/golang-posts
 
 go 1.25.5
 
