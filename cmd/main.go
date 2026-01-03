@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/abelmalu/golang-posts/internal"
 	"github.com/abelmalu/golang-posts/pkg"
 )
 
@@ -17,6 +18,9 @@ func main(){
 	}
 
 	defer db.Close()
+
+	router := internal.SetupRoutes()
+	log.Println(router)
   
 
 }
