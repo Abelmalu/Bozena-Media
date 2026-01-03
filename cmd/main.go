@@ -1,23 +1,22 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+	"log"
+
+	"github.com/abelmalu/golang-posts/pkg"
 )
 
 
 func main(){
 
-	fmt.Println("hellow from the second image")
-    
+	db,err := pkg.InitDB()
 
-	http.HandleFunc("/",func(w http.ResponseWriter, r *http.Request) {
+	if err != nil{
 
-		w.Header().Set("Content-Type","application/json")
-		w.WriteHeader(200)
+		log.Fatalf("Service startup failed: %v",err)
+	}
 
-		w.Write(make([]byte, 22))
-	})
+	defer db.Close()
+  
 
-	http.ListenAndServe(":8080",nil)
 }
