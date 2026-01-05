@@ -48,3 +48,14 @@ func Register(c *gin.Context){
 
 
 }
+
+
+// login authenticate a user with a valid username and password
+func Login( c *gin.Context){
+  
+	c.SholudBindJSON()
+
+
+
+
+}
