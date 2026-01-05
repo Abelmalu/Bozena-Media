@@ -15,7 +15,7 @@ import (
 func InitDB()(*sql.DB,error){
 
 	// connection string for postgresql 
-	dsn := "host=localhost user=root password=passworD-123 dbname=blog sslmode=disable"
+	dsn := "postgres://root:passworD-123@localhost:5432/blog?sslmode=disable"
 
      // creating the connection pool
 	dbConPool,err :=sql.Open("pgx",dsn)

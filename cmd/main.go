@@ -20,7 +20,10 @@ func main(){
 	defer db.Close()
 
 	router := internal.SetupRoutes()
-	log.Println(router)
+	if err :=  router.Run(":8080"); err !=nil{
+
+		log.Println("The router error is ",err)
+	}
   
 
 }
