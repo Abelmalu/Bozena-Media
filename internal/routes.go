@@ -10,6 +10,7 @@ func SetupRoutes() *gin.Engine {
 	r := gin.Default()
 
 	r.POST("/register", auth.Register)
+	r.POST("/login",auth.Login)
 
 	return r
 }
