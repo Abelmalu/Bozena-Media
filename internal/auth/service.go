@@ -1,11 +1,13 @@
 package auth
 
 import (
+	"log"
 	"net/http"
-	"github.com/abelmalu/golang-posts/internal/models"
-	"github.com/gin-gonic/gin"
-	"github.com/abelmalu/golang-posts/pkg"
 
+	"github.com/abelmalu/golang-posts/internal/models"
+	"github.com/abelmalu/golang-posts/pkg"
+	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 
@@ -23,20 +25,26 @@ func Register(c *gin.Context){
 		return
 
 	}
-
-	  db,err := pkg.InitDB()
-
-	  if err != nil{
-
-		c.JSON(http.StatusInternalServerError,gin.H{"status":"error", "message":err.Error()})
-		return
-	  }
+     
+	  db := pkg.DB
 
 	  query := `INSERT INTO users(name,username,email,password) VALUES($1,$2,$3,$4)`
 	  _,dbError := db.Exec(query,newUser.Name,newUser.Username,newUser.Email, newUser.Password)
 	  if dbError != nil{
 
-		c.JSON(http.StatusInternalServerError,gin.H{"status":"error", "message":dbError.Error()})
+		// Change *pq.Error to *pgconn.PgError
+if pgErr, ok := dbError.(*pgconn.PgError); ok {
+    if pgErr.Code == "23505" {
+        c.JSON(http.StatusConflict, gin.H{"message": "Username or Email already exists"})
+        return
+    }
+}
+	
+        
+
+		log.Printf("Registration DB Error %v",dbError)
+
+		c.JSON(http.StatusInternalServerError,gin.H{"status":"error", "message":"Internal Server Error"})
 		return
 	  }
 
@@ -52,8 +60,21 @@ func Register(c *gin.Context){
 
 // login authenticate a user with a valid username and password
 func Login( c *gin.Context){
+
+	var input struct{
+
+		username string `json:"username" db:"username"`
+		password string `json:"password" db:"password"`
+	}
   
-	c.SholudBindJSON()
+	if err := c.ShouldBindJSON(&input); err !=nil{
+
+		c.JSON(http.StatusBadRequest,gin.H{"error":err.Error()})
+		return
+
+	}
+	
+
 
 
 

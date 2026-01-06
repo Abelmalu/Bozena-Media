@@ -8,6 +8,7 @@ import (
 	_ "github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
+var DB *sql.DB
 
 
 
@@ -31,11 +32,12 @@ func InitDB()(*sql.DB,error){
 
 	// Check if connection credentials are correct 
 	if err := dbConPool.Ping(); err != nil{
-		dbConPool.Close()
-
+		
 		return nil, fmt.Errorf("pinging %s database: %w", "pgx", err)
 
 	}
+
+	DB = dbConPool
 
 
    return dbConPool,nil
