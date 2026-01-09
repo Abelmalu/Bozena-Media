@@ -1,4 +1,4 @@
-package todo
+package posts
 
 import (
 	"log"
@@ -12,6 +12,17 @@ import (
 
 
 func CreatePost(c *gin.Context){
+	//Grabbing the value of userID from the context 
+
+	log.Printf("in the handler")
+	 userIDValue, exists := c.Get("userID")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+        return
+
+    }
+
+  
 
 	var post models.Post
 
@@ -24,7 +35,7 @@ func CreatePost(c *gin.Context){
 		
 		})
 	}
-
+     post.UserID = userIDValue.(int)
 	query := `INSERT INTO posts (title,content,user_id) VALUES($1,$2,$3)`
 
 
