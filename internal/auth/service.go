@@ -9,6 +9,7 @@ import (
 	"github.com/abelmalu/golang-posts/pkg"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgconn"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func Register(c *gin.Context) {
@@ -21,43 +22,56 @@ func Register(c *gin.Context) {
 		return
 
 	}
+		hashedPassword, err := bcrypt.GenerateFromPassword(
+		[]byte(newUser.Password),
+		bcrypt.DefaultCost,
+	)
+	if err != nil {
+		log.Printf("Password hash error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "error",
+			"message": "Internal Server Error",
+		})
+		return
+	}
+	newUser.Password = string(hashedPassword)
 
 	db := pkg.DB
 
 	query := `INSERT INTO users(name,username,email,password) VALUES($1,$2,$3,$4) RETURNING id`
-	 dbError := db.QueryRow(query, newUser.Name, newUser.Username, newUser.Email, newUser.Password).Scan(&newUser.ID)
-
-	if dbError != nil {
-
-		// Change *pq.Error to *pgconn.PgError
-		if pgErr, ok := dbError.(*pgconn.PgError); ok {
+	if err := db.QueryRow(query, newUser.Name, newUser.Username, newUser.Email, newUser.Password).Scan(&newUser.ID); err !=nil{
+			// Change *pq.Error to *pgconn.PgError
+		if pgErr, ok := err.(*pgconn.PgError); ok {
 			if pgErr.Code == "23505" {
 				c.JSON(http.StatusConflict, gin.H{"message": "Username or Email already exists"})
 				return
 			}
 		}
-		log.Printf("Registration DB Error %v", dbError)
+		log.Printf("Registration DB Error %v", err)
 
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Internal Server Error"})
 		return
+
 	}
 
-	token,err := pkg.GenerateToken(newUser.ID)
-	if err != nil{
+	
 
-		log.Fatalf("JWT error %v",err)
-		c.JSON(http.StatusInternalServerError,gin.H{
-			"status":"error",
-			"message":"Internal Server error",
+	token, err := pkg.GenerateToken(newUser.ID)
+	if err != nil {
+
+		log.Fatalf("JWT error %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Internal Server error",
 		})
-		return 
+		return
 	}
 
 	responseMessage := "Welcome " + newUser.Name
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": responseMessage,
-		"token":token,
+		"token":   token,
 	})
 
 }
@@ -79,50 +93,46 @@ func Login(c *gin.Context) {
 
 	}
 	query := `SELECT * FROM users where username=$1`
-	err := pkg.DB.QueryRow(query,input.Username).Scan(&user.ID,&user.Name,&user.Username,&user.Password,&user.Email,&user.CreatedAt,&user.UpdatedAt)
-	if err != nil{
+	err := pkg.DB.QueryRow(query, input.Username).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
 
-		log.Printf("Login DB Error %v",err)
-		c.JSON(http.StatusBadRequest,gin.H{"status":"error", "message":"Invalid Credentials"})
-		return 
+		log.Printf("Login DB Error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid Credentials"})
+		return
 	}
 
-	
 	trimmedPassword := strings.TrimSpace(input.Password)
 
-	if trimmedPassword == user.Password{
+	if trimmedPassword == user.Password {
 
-		log.Printf("user %s LoggedIn",user.Username)
+		log.Printf("user %s LoggedIn", user.Username)
 
-		token,err := pkg.GenerateToken(user.ID)
-	if err != nil{
+		token, err := pkg.GenerateToken(user.ID)
+		if err != nil {
 
-		log.Fatalf("JWT error %v",err)
-		c.JSON(http.StatusInternalServerError,gin.H{
-			"status":"error",
-			"message":"Internal Server error",
+			log.Fatalf("JWT error %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"status":  "error",
+				"message": "Internal Server error",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "Success",
+			"message": "Successfully LoggedIn!",
+			"token":   token,
 		})
-		return 
-	}
 
-	c.JSON(http.StatusOK,gin.H{
-		"status":"Success",
-		"message":"Successfully LoggedIn!",
-		"token": token,
-})
+	} else {
 
-
-	}else{
-
-		c.JSON(http.StatusBadRequest,gin.H{"status":"error","message":"Invalid Credentials"})
-
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid Credentials"})
 
 	}
 
 }
 
-func Home(c *gin.Context){
+func Home(c *gin.Context) {
 
-
-	c.JSON(http.StatusOK,"welcome back")
+	c.JSON(http.StatusOK, "welcome back")
 }
