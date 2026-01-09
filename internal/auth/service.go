@@ -24,8 +24,9 @@ func Register(c *gin.Context) {
 
 	db := pkg.DB
 
-	query := `INSERT INTO users(name,username,email,password) VALUES($1,$2,$3,$4)`
-	_, dbError := db.Exec(query, newUser.Name, newUser.Username, newUser.Email, newUser.Password)
+	query := `INSERT INTO users(name,username,email,password) VALUES($1,$2,$3,$4) RETURNING id`
+	 dbError := db.QueryRow(query, newUser.Name, newUser.Username, newUser.Email, newUser.Password).Scan(&newUser.ID)
+
 	if dbError != nil {
 
 		// Change *pq.Error to *pgconn.PgError
@@ -41,10 +42,22 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	token,err := pkg.GenerateToken(newUser.ID)
+	if err != nil{
+
+		log.Fatalf("JWT error %v",err)
+		c.JSON(http.StatusInternalServerError,gin.H{
+			"status":"error",
+			"message":"Internal Server error",
+		})
+		return 
+	}
+
 	responseMessage := "Welcome " + newUser.Name
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": responseMessage,
+		"token":token,
 	})
 
 }
@@ -66,7 +79,7 @@ func Login(c *gin.Context) {
 
 	}
 	query := `SELECT * FROM users where username=$1`
-	err := pkg.DB.QueryRow(query,input.Username).Scan(&user.Id,&user.Name,&user.Username,&user.Password,&user.Email,&user.CreatedAt,&user.UpdatedAt)
+	err := pkg.DB.QueryRow(query,input.Username).Scan(&user.ID,&user.Name,&user.Username,&user.Password,&user.Email,&user.CreatedAt,&user.UpdatedAt)
 	if err != nil{
 
 		log.Printf("Login DB Error %v",err)
@@ -80,6 +93,23 @@ func Login(c *gin.Context) {
 	if trimmedPassword == user.Password{
 
 		log.Printf("user %s LoggedIn",user.Username)
+
+		token,err := pkg.GenerateToken(user.ID)
+	if err != nil{
+
+		log.Fatalf("JWT error %v",err)
+		c.JSON(http.StatusInternalServerError,gin.H{
+			"status":"error",
+			"message":"Internal Server error",
+		})
+		return 
+	}
+
+	c.JSON(http.StatusOK,gin.H{
+		"status":"Success",
+		"message":"Successfully LoggedIn!",
+		"token": token,
+})
 
 
 	}else{
