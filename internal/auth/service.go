@@ -78,10 +78,10 @@ func Login(c *gin.Context) {
 
 	var user models.User
 
-	var input struct {
+	 input := struct {
 		Username string `json:"username" db:"username"`
 		Password string `json:"password" db:"password"`
-	}
+	}{}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 

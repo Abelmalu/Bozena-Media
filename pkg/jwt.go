@@ -19,11 +19,12 @@ func GenerateToken(userID int) (string, error) {
     return token.SignedString(jwtSecret)
 }
 
-// func ValidateToken(tokenString string) (*jwt.Token, error) {
-//     return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-//         if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-//             return nil, jwt.ErrTokenInvalidType
-//         }
-//         return jwtSecret, nil
-//     })
-// }
+func ValidateToken(tokenString string) (*jwt.Token, error) {
+    return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		//validating the signing method is HS256 / HS384 / HS512,
+        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+            return nil, jwt.ErrTokenSignatureInvalid
+        }
+        return jwtSecret, nil 
+    })
+}
