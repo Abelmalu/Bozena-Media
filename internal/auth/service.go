@@ -3,7 +3,6 @@ package auth
 import (
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/abelmalu/golang-posts/internal/models"
 	"github.com/abelmalu/golang-posts/pkg"
@@ -22,14 +21,14 @@ func Register(c *gin.Context) {
 		return
 
 	}
-		hashedPassword, err := bcrypt.GenerateFromPassword(
+	hashedPassword, err := bcrypt.GenerateFromPassword(
 		[]byte(newUser.Password),
 		bcrypt.DefaultCost,
 	)
 	if err != nil {
 		log.Printf("Password hash error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"status": "error",
+			"status":  "error",
 			"message": "Internal Server Error",
 		})
 		return
@@ -39,8 +38,8 @@ func Register(c *gin.Context) {
 	db := pkg.DB
 
 	query := `INSERT INTO users(name,username,email,password) VALUES($1,$2,$3,$4) RETURNING id`
-	if err := db.QueryRow(query, newUser.Name, newUser.Username, newUser.Email, newUser.Password).Scan(&newUser.ID); err !=nil{
-			// Change *pq.Error to *pgconn.PgError
+	if err := db.QueryRow(query, newUser.Name, newUser.Username, newUser.Email, newUser.Password).Scan(&newUser.ID); err != nil {
+		// Change *pq.Error to *pgconn.PgError
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			if pgErr.Code == "23505" {
 				c.JSON(http.StatusConflict, gin.H{"message": "Username or Email already exists"})
@@ -53,8 +52,6 @@ func Register(c *gin.Context) {
 		return
 
 	}
-
-	
 
 	token, err := pkg.GenerateToken(newUser.ID)
 	if err != nil {
@@ -101,34 +98,37 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	trimmedPassword := strings.TrimSpace(input.Password)
+	err = bcrypt.CompareHashAndPassword(
+		[]byte(user.Password),  // stored hash
+		[]byte(input.Password), // plain password
+	)
 
-	if trimmedPassword == user.Password {
-
-		log.Printf("user %s LoggedIn", user.Username)
-
-		token, err := pkg.GenerateToken(user.ID)
-		if err != nil {
-
-			log.Fatalf("JWT error %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"status":  "error",
-				"message": "Internal Server error",
-			})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"status":  "Success",
-			"message": "Successfully LoggedIn!",
-			"token":   token,
+	if err != nil {
+		// password mismatch
+		log.Printf("Incorrect password error %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status":  "error",
+			"message": "Invalid credentials",
 		})
-
-	} else {
-
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid Credentials"})
-
+		return
 	}
+
+	token, err := pkg.GenerateToken(user.ID)
+	if err != nil {
+
+		log.Fatalf("JWT error %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Internal Server error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "Success",
+		"message": "Successfully LoggedIn!",
+		"token":   token,
+	})
 
 }
 
