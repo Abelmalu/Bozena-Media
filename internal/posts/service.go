@@ -34,6 +34,7 @@ func CreatePost(c *gin.Context){
 			"message":"Invalid request body",
 		
 		})
+		return
 	}
      post.UserID = userIDValue.(int)
 	query := `INSERT INTO posts (title,content,user_id) VALUES($1,$2,$3)`
@@ -54,6 +55,6 @@ func CreatePost(c *gin.Context){
 		"status":"success",
 		"message":"Successfully created a post",
 	})
-
+     return 
 
 }
