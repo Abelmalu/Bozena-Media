@@ -9,9 +9,10 @@ import (
 
 var jwtSecret = []byte("your_secret_key")
 
-func GenerateToken(userID int) (string, error) {
+func GenerateAcessToken(userID int) (string, error) {
     claims := jwt.MapClaims{
         "user_id": userID,
+        "type":"access",
         "exp":     time.Now().Add(time.Hour * 24).Unix(),
     }
 
@@ -27,4 +28,19 @@ func ValidateToken(tokenString string) (*jwt.Token, error) {
         }
         return jwtSecret, nil 
     })
+}
+
+func GenerateRefreshToken(userID int)(string,error){
+
+    claims := jwt.MapClaims{
+        "user_id":userID,
+        "type":"refresh",
+        "exp": time.Now().Add( 24*30 * time.Hour ).Unix(),
+    }
+
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256,claims)
+
+    return token.SignedString(jwtSecret)
+
+
 }

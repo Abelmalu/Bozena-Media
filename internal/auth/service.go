@@ -53,7 +53,7 @@ func Register(c *gin.Context) {
 
 	}
 
-	token, err := pkg.GenerateToken(newUser.ID)
+	token, err := pkg.GenerateAcessToken(newUser.ID)
 	if err != nil {
 
 		log.Fatalf("JWT error %v", err)
@@ -113,7 +113,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	token, err := pkg.GenerateToken(user.ID)
+	token, err := pkg.GenerateAcessToken(user.ID)
 	if err != nil {
 
 		log.Fatalf("JWT error %v", err)
