@@ -19,7 +19,7 @@ func SetupRoutes() *gin.Engine {
 
 	r.POST("/register", auth.Register)
 	r.POST("/login", auth.Login)
-	r.GET("/", auth.Home)
+	
 
 	return r
 }

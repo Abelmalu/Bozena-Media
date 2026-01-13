@@ -45,7 +45,7 @@ func Register(c *gin.Context) {
 				c.JSON(http.StatusConflict, gin.H{"message": "Username or Email already exists"})
 				return
 			}
-		}
+		} 
 		log.Printf("Registration DB Error %v", err)
 
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Internal Server Error"})
@@ -53,7 +53,17 @@ func Register(c *gin.Context) {
 
 	}
 
-	token, err := pkg.GenerateAcessToken(newUser.ID)
+	accessToken, err := pkg.GenerateAcessToken(newUser.ID)
+	if err != nil {
+
+		log.Fatalf("JWT error %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Internal Server error",
+		})
+		return
+	}
+RefreshToken, err := pkg.GenerateAcessToken(newUser.ID)
 	if err != nil {
 
 		log.Fatalf("JWT error %v", err)
@@ -68,7 +78,7 @@ func Register(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": responseMessage,
-		"token":   token,
+		"token":   accessToken,
 	})
 
 }
@@ -132,7 +142,7 @@ func Login(c *gin.Context) {
 
 }
 
-func Home(c *gin.Context) {
+func RefreshToken(c *gin.Context) {
 
-	c.JSON(http.StatusOK, "welcome back")
+	
 }

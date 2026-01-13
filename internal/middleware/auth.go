@@ -10,27 +10,33 @@ import (
 )
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		var tokenStr string 
 		// 1. Get the Authorization header
 		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			log.Printf("No Authorization header in the request header")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort() // Stop the request from reaching the handler
-			return
+		
+		if strings.HasPrefix(authHeader,"Bearer "){
+
+			tokenStr = strings.TrimPrefix(authHeader,"Bearer ")
 		}
 
-		// 2. Check for the "Bearer " prefix
-		parts := strings.SplitN(authHeader, " ", 2)
-		if !(len(parts) == 2 && parts[0] == "Bearer") {
-			log.Printf("Bearer Token not in the request header")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort()
-			return
-		}
+		if tokenStr == ""{
 
-		// 3. Validate the token
-		tokenString := parts[1]
-		token, err := pkg.ValidateToken(tokenString) // Your existing function
+			cookieToken, err := c.Cookie("access_token")
+			if err == nil {
+
+				tokenStr = cookieToken
+			}
+
+		}
+		if tokenStr == ""{
+
+			c.JSON(http.StatusUnauthorized,gin.H{
+				"error":"Unauthorized",
+			})
+		}
+		// Validate the token
+		
+		token, err := pkg.ValidateToken(tokenStr) // Your existing function
 
 		if err != nil || !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
