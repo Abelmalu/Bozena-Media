@@ -11,6 +11,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type TokenPair struct {
+	AccessToken  string
+	RefreshToken string
+}
+
 func Register(c *gin.Context) {
 
 	var newUser models.User
@@ -45,7 +50,7 @@ func Register(c *gin.Context) {
 				c.JSON(http.StatusConflict, gin.H{"message": "Username or Email already exists"})
 				return
 			}
-		} 
+		}
 		log.Printf("Registration DB Error %v", err)
 
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Internal Server Error"})
@@ -53,33 +58,49 @@ func Register(c *gin.Context) {
 
 	}
 
-	accessToken, err := pkg.GenerateAcessToken(newUser.ID)
-	if err != nil {
+	// if registration is successful check request header and generate tokens
+	clientHeader := c.GetHeader("X-Client-Type")
+	clientType := models.ClientWeb
 
-		log.Fatalf("JWT error %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": "Internal Server error",
-		})
-		return
-	}
-RefreshToken, err := pkg.GenerateAcessToken(newUser.ID)
-	if err != nil {
+	if clientHeader == "mobile" {
 
-		log.Fatalf("JWT error %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": "Internal Server error",
-		})
-		return
+		clientType = models.ClientMobile
 	}
 
-	responseMessage := "Welcome " + newUser.Name
-	c.JSON(http.StatusOK, gin.H{
-		"status":  "success",
-		"message": responseMessage,
-		"token":   accessToken,
-	})
+	tokens, err := issueTokens(c, newUser.ID, clientType)
+
+	if err != nil {
+		log.Fatalf("JWT error %v", err)
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Internal Server Error",
+		})
+
+	}
+
+	response := gin.H{"message": "Login successful"}
+
+	switch clientType {
+	case models.ClientWeb:
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    tokens.RefreshToken,
+			MaxAge:   30 * 24 * 60 * 60,
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+		})
+
+		c.Header("Authorization", "Bearer "+tokens.AccessToken)
+
+	case models.ClientMobile:
+		response["access_token"] = tokens.AccessToken
+		response["refresh_token"] = tokens.RefreshToken
+	}
+
+	c.JSON(http.StatusOK, response)
 
 }
 
@@ -88,7 +109,7 @@ func Login(c *gin.Context) {
 
 	var user models.User
 
-	 input := struct {
+	input := struct {
 		Username string `json:"username" db:"username"`
 		Password string `json:"password" db:"password"`
 	}{}
@@ -142,7 +163,21 @@ func Login(c *gin.Context) {
 
 }
 
-func RefreshToken(c *gin.Context) {
+func issueTokens(c *gin.Context, userID int, clientType models.ClientType) (*TokenPair, error) {
 
-	
+	accessToken, err := pkg.GenerateAcessToken(userID)
+	if err != nil {
+
+		return nil, err
+	}
+	refreshToken, err := pkg.GenerateAcessToken(userID)
+	if err != nil {
+
+		return nil, err
+	}
+	return &TokenPair{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
+
 }

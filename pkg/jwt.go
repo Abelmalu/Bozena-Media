@@ -1,10 +1,11 @@
 package pkg
 
-
-
 import (
-    "github.com/golang-jwt/jwt/v5"
-    "time"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var (
@@ -20,20 +21,22 @@ func GenerateAcessToken(userID int) (string, error) {
     }
 
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    return token.SignedString(jwtSecret)
+    return token.SignedString(accessSecret)
 }
 func ValidateAccessToken(tokenStr string) (jwt.MapClaims, error) {
-	return validateToken(tokenStr, accessSecret, "access")
+	
+	return ValidateToken(tokenStr, accessSecret, "access")
 }
 
 func ValidateRefreshToken(tokenStr string) (jwt.MapClaims, error) {
-	return validateToken(tokenStr, refreshSecret, "refresh")
+	return ValidateToken(tokenStr, refreshSecret, "refresh")
 }
 
 // validate both access and refresh tokens 
 func ValidateToken(tokenStr string, secret []byte, expectedType string) (jwt.MapClaims, error) {
 	// 1. Parse the token
 	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+
 		// Verify the signing method is what you expect (HMAC)
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
@@ -41,19 +44,16 @@ func ValidateToken(tokenStr string, secret []byte, expectedType string) (jwt.Map
 		return secret, nil
 	})
 
-	// 2. detailed error handling
+	
 	if err != nil {
 		// This returns the specific error (e.g., "token is expired")
 		return nil, fmt.Errorf("parsing token failed: %w", err)
 	}
 
-	// 3. Check validity (Parse usually handles this, but this is a double check)
-	if !token.Valid {
-		return nil, errors.New("invalid token")
-	}
-
-	// 4. Extract Claims
+	
+	// Extract Claims
 	claims, ok := token.Claims.(jwt.MapClaims)
+	fmt.Printf("this the claims map",claims)
 	if !ok {
 		return nil, errors.New("invalid token claims structure")
 	}
@@ -78,7 +78,7 @@ func GenerateRefreshToken(userID int)(string,error){
 
     token := jwt.NewWithClaims(jwt.SigningMethodHS256,claims)
 
-    return token.SignedString(jwtSecret)
+    return token.SignedString(refreshSecret)
 
 
 }

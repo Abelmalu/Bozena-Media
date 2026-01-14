@@ -30,3 +30,12 @@ type Like struct{
 	
 }
 
+
+// client types for mobile apps and browsers
+
+type ClientType string 
+
+const (
+	ClientWeb ClientType = "web"
+	ClientMobile ClientType = "mobile"
+)
