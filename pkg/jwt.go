@@ -7,7 +7,10 @@ import (
     "time"
 )
 
-var jwtSecret = []byte("your_secret_key")
+var (
+	accessSecret  = []byte("ACCESS_SECRET_CHANGE_ME")
+	refreshSecret = []byte("REFRESH_SECRET_CHANGE_ME")
+)
 
 func GenerateAcessToken(userID int) (string, error) {
     claims := jwt.MapClaims{
@@ -19,15 +22,50 @@ func GenerateAcessToken(userID int) (string, error) {
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
     return token.SignedString(jwtSecret)
 }
+func ValidateAccessToken(tokenStr string) (jwt.MapClaims, error) {
+	return validateToken(tokenStr, accessSecret, "access")
+}
 
-func ValidateToken(tokenString string) (*jwt.Token, error) {
-    return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		//validating the signing method is HS256 / HS384 / HS512,
-        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-            return nil, jwt.ErrTokenSignatureInvalid
-        }
-        return jwtSecret, nil 
-    })
+func ValidateRefreshToken(tokenStr string) (jwt.MapClaims, error) {
+	return validateToken(tokenStr, refreshSecret, "refresh")
+}
+
+// validate both access and refresh tokens 
+func ValidateToken(tokenStr string, secret []byte, expectedType string) (jwt.MapClaims, error) {
+	// 1. Parse the token
+	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+		// Verify the signing method is what you expect (HMAC)
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
+		return secret, nil
+	})
+
+	// 2. detailed error handling
+	if err != nil {
+		// This returns the specific error (e.g., "token is expired")
+		return nil, fmt.Errorf("parsing token failed: %w", err)
+	}
+
+	// 3. Check validity (Parse usually handles this, but this is a double check)
+	if !token.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	// 4. Extract Claims
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errors.New("invalid token claims structure")
+	}
+
+	// 5. Validate the "type" claim (Access vs Refresh)
+	// We safely cast to string to avoid potential interface{} comparison issues
+	typeVal, ok := claims["type"].(string)
+	if !ok || typeVal != expectedType {
+		return nil, fmt.Errorf("invalid token type: expected %s, got %v", expectedType, claims["type"])
+	}
+
+	return claims, nil
 }
 
 func GenerateRefreshToken(userID int)(string,error){
