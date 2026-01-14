@@ -143,23 +143,49 @@ func Login(c *gin.Context) {
 		})
 		return
 	}
+	// if login is successful check request header and generate tokens
+	clientHeader := c.GetHeader("X-Client-Type")
+	clientType := models.ClientWeb
 
-	token, err := pkg.GenerateAcessToken(user.ID)
-	if err != nil {
+	if clientHeader == "mobile" {
 
-		log.Fatalf("JWT error %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": "Internal Server error",
-		})
-		return
+		clientType = models.ClientMobile
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"status":  "Success",
-		"message": "Successfully LoggedIn!",
-		"token":   token,
-	})
+		tokens, err := issueTokens(c, user.ID, clientType)
+
+	if err != nil {
+		log.Fatalf("JWT error %v", err)
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Internal Server Error",
+		})
+
+	}
+
+	response := gin.H{"message": "Login successful"}
+
+	switch clientType {
+	case models.ClientWeb:
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    tokens.RefreshToken,
+			MaxAge:   30 * 24 * 60 * 60,
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+		})
+
+		c.Header("Authorization", "Bearer "+tokens.AccessToken)
+
+	case models.ClientMobile:
+		response["access_token"] = tokens.AccessToken
+		response["refresh_token"] = tokens.RefreshToken
+	}
+
+	c.JSON(http.StatusOK, response)
 
 }
 
@@ -180,4 +206,10 @@ func issueTokens(c *gin.Context, userID int, clientType models.ClientType) (*Tok
 		RefreshToken: refreshToken,
 	}, nil
 
+}
+
+func StoreRefreshTokens(userID int,refreshToken string)(){
+
+
+	query := `INSERT into refresh_tokens ()`
 }
