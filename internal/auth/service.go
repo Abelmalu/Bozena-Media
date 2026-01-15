@@ -1,8 +1,11 @@
 package auth
 
 import (
+	"database/sql"
+	"errors"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/abelmalu/golang-posts/internal/models"
 	"github.com/abelmalu/golang-posts/pkg"
@@ -208,8 +211,39 @@ func issueTokens(c *gin.Context, userID int, clientType models.ClientType) (*Tok
 
 }
 
-func StoreRefreshTokens(userID int,refreshToken string)(){
+func StoreRefreshTokens(userID int,refreshToken string, clientType string)(sql.Result,error){
 
 
-	query := `INSERT into refresh_tokens ()`
+	query := `INSERT INTO refresh_tokens (user_id,token_text,expires_at,client_type) VALUES($1,$2,$3,$4)`
+
+	result,err := pkg.DB.Exec(query, userID,refreshToken,clientType)
+	if err != nil{
+
+		return nil,err
+	}
+
+	return result,nil
+
+}
+func ExtractRefreshToken(c *gin.Context) (string, error) {
+
+	//Extracting  refresh tokens from mobile app clients 
+	var  refreshToken string
+	if err := c.ShouldBindJSON(&refreshToken); err == nil {
+		if refreshToken != "" {
+			return refreshToken, nil
+		}
+	}
+
+	// Extracting HttpOnly cookie for web clients
+	if token, err := c.Cookie("refresh_token"); err == nil && token != "" {
+		return token, nil
+	}
+
+	//Extracting from custom header fallback
+	if token := c.GetHeader("X-Refresh-Token"); token != "" {
+		return token, nil
+	}
+
+	return "", errors.New("Refresh Token not found")
 }

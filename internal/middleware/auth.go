@@ -47,7 +47,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		tokenClaims, err := pkg.ValidateAccessToken(tokenStr) // Your existing function
 
 		if err != nil {
-			log.Printf("invalid token, %w", err)
+			log.Printf("invalid token, %v", err)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
 			c.Abort()
 			return
@@ -58,7 +58,8 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
 			return
 		}
-		c.Set("userID", int(uid)) // convert once here
+		c.Set("userID", int(uid))
+		// convert once here
 
 		c.Next() // Token is valid, proceed to the next handler!
 	}

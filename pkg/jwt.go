@@ -23,6 +23,23 @@ func GenerateAcessToken(userID int) (string, error) {
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
     return token.SignedString(accessSecret)
 }
+
+// generates refresh tokens with refresh token secret keys 
+func GenerateRefreshToken(userID int)(string,error){
+
+    claims := jwt.MapClaims{
+        "user_id":userID,
+        "type":"refresh",
+        "exp": time.Now().Add( 24*30 * time.Hour ).Unix(),
+    }
+
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256,claims)
+
+    return token.SignedString(refreshSecret)
+
+
+}
+
 func ValidateAccessToken(tokenStr string) (jwt.MapClaims, error) {
 	
 	return ValidateToken(tokenStr, accessSecret, "access")
@@ -68,17 +85,3 @@ func ValidateToken(tokenStr string, secret []byte, expectedType string) (jwt.Map
 	return claims, nil
 }
 
-func GenerateRefreshToken(userID int)(string,error){
-
-    claims := jwt.MapClaims{
-        "user_id":userID,
-        "type":"refresh",
-        "exp": time.Now().Add( 24*30 * time.Hour ).Unix(),
-    }
-
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256,claims)
-
-    return token.SignedString(refreshSecret)
-
-
-}
