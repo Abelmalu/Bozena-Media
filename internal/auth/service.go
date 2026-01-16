@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/abelmalu/golang-posts/internal/models"
@@ -156,10 +155,11 @@ func Login(c *gin.Context) {
 		clientType = models.ClientMobile
 	}
 
-		tokens, err := issueTokens(c, user.ID, clientType)
+	// Generate tokens
+	tokens, err := issueTokens(c, user.ID, clientType)
 
 	if err != nil {
-		log.Fatalf("JWT error %v", err)
+		log.Printf("JWT error %v", err)
 
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
@@ -193,10 +193,67 @@ func Login(c *gin.Context) {
 
 }
 
+// RefreshHandler handle requests for getting new access tokens
+func RefreshHandler(c *gin.Context) {
+
+	// extracting the refresh token from the request for both mobile and web clients
+	refreshToken, err := ExtractRefreshToken(c)
+	if err != nil {
+
+		log.Printf("refresh token extracting error %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
+		return
+	}
+	// validate the token to check if it tampered
+	tokenClaims, err := pkg.ValidateRefreshToken(refreshToken)
+
+	if err != nil {
+
+		log.Printf("refresh token validation error: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
+		return
+	}
+
+	// Get the refresh token from the DB
+	tokenRecord, err := GetRefreshToken(refreshToken)
+	if err != nil {
+
+		log.Printf("Getting refresh token database error %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
+		return
+	}
+	// check if it is revoked or has expired
+	if tokenRecord.Revoked || tokenRecord.ExpiresAt.Before(time.Now()) {
+		log.Printf("token expired or revoked ")
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
+		return
+
+	}
+	userID := tokenRecord.UserID
+	clientType := tokenRecord.ClientType
+
+	// Rotate refresh token (issue a new one)
+	newRefreshToken, err, _ := pkg.GenerateRefreshToken(userID)
+	if err != nil {
+		log.Printf("Failed to generate refresh token: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+	// revoke the old token so it can't be used anymore
+	if err := RevokeRefreshToken(tokenRecord.TokenText); err !=nil{
+
+		log.Printf("Couldn't Revoke the token %v",err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+			return
+	}
+
+}
+
+// Refresh token handler for getting new access tokens
 func ExtractRefreshToken(c *gin.Context) (string, error) {
 
-	//Extracting  refresh tokens from mobile app clients 
-	var  refreshToken string
+	//Extracting  refresh tokens from mobile app clients
+	var refreshToken string
 	if err := c.ShouldBindJSON(&refreshToken); err == nil {
 		if refreshToken != "" {
 			return refreshToken, nil
@@ -223,14 +280,15 @@ func issueTokens(c *gin.Context, userID int, clientType models.ClientType) (*Tok
 
 		return nil, err
 	}
-	refreshToken, err,expiresAt := pkg.GenerateRefreshToken(userID)
+	refreshToken, err, expiresAt := pkg.GenerateRefreshToken(userID)
 	if err != nil {
 
 		return nil, err
 	}
-	_,err = StoreRefreshTokens(userID,refreshToken,expiresAt,string(clientType))
 
-	if err != nil{
+	_, err = StoreRefreshTokens(userID, refreshToken, expiresAt, string(clientType))
+
+	if err != nil {
 
 		return nil, err
 	}
@@ -242,20 +300,62 @@ func issueTokens(c *gin.Context, userID int, clientType models.ClientType) (*Tok
 
 }
 
-func StoreRefreshTokens(userID int,refreshToken string, expiresAt time.Time, clientType string)(sql.Result,error){
+func StoreRefreshTokens(userID int, refreshToken string, expiresAt time.Time, clientType string) (sql.Result, error) {
 
+	// hashing the token before inserting to a db
+	refreshToken = pkg.HashToken(refreshToken)
 
 	query := `INSERT INTO refresh_tokens (user_id,token_text,expires_at,client_type) VALUES($1,$2,$3,$4)`
 
-	result,err := pkg.DB.Exec(query, userID,refreshToken,expiresAt,clientType)
-	if err != nil{
+	result, err := pkg.DB.Exec(query, userID, refreshToken, expiresAt, clientType)
+	if err != nil {
 
-		return nil,err
+		return nil, err
 	}
 
-	return result,nil
+	return result, nil
 
 }
 
+func GetRefreshToken(refreshToken string) (*models.RefreshToken, error) {
+
+	var refreshRecord models.RefreshToken
+
+	// hashing the token because stored tokens are hashed
+	hashedrefreshToken := pkg.HashToken(refreshToken)
+
+	query := `SELECT * FROM refresh_tokens where token_text = $1;`
+
+	if err := pkg.DB.QueryRow(query, hashedrefreshToken).Scan(&refreshRecord); err != nil {
+
+		return nil, err
+	}
+
+	return &refreshRecord, nil
+}
+
+// RevokeRefreshToken revokes the token 
+func RevokeRefreshToken(refreshToken string) error{
+
+	query := `
+	
+	UPDATE refresh_tokens SET revoked=TRUE 
+	WHERE token_text = $1 revoked=FALSE `
+
+	result,err := pkg.DB.Exec(query,refreshToken)
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	// detect reuse attempt
+	if rowsAffected == 0 {
+		// token was already revoked or doesn't exist
+		log.Printf("refresh token already revoked or not found")
+	}
+
+	return err
 
 
+}

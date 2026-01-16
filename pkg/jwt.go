@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/abelmalu/golang-posts/pkg"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -52,6 +53,7 @@ func ValidateAccessToken(tokenStr string) (jwt.MapClaims, error) {
 }
 
 func ValidateRefreshToken(tokenStr string) (jwt.MapClaims, error) {
+	
 	return ValidateToken(tokenStr, refreshSecret, "refresh")
 }
 
@@ -74,7 +76,7 @@ func ValidateToken(tokenStr string, secret []byte, expectedType string) (jwt.Map
 
 	// Extract Claims
 	claims, ok := token.Claims.(jwt.MapClaims)
-	fmt.Printf("this the claims map", claims)
+
 	if !ok {
 		return nil, errors.New("invalid token claims structure")
 	}
