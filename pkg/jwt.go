@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"time"
@@ -12,42 +14,40 @@ var (
 	accessSecret  = []byte("ACCESS_SECRET_CHANGE_ME")
 	refreshSecret = []byte("REFRESH_SECRET_CHANGE_ME")
 )
+
 const RefreshTokenDuration = 24 * 30 * time.Hour
 
 func GenerateAcessToken(userID int) (string, error) {
 
-    claims := jwt.MapClaims{
-        "user_id": userID,
-        "type":"access",
-        "exp":     time.Now().Add(time.Hour * 24).Unix(),
-    }
+	claims := jwt.MapClaims{
+		"user_id": userID,
+		"type":    "access",
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	}
 
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    return token.SignedString(accessSecret)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(accessSecret)
 }
 
-// generates refresh tokens with refresh token secret keys 
-func GenerateRefreshToken(userID int)(string,error,time.Time){
-		expiresAt := time.Now().Add(RefreshTokenDuration)
+// generates refresh tokens with refresh token secret keys
+func GenerateRefreshToken(userID int) (string, error, time.Time) {
+	expiresAt := time.Now().Add(RefreshTokenDuration)
 
-    claims := jwt.MapClaims{
-        "user_id":userID,
-        "type":"refresh",
-        "exp": expiresAt,
-    }
+	claims := jwt.MapClaims{
+		"user_id": userID,
+		"type":    "refresh",
+		"exp":     expiresAt,
+	}
 
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256,claims)
-	signedToken,err := token.SignedString(refreshSecret)
-	
-	
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString(refreshSecret)
 
-    return signedToken,err,expiresAt
-
+	return signedToken, err, expiresAt
 
 }
 
 func ValidateAccessToken(tokenStr string) (jwt.MapClaims, error) {
-	
+
 	return ValidateToken(tokenStr, accessSecret, "access")
 }
 
@@ -55,7 +55,7 @@ func ValidateRefreshToken(tokenStr string) (jwt.MapClaims, error) {
 	return ValidateToken(tokenStr, refreshSecret, "refresh")
 }
 
-// validate both access and refresh tokens 
+// validate both access and refresh tokens
 func ValidateToken(tokenStr string, secret []byte, expectedType string) (jwt.MapClaims, error) {
 	// 1. Parse the token
 	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
@@ -67,16 +67,14 @@ func ValidateToken(tokenStr string, secret []byte, expectedType string) (jwt.Map
 		return secret, nil
 	})
 
-	
 	if err != nil {
 		// This returns the specific error (e.g., "token is expired")
 		return nil, fmt.Errorf("parsing token failed: %w", err)
 	}
 
-	
 	// Extract Claims
 	claims, ok := token.Claims.(jwt.MapClaims)
-	fmt.Printf("this the claims map",claims)
+	fmt.Printf("this the claims map", claims)
 	if !ok {
 		return nil, errors.New("invalid token claims structure")
 	}
@@ -91,3 +89,11 @@ func ValidateToken(tokenStr string, secret []byte, expectedType string) (jwt.Map
 	return claims, nil
 }
 
+// HashToken hashes refresh tokens using SHA256
+func HashToken(token string) string {
+
+	hasher := sha256.New()
+	hasher.Write([]byte(token))
+	return hex.EncodeToString(hasher.Sum(nil))
+
+}
