@@ -204,15 +204,6 @@ func RefreshHandler(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
 		return
 	}
-	// validate the token to check if it tampered
-	_, err = pkg.ValidateRefreshToken(refreshToken)
-
-	if err != nil {
-
-		log.Printf("refresh token validation error: %v", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
-		return
-	}
 
 	// Get the refresh token from the DB
 	tokenRecord, err := GetRefreshToken(refreshToken)
@@ -229,6 +220,15 @@ func RefreshHandler(c *gin.Context) {
 		return
 
 	}
+	// validate the token to check if it tampered
+	_, err = pkg.ValidateRefreshToken(refreshToken)
+
+	if err != nil {
+
+		log.Printf("refresh token validation error: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
+		return
+	}
 	var clientType models.ClientType
 	userID := tokenRecord.UserID
 	clientTypeStr := tokenRecord.ClientType
@@ -241,7 +241,6 @@ func RefreshHandler(c *gin.Context) {
 
 	}
 
-	
 	// revoke the old token so it can't be used anymore
 	if err := RevokeRefreshToken(tokenRecord.TokenText); err != nil {
 
@@ -252,14 +251,13 @@ func RefreshHandler(c *gin.Context) {
 	// Generate new tokens Rotate refresh token (issue a new one)
 	tokens, err := issueTokens(c, userID, clientType)
 
-	// store the refresh token 
-	newExpireTime := time.Now().Add(24*30*time.Hour)
-	_,err = StoreRefreshTokens(userID,tokens.RefreshToken,newExpireTime,clientTypeStr)
-	if err != nil{
+	// store the refresh token
+	newExpireTime := time.Now().Add(24 * 30 * time.Hour)
+	_, err = StoreRefreshTokens(userID, tokens.RefreshToken, newExpireTime, clientTypeStr)
+	if err != nil {
 
-		log.Printf("couldn't store a new refresh token %v",err)
+		log.Printf("couldn't store a new refresh token %v", err)
 	}
-
 
 	switch clientType {
 	case models.ClientWeb:
@@ -276,13 +274,11 @@ func RefreshHandler(c *gin.Context) {
 		c.Header("Authorization", "Bearer "+tokens.AccessToken)
 
 	case models.ClientMobile:
-		 c.JSON(http.StatusOK, gin.H{
-            "access_token":  tokens.AccessToken,
-            "refresh_token": tokens.RefreshToken,
-        })
+		c.JSON(http.StatusOK, gin.H{
+			"access_token":  tokens.AccessToken,
+			"refresh_token": tokens.RefreshToken,
+		})
 	}
-
-	
 
 }
 

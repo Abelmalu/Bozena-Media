@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/abelmalu/golang-posts/pkg"
 	"github.com/golang-jwt/jwt/v5"
 )
 
