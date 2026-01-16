@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/abelmalu/golang-posts/internal/models"
 	"github.com/abelmalu/golang-posts/pkg"
@@ -192,39 +193,6 @@ func Login(c *gin.Context) {
 
 }
 
-func issueTokens(c *gin.Context, userID int, clientType models.ClientType) (*TokenPair, error) {
-
-	accessToken, err := pkg.GenerateAcessToken(userID)
-	if err != nil {
-
-		return nil, err
-	}
-	refreshToken, err := pkg.GenerateAcessToken(userID)
-	if err != nil {
-
-		return nil, err
-	}
-	return &TokenPair{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}, nil
-
-}
-
-func StoreRefreshTokens(userID int,refreshToken string, clientType string)(sql.Result,error){
-
-
-	query := `INSERT INTO refresh_tokens (user_id,token_text,expires_at,client_type) VALUES($1,$2,$3,$4)`
-
-	result,err := pkg.DB.Exec(query, userID,refreshToken,clientType)
-	if err != nil{
-
-		return nil,err
-	}
-
-	return result,nil
-
-}
 func ExtractRefreshToken(c *gin.Context) (string, error) {
 
 	//Extracting  refresh tokens from mobile app clients 
@@ -247,3 +215,45 @@ func ExtractRefreshToken(c *gin.Context) (string, error) {
 
 	return "", errors.New("Refresh Token not found")
 }
+
+func issueTokens(c *gin.Context, userID int, clientType models.ClientType) (*TokenPair, error) {
+
+	accessToken, err := pkg.GenerateAcessToken(userID)
+	if err != nil {
+
+		return nil, err
+	}
+	refreshToken, err,expiresAt := pkg.GenerateRefreshToken(userID)
+	if err != nil {
+
+		return nil, err
+	}
+	_,err = StoreRefreshTokens(userID,refreshToken,expiresAt,string(clientType))
+
+	if err != nil{
+
+		return nil, err
+	}
+
+	return &TokenPair{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
+
+}
+
+func StoreRefreshTokens(userID int,refreshToken string, expiresAt time.Time, clientType string)(sql.Result,error){
+
+
+	query := `INSERT INTO refresh_tokens (user_id,token_text,expires_at,client_type) VALUES($1,$2,$3,$4)`
+
+	result,err := pkg.DB.Exec(query, userID,refreshToken,expiresAt,clientType)
+	if err != nil{
+
+		return nil,err
+	}
+
+	return result,nil
+
+}
+

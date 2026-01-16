@@ -12,8 +12,10 @@ var (
 	accessSecret  = []byte("ACCESS_SECRET_CHANGE_ME")
 	refreshSecret = []byte("REFRESH_SECRET_CHANGE_ME")
 )
+const RefreshTokenDuration = 24 * 30 * time.Hour
 
 func GenerateAcessToken(userID int) (string, error) {
+
     claims := jwt.MapClaims{
         "user_id": userID,
         "type":"access",
@@ -25,17 +27,21 @@ func GenerateAcessToken(userID int) (string, error) {
 }
 
 // generates refresh tokens with refresh token secret keys 
-func GenerateRefreshToken(userID int)(string,error){
+func GenerateRefreshToken(userID int)(string,error,time.Time){
+		expiresAt := time.Now().Add(RefreshTokenDuration)
 
     claims := jwt.MapClaims{
         "user_id":userID,
         "type":"refresh",
-        "exp": time.Now().Add( 24*30 * time.Hour ).Unix(),
+        "exp": expiresAt,
     }
 
     token := jwt.NewWithClaims(jwt.SigningMethodHS256,claims)
+	signedToken,err := token.SignedString(refreshSecret)
+	
+	
 
-    return token.SignedString(refreshSecret)
+    return signedToken,err,expiresAt
 
 
 }
