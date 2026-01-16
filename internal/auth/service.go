@@ -205,7 +205,7 @@ func RefreshHandler(c *gin.Context) {
 		return
 	}
 	// validate the token to check if it tampered
-	tokenClaims, err := pkg.ValidateRefreshToken(refreshToken)
+	_, err = pkg.ValidateRefreshToken(refreshToken)
 
 	if err != nil {
 
@@ -229,23 +229,60 @@ func RefreshHandler(c *gin.Context) {
 		return
 
 	}
+	var clientType models.ClientType
 	userID := tokenRecord.UserID
-	clientType := tokenRecord.ClientType
+	clientTypeStr := tokenRecord.ClientType
 
-	// Rotate refresh token (issue a new one)
-	newRefreshToken, err, _ := pkg.GenerateRefreshToken(userID)
-	if err != nil {
-		log.Printf("Failed to generate refresh token: %v", err)
+	switch clientTypeStr {
+	case "web":
+		clientType = models.ClientWeb
+	case "mobile":
+		clientType = models.ClientMobile
+
+	}
+
+	
+	// revoke the old token so it can't be used anymore
+	if err := RevokeRefreshToken(tokenRecord.TokenText); err != nil {
+
+		log.Printf("Couldn't Revoke the token %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
-	// revoke the old token so it can't be used anymore
-	if err := RevokeRefreshToken(tokenRecord.TokenText); err !=nil{
+	// Generate new tokens Rotate refresh token (issue a new one)
+	tokens, err := issueTokens(c, userID, clientType)
 
-		log.Printf("Couldn't Revoke the token %v",err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
-			return
+	// store the refresh token 
+	newExpireTime := time.Now().Add(24*30*time.Hour)
+	_,err = StoreRefreshTokens(userID,tokens.RefreshToken,newExpireTime,clientTypeStr)
+	if err != nil{
+
+		log.Printf("couldn't store a new refresh token %v",err)
 	}
+
+
+	switch clientType {
+	case models.ClientWeb:
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    tokens.RefreshToken,
+			MaxAge:   30 * 24 * 60 * 60,
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+		})
+
+		c.Header("Authorization", "Bearer "+tokens.AccessToken)
+
+	case models.ClientMobile:
+		 c.JSON(http.StatusOK, gin.H{
+            "access_token":  tokens.AccessToken,
+            "refresh_token": tokens.RefreshToken,
+        })
+	}
+
+	
 
 }
 
@@ -334,15 +371,15 @@ func GetRefreshToken(refreshToken string) (*models.RefreshToken, error) {
 	return &refreshRecord, nil
 }
 
-// RevokeRefreshToken revokes the token 
-func RevokeRefreshToken(refreshToken string) error{
+// RevokeRefreshToken revokes the token
+func RevokeRefreshToken(refreshToken string) error {
 
 	query := `
 	
 	UPDATE refresh_tokens SET revoked=TRUE 
 	WHERE token_text = $1 revoked=FALSE `
 
-	result,err := pkg.DB.Exec(query,refreshToken)
+	result, err := pkg.DB.Exec(query, refreshToken)
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
@@ -356,6 +393,5 @@ func RevokeRefreshToken(refreshToken string) error{
 	}
 
 	return err
-
 
 }
