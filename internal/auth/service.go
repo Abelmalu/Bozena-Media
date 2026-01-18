@@ -193,6 +193,53 @@ func Login(c *gin.Context) {
 
 }
 
+// Logout logs the user out 
+func Logout (c *gin.Context){
+
+	// extracting the refresh token from the request for both mobile and web clients
+	refreshToken, err := ExtractRefreshToken(c)
+	if err != nil {
+
+		log.Printf("refresh token extracting error %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
+		return
+	}
+	// validate the token to check if it is tampered
+	_, err = pkg.ValidateRefreshToken(refreshToken)
+
+	if err != nil {
+
+		log.Printf("refresh token validation error: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
+		return
+	}
+
+	// hash the token to check with DB token
+	hashedRefreshToken := pkg.HashToken(refreshToken)
+	if err := DeleteRefreshToken(hashedRefreshToken); err != nil{
+
+		log.Printf("error wile deleting refresh token: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "Internal Server Error"})
+		return
+	}
+
+	// 3. Clear cookies (WEB ONLY)
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		MaxAge:   -1, // delete cookie
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+	c.JSON(http.statusOk,gin.H{"message":"succesfully loged out"})
+
+
+
+
+}
+
 // RefreshHandler handle requests for getting new access tokens
 func RefreshHandler(c *gin.Context) {
 
@@ -220,7 +267,7 @@ func RefreshHandler(c *gin.Context) {
 		return
 
 	}
-	// validate the token to check if it tampered
+	// validate the token to check if it is tampered
 	_, err = pkg.ValidateRefreshToken(refreshToken)
 
 	if err != nil {
@@ -390,4 +437,26 @@ func RevokeRefreshToken(refreshToken string) error {
 
 	return err
 
+}
+
+// revokes the current session of the user by deleting the refresh token
+func DeleteRefreshToken(string refreshToken)(error){
+
+	query =`DELETE FROM refresh_tokens WHERE token_text=$1`
+
+	result,err := pkg.DB.Exec(query,refreshToken)
+	
+	if err != nil{
+
+		log.Fatalf("DB Exec error %v",err)
+		return err
+	}
+
+	rowsAffected,err :=  result.RowsAffected()
+	if err != nil{
+
+		log.Fatalf("db exec error %v",err)
+		return err
+	}
+	return err
 }
