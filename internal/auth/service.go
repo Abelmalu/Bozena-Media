@@ -233,7 +233,7 @@ func Logout (c *gin.Context){
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
-	c.JSON(http.statusOk,gin.H{"message":"succesfully loged out"})
+	c.JSON(http.StatusOK,gin.H{"message":"succesfully loged out"})
 
 
 
@@ -440,9 +440,9 @@ func RevokeRefreshToken(refreshToken string) error {
 }
 
 // revokes the current session of the user by deleting the refresh token
-func DeleteRefreshToken(string refreshToken)(error){
+func DeleteRefreshToken( refreshToken string)(error){
 
-	query =`DELETE FROM refresh_tokens WHERE token_text=$1`
+	query :=`DELETE FROM refresh_tokens WHERE token_text=$1`
 
 	result,err := pkg.DB.Exec(query,refreshToken)
 	
@@ -452,7 +452,7 @@ func DeleteRefreshToken(string refreshToken)(error){
 		return err
 	}
 
-	rowsAffected,err :=  result.RowsAffected()
+	_,err =  result.RowsAffected()
 	if err != nil{
 
 		log.Fatalf("db exec error %v",err)

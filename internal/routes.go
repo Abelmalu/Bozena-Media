@@ -10,12 +10,13 @@ import (
 func SetupRoutes() *gin.Engine {
 
 	r := gin.Default()
-	authGroup := r.Group("/auth")
+	authGroup := r.Group("")
 	{
 		authGroup.POST("/register", auth.Register)
 		authGroup.POST("/login", auth.Login)
 		authGroup.POST("/refresh",auth.RefreshHandler)
-
+		authGroup.POST("/logout",middleware.AuthMiddleware(),auth.RefreshHandler)
+		
 	}
 	postsGroup := r.Group("/posts")
 	postsGroup.Use(middleware.AuthMiddleware())
