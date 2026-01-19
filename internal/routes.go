@@ -5,11 +5,22 @@ import (
 	"github.com/abelmalu/golang-posts/internal/posts"
 	"github.com/abelmalu/golang-posts/internal/auth"
 	"github.com/gin-gonic/gin"
+	"time"
+	"github.com/gin-contrib/cors"
 )
 
 func SetupRoutes() *gin.Engine {
 
 	r := gin.Default()
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization","X-Client-Type"},
+		ExposeHeaders:    []string{"Authorization"}, // IMPORTANT
+		AllowCredentials: true, // REQUIRED for cookies
+		MaxAge:           12 * time.Hour,
+	}))
+
 	authGroup := r.Group("")
 	{
 		authGroup.POST("/register", auth.Register)
