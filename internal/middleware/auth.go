@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-
 	"github.com/abelmalu/golang-posts/pkg"
 	"github.com/gin-gonic/gin"
 )
@@ -58,6 +57,12 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 		c.Set("userID", int(uid))
+		userRole, ok := tokenClaims["userRole"].(string)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+			return
+		}
+		c.Set("userRole", userRole)
 		// convert once here
 
 		c.Next() // Token is valid, proceed to the next handler!
@@ -72,8 +77,9 @@ func AuthorizeRoles(allowedRoles ...string) gin.HandlerFunc {
 		if !ok {
 
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"message": "Unauthorized",
+				"message": "can't Unauthorized",
 			})
+			c.Abort()
 			return
 		}
 		userRole := role.(string)

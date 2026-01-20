@@ -82,7 +82,7 @@ func Register(c *gin.Context) {
 
 	}
 
-	response := gin.H{"message": "Login successful"}
+	response := gin.H{"message": "Registered successfully"}
 
 	switch clientType {
 	case models.ClientWeb:
@@ -124,7 +124,8 @@ func Login(c *gin.Context) {
 
 	}
 	query := `SELECT * FROM users where username=$1`
-	err := pkg.DB.QueryRow(query, input.Username).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt)
+	err := pkg.DB.QueryRow(query, input.Username).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt,&user.Role)
+	
 	if err != nil {
 
 		log.Printf("Login DB Error %v", err)

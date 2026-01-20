@@ -6,6 +6,7 @@ import (
 	"github.com/abelmalu/golang-posts/internal/auth"
 	"github.com/gin-gonic/gin"
 	"time"
+	"fmt"
 	"github.com/gin-contrib/cors"
 )
 
@@ -30,8 +31,11 @@ func SetupRoutes() *gin.Engine {
 		
 	}
 	postsGroup := r.Group("/posts")
-	postsGroup.Use(middleware.AuthMiddleware())
+	fmt.Printf("here before the middleware")
+	
+	postsGroup.Use(middleware.AuthMiddleware(),middleware.AuthorizeRoles("users"))
 	{
+		fmt.Printf("here after the middleware")
 		postsGroup.POST("/create", posts.CreatePost)
 	}
 
