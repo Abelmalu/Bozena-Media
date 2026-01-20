@@ -70,7 +70,7 @@ func Register(c *gin.Context) {
 		clientType = models.ClientMobile
 	}
 
-	tokens, err := issueTokens(c, newUser.ID, clientType)
+	tokens, err := issueTokens(c, newUser.ID, clientType,"user")
 
 	if err != nil {
 		log.Fatalf("JWT error %v", err)
@@ -156,7 +156,7 @@ func Login(c *gin.Context) {
 	}
 
 	// Generate tokens
-	tokens, err := issueTokens(c, user.ID, clientType)
+	tokens, err := issueTokens(c, user.ID, clientType,user.Role)
 
 	if err != nil {
 		log.Printf("JWT error %v", err)
@@ -267,7 +267,7 @@ func RefreshHandler(c *gin.Context) {
 		return
 
 	}
-	// validate the token to check if it is tampered
+	// validate the token to check if it is tampered or expired
 	_, err = pkg.ValidateRefreshToken(refreshToken)
 
 	if err != nil {
@@ -275,6 +275,15 @@ func RefreshHandler(c *gin.Context) {
 		log.Printf("refresh token validation error: %v", err)
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
 		return
+	}
+	user,err := GetUserByID(tokenRecord.ID)
+	
+	if err !=nil{
+		log.Printf("refresh token validation error: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
+		return
+
+
 	}
 	var clientType models.ClientType
 	userID := tokenRecord.UserID
@@ -295,8 +304,9 @@ func RefreshHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
+	
 	// Generate new tokens Rotate refresh token (issue a new one)
-	tokens, err := issueTokens(c, userID, clientType)
+	tokens, err := issueTokens(c, userID, clientType,user.Role)
 
 	// store the refresh token
 	newExpireTime := time.Now().Add(24 * 30 * time.Hour)
@@ -329,6 +339,27 @@ func RefreshHandler(c *gin.Context) {
 
 }
 
+func GetUserByID(ID int) (*models.User, error) {
+	var user models.User
+	query := `SELECT * FROM users WHERE id=$1`
+
+	err := pkg.DB.QueryRow(query, ID).Scan(
+	&user.ID,
+	&user.Email,
+	&user.Password,
+	&user.Role,
+	&user.CreatedAt,
+)
+
+if err != nil {
+	if err == sql.ErrNoRows {
+		return nil, err
+	}
+	return nil, err
+}
+return &user,nil
+}
+
 // Refresh token handler for getting new access tokens
 func ExtractRefreshToken(c *gin.Context) (string, error) {
 
@@ -353,9 +384,9 @@ func ExtractRefreshToken(c *gin.Context) (string, error) {
 	return "", errors.New("Refresh Token not found")
 }
 
-func issueTokens(c *gin.Context, userID int, clientType models.ClientType) (*TokenPair, error) {
+func issueTokens(c *gin.Context, userID int, clientType models.ClientType,userRole string) (*TokenPair, error) {
 
-	accessToken, err := pkg.GenerateAcessToken(userID)
+	accessToken, err := pkg.GenerateAcessToken(userID,userRole)
 	if err != nil {
 
 		return nil, err

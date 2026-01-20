@@ -17,11 +17,12 @@ var (
 
 const RefreshTokenDuration = 24 * 30 * time.Hour
 
-func GenerateAcessToken(userID int) (string, error) {
+func GenerateAcessToken(userID int,role string) (string, error) {
 
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"type":    "access",
+		"userRole":role,
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	}
 
