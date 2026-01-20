@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	
+
 	"github.com/abelmalu/golang-posts/pkg"
 	"github.com/gin-gonic/gin"
 )
@@ -24,9 +24,8 @@ func AuthMiddleware() gin.HandlerFunc {
 
 			cookieToken, err := c.Cookie("access_token")
 			if err != nil {
-				log.Printf("Getting cookie error %v",err)
+				log.Printf("Getting cookie error %v", err)
 
-				
 			}
 			tokenStr = cookieToken
 
@@ -44,7 +43,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// Validate the token
 
-		tokenClaims, err := pkg.ValidateAccessToken(tokenStr) // Your existing function
+		tokenClaims, err := pkg.ValidateAccessToken(tokenStr)
 
 		if err != nil {
 			log.Printf("invalid token, %v", err)
@@ -62,5 +61,40 @@ func AuthMiddleware() gin.HandlerFunc {
 		// convert once here
 
 		c.Next() // Token is valid, proceed to the next handler!
+	}
+}
+
+func AuthorizeRoles(allowedRoles ...string) gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+
+		role, ok := c.Get("userRole")
+		if !ok {
+
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"message": "Unauthorized",
+			})
+			return
+		}
+		userRole := role.(string)
+
+		hasAccess := false
+		for _, r := range allowedRoles {
+			if r == userRole {
+				hasAccess = true
+				break
+
+			}
+
+		}
+		if !hasAccess {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"message": "You are not authorized for this action",
+			})
+			c.Abort()
+
+		}
+		c.Next()
+
 	}
 }
