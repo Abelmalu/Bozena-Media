@@ -24,6 +24,7 @@ func Register(c *gin.Context) {
 	var newUser models.User
 
 	if err := c.ShouldBindJSON(&newUser); err != nil {
+		log.Printf("the error while decoding json %v",err)
 
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

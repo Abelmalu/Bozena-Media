@@ -27,7 +27,7 @@ func SetupRoutes() *gin.Engine {
 		authGroup.POST("/register", auth.Register)
 		authGroup.POST("/login", auth.Login)
 		authGroup.POST("/refresh",auth.RefreshHandler)
-		authGroup.POST("/logout",middleware.AuthMiddleware(),auth.RefreshHandler)
+		authGroup.POST("/logout",middleware.AuthMiddleware(),auth.Logout)
 		
 	}
 	postsGroup := r.Group("/posts")
