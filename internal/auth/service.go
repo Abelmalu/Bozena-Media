@@ -45,8 +45,8 @@ func Register(c *gin.Context) {
 
 	db := pkg.DB
 
-	query := `INSERT INTO users(name,username,email,password) VALUES($1,$2,$3,$4) RETURNING id`
-	if err := db.QueryRow(query, newUser.Name, newUser.Username, newUser.Email, newUser.Password).Scan(&newUser.ID); err != nil {
+	query := `INSERT INTO users(name,username,email,password) VALUES($1,$2,$3,$4) RETURNING id,role`
+	if err := db.QueryRow(query, newUser.Name, newUser.Username, newUser.Email, newUser.Password).Scan(&newUser.ID, &newUser.Role); err != nil {
 		// Change *pq.Error to *pgconn.PgError
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			if pgErr.Code == "23505" {
@@ -69,8 +69,9 @@ func Register(c *gin.Context) {
 
 		clientType = models.ClientMobile
 	}
+	log.Printf("the user's role is %v", newUser.Role)
 
-	tokens, err := issueTokens(c, newUser.ID, clientType,"user")
+	tokens, err := issueTokens(c, newUser.ID, clientType, newUser.Role)
 
 	if err != nil {
 		log.Fatalf("JWT error %v", err)
@@ -96,7 +97,7 @@ func Register(c *gin.Context) {
 			SameSite: http.SameSiteLaxMode,
 		})
 
-		c.Header("Authorization", "Bearer "+tokens.AccessToken)
+		response["access_token"] = tokens.AccessToken
 
 	case models.ClientMobile:
 		response["access_token"] = tokens.AccessToken
@@ -124,8 +125,8 @@ func Login(c *gin.Context) {
 
 	}
 	query := `SELECT * FROM users where username=$1`
-	err := pkg.DB.QueryRow(query, input.Username).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt,&user.Role)
-	
+	err := pkg.DB.QueryRow(query, input.Username).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.Role)
+
 	if err != nil {
 
 		log.Printf("Login DB Error %v", err)
@@ -157,7 +158,7 @@ func Login(c *gin.Context) {
 	}
 
 	// Generate tokens
-	tokens, err := issueTokens(c, user.ID, clientType,user.Role)
+	tokens, err := issueTokens(c, user.ID, clientType, user.Role)
 
 	if err != nil {
 		log.Printf("JWT error %v", err)
@@ -183,7 +184,7 @@ func Login(c *gin.Context) {
 			SameSite: http.SameSiteLaxMode,
 		})
 
-		c.Header("Authorization", "Bearer "+tokens.AccessToken)
+		response["access_token"] = tokens.AccessToken
 
 	case models.ClientMobile:
 		response["access_token"] = tokens.AccessToken
@@ -194,8 +195,8 @@ func Login(c *gin.Context) {
 
 }
 
-// Logout logs the user out 
-func Logout (c *gin.Context){
+// Logout logs the user out
+func Logout(c *gin.Context) {
 
 	// extracting the refresh token from the request for both mobile and web clients
 	refreshToken, err := ExtractRefreshToken(c)
@@ -217,7 +218,7 @@ func Logout (c *gin.Context){
 
 	// hash the token to check with DB token
 	hashedRefreshToken := pkg.HashToken(refreshToken)
-	if err := DeleteRefreshToken(hashedRefreshToken); err != nil{
+	if err := DeleteRefreshToken(hashedRefreshToken); err != nil {
 
 		log.Printf("error wile deleting refresh token: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "Internal Server Error"})
@@ -234,10 +235,7 @@ func Logout (c *gin.Context){
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
-	c.JSON(http.StatusOK,gin.H{"message":"succesfully loged out"})
-
-
-
+	c.JSON(http.StatusOK, gin.H{"message": "succesfully loged out"})
 
 }
 
@@ -277,13 +275,12 @@ func RefreshHandler(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
 		return
 	}
-	user,err := GetUserByID(tokenRecord.ID)
-	
-	if err !=nil{
+	user, err := GetUserByID(tokenRecord.ID)
+
+	if err != nil {
 		log.Printf("refresh token validation error: %v", err)
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
 		return
-
 
 	}
 	var clientType models.ClientType
@@ -305,9 +302,9 @@ func RefreshHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
-	
+
 	// Generate new tokens Rotate refresh token (issue a new one)
-	tokens, err := issueTokens(c, userID, clientType,user.Role)
+	tokens, err := issueTokens(c, userID, clientType, user.Role)
 
 	// store the refresh token
 	newExpireTime := time.Now().Add(24 * 30 * time.Hour)
@@ -345,20 +342,20 @@ func GetUserByID(ID int) (*models.User, error) {
 	query := `SELECT * FROM users WHERE id=$1`
 
 	err := pkg.DB.QueryRow(query, ID).Scan(
-	&user.ID,
-	&user.Email,
-	&user.Password,
-	&user.Role,
-	&user.CreatedAt,
-)
+		&user.ID,
+		&user.Email,
+		&user.Password,
+		&user.Role,
+		&user.CreatedAt,
+	)
 
-if err != nil {
-	if err == sql.ErrNoRows {
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
 		return nil, err
 	}
-	return nil, err
-}
-return &user,nil
+	return &user, nil
 }
 
 // Refresh token handler for getting new access tokens
@@ -385,9 +382,9 @@ func ExtractRefreshToken(c *gin.Context) (string, error) {
 	return "", errors.New("Refresh Token not found")
 }
 
-func issueTokens(c *gin.Context, userID int, clientType models.ClientType,userRole string) (*TokenPair, error) {
+func issueTokens(c *gin.Context, userID int, clientType models.ClientType, userRole string) (*TokenPair, error) {
 
-	accessToken, err := pkg.GenerateAcessToken(userID,userRole)
+	accessToken, err := pkg.GenerateAcessToken(userID, userRole)
 	if err != nil {
 
 		return nil, err
@@ -472,22 +469,22 @@ func RevokeRefreshToken(refreshToken string) error {
 }
 
 // revokes the current session of the user by deleting the refresh token
-func DeleteRefreshToken( refreshToken string)(error){
+func DeleteRefreshToken(refreshToken string) error {
 
-	query :=`DELETE FROM refresh_tokens WHERE token_text=$1`
+	query := `DELETE FROM refresh_tokens WHERE token_text=$1`
 
-	result,err := pkg.DB.Exec(query,refreshToken)
-	
-	if err != nil{
+	result, err := pkg.DB.Exec(query, refreshToken)
 
-		log.Fatalf("DB Exec error %v",err)
+	if err != nil {
+
+		log.Fatalf("DB Exec error %v", err)
 		return err
 	}
 
-	_,err =  result.RowsAffected()
-	if err != nil{
+	_, err = result.RowsAffected()
+	if err != nil {
 
-		log.Fatalf("db exec error %v",err)
+		log.Fatalf("db exec error %v", err)
 		return err
 	}
 	return err
