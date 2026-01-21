@@ -9,7 +9,9 @@ import (
 )
 
 
+func Posts(c *gin.Context){
 
+}
 
 func CreatePost(c *gin.Context){
 	//Grabbing the value of userID from the context 
@@ -57,4 +59,42 @@ func CreatePost(c *gin.Context){
 	})
      return 
 
+}
+
+
+func GetPosts(c *gin.Context){
+	var posts [] models.Post
+	query := `SELECT * FROM posts`
+
+	rows,err :=pkg.DB.Query(query)
+	if err != nil{
+
+		log.Printf("error during db query %v",err)
+		c.JSON(http.StatusInternalServerError,gin.H{
+			"status":"error",
+			"message":"Internal Server Error",
+		
+		})
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next(){
+	var post models.Post
+
+		rows.Scan(&post.Id,&post.Title,&post.Content,&post.UserID)
+		posts = append(posts,post)
+
+
+	}
+
+	if err = rows.Err(); err != nil {
+        log.Printf("error after iterating rows: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{
+			"status":"error",
+			"message": "Internal Server Error",
+		})
+        return
+    }
+	c.JSON(http.StatusOK,posts)
 }
