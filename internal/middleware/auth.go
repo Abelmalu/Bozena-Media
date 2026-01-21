@@ -46,20 +46,22 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		if err != nil {
 			log.Printf("invalid token, %v", err)
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+			c.JSON(http.StatusUnauthorized, gin.H{"status": "error","message":"Unauthorized"})
 			c.Abort()
 			return
 		}
 
 		uid, ok := tokenClaims["user_id"].(float64)
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+			log.Printf("Invalid token claims")
+			c.AbortWithStatusJSON(http.StatusUnauthorized,gin.H{"status": "error","message":"Unauthorized"})
 			return
 		}
 		c.Set("userID", int(uid))
 		userRole, ok := tokenClaims["userRole"].(string)
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+			log.Printf("Invalid token claims")
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"status": "error","message":"Unauthorized"})
 			return
 		}
 		c.Set("userRole", userRole)
@@ -75,10 +77,10 @@ func AuthorizeRoles(allowedRoles ...string) gin.HandlerFunc {
 
 		role, ok := c.Get("userRole")
 		if !ok {
+			log.Printf("Invalid token claims")
+			
 
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"message": "can't Unauthorized",
-			})
+			c.JSON(http.StatusUnauthorized, gin.H{"status": "error","message":"Unauthorized"})
 			c.Abort()
 			return
 		}
@@ -94,9 +96,8 @@ func AuthorizeRoles(allowedRoles ...string) gin.HandlerFunc {
 
 		}
 		if !hasAccess {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"message": "You are not authorized for this action",
-			})
+			
+			c.JSON(http.StatusUnauthorized, gin.H{"status": "error","message":"You are not authorized"})
 			c.Abort()
 
 		}
