@@ -36,6 +36,7 @@ func SetupRoutes() *gin.Engine {
 		
 		postsGroup.POST("/create", posts.CreatePost)
 		postsGroup.GET("/",posts.GetPosts)
+		postsGroup.PUT("/update/:id",posts.UpdatePost)
 	}
 
 	return r
