@@ -21,7 +21,9 @@ func SetupRoutes() *gin.Engine {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	authGroup := r.Group("")
+
+
+	authGroup := r.Group("/auth")
 	{
 		authGroup.POST("/register", auth.Register)
 		authGroup.POST("/login", auth.Login)
@@ -29,15 +31,17 @@ func SetupRoutes() *gin.Engine {
 		authGroup.POST("/logout",middleware.AuthMiddleware(),auth.Logout)
 		
 	}
-	postsGroup := r.Group("/posts")
+	authenticated := r.Group("/")
 	
-	postsGroup.Use(middleware.AuthMiddleware(),middleware.AuthorizeRoles("users"))
+	//authenticated.Use(middleware.AuthMiddleware(),middleware.AuthorizeRoles("users"))
 	{
 		
-		postsGroup.POST("/create", posts.CreatePost)
-		postsGroup.GET("/",posts.GetPosts)
-		postsGroup.PUT("/update/:id",posts.UpdatePost)
-		postsGroup.DELETE("/delete/:id",posts.DeletePost)
+		authenticated.POST("/posts", posts.CreatePost)
+		authenticated.GET("/posts",posts.GetPosts)
+
+		postOwner := authenticated.Group("/posts/:id")
+		postOwner.PUT("",posts.UpdatePost)
+		postOwner.DELETE("",posts.DeletePost)
 	}
 		
 
