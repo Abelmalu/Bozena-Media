@@ -137,7 +137,7 @@ func UpdatePost(c *gin.Context) {
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Printf("DB erro %v", err)
+		log.Printf("DB error %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Ooops Couldn't update post!",
@@ -158,5 +158,64 @@ func UpdatePost(c *gin.Context) {
 		"status":  "success",
 		"message": "Post updated Successfully",
 	})
+
+}
+
+func DeletePost(c *gin.Context){
+
+	postIDStr := c.Param("id")
+	postID, err := strconv.Atoi(postIDStr)
+
+	if err != nil {
+
+		log.Printf("error while Atoi, %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Bad Request",
+		})
+		return
+
+	}
+
+	query := `DELETE FROM posts WHERE id=$1`
+
+	result,err := pkg.DB.Exec(query,postID)
+	
+	if err != nil{
+		log.Printf("DB erro %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Internal Server Error",
+		})
+		return
+
+	}
+	rowsAffected,err := result.RowsAffected()
+	if err != nil{
+
+		log.Printf("DB erro %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Ooops Couldn't delete post!",
+		})
+		return
+
+	}
+
+	if rowsAffected == 0{
+		log.Printf("DB erro rows affected came zero")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Ooops Couldn't delete post!",
+		})
+		return
+
+
+	}
+	c.JSON(http.StatusOK,gin.H{
+		"status":"success",
+		"message":"Post deleted successfully",
+	})
+
 
 }
