@@ -23,7 +23,7 @@ func SetupRoutes() *gin.Engine {
 
 
 
-	authGroup := r.Group("/auth")
+	authGroup := r.Group("/")
 	{
 		authGroup.POST("/register", auth.Register)
 		authGroup.POST("/login", auth.Login)
@@ -33,13 +33,14 @@ func SetupRoutes() *gin.Engine {
 	}
 	authenticated := r.Group("/")
 	
-	//authenticated.Use(middleware.AuthMiddleware(),middleware.AuthorizeRoles("users"))
+	authenticated.Use(middleware.AuthMiddleware(),middleware.AuthorizeRoles("users"))
 	{
 		
 		authenticated.POST("/posts", posts.CreatePost)
 		authenticated.GET("/posts",posts.GetPosts)
 
 		postOwner := authenticated.Group("/posts/:id")
+		postOwner.Use(middleware.AuthorizePostOwner())
 		postOwner.PUT("",posts.UpdatePost)
 		postOwner.DELETE("",posts.DeletePost)
 	}
