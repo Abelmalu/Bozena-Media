@@ -46,3 +46,8 @@ func CreateLike(c *gin.Context) {
 
 
 }
+
+func DeleteLike(c *gin.Context){
+
+	panic("Unimplemented")
+}
