@@ -2,9 +2,9 @@ package core
 
 import "context"
 
-type Service interface {
+type PostService interface {
 
-	CreatPost(ct context.Context,)
+	CreatPost(ctx context.Context,)
 
 
 
