@@ -4,15 +4,10 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-
 	"github.com/abelmalu/golang-posts/internal/models"
 	"github.com/abelmalu/golang-posts/pkg"
 	"github.com/gin-gonic/gin"
 )
-
-func Posts(c *gin.Context) {
-
-}
 
 func CreatePost(c *gin.Context) {
 	//Grabbing the value of userID from the context
