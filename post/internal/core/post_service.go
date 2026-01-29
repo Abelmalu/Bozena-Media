@@ -1,10 +1,18 @@
 package core
 
-import "context"
+import (
+	"context"
+	"github.com/abelmalu/golang-posts/post/internal/models"
+
+)
+
 
 type PostService interface {
-
-	CreatPost(ctx context.Context,)
+    //CreatePost creates a post 
+	CreatePost(ctx context.Context,post *models.Post)(*models.Post,error)
+	UpdatePost(ctx context.Context,ID int  )(error)
+	DeletePost(ctx context.Context, ID int )(error)
+	GetPosts(ctx context.Context)([]models.Post,error)
 
 
 

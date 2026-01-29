@@ -59,3 +59,13 @@ func initDB(config *config.Config) (*sql.DB, error) {
 
 	return DBConPool, nil
 }
+
+// Run starts the gRPC server on the provided port 
+func (app *App) Run(){
+
+		grpcServer := grpc.NewServer()
+
+
+
+
+}
