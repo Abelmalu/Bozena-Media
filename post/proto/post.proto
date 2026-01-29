@@ -1,0 +1,30 @@
+syntax = "proto3";
+package postservice;
+
+option go_package = "./proto/pb";
+
+
+service PostService{
+
+    rpc CreatePost(CreatePostRequest) returns (CreatePostResponse);
+}
+
+message Post{
+    int64 id = 1;
+    string title = 2;
+    string content = 3;
+    int64 user_id = 4;
+}
+
+message CreatePostRequest{
+    string title = 2;
+    string content = 3;
+    
+
+}
+
+message CreatePostResponse {
+    string status = 1;
+    string message = 2;
+}
+
