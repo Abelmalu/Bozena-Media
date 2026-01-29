@@ -49,7 +49,7 @@ func CreatePost(c *gin.Context) {
 		"status":  "success",
 		"message": "Successfully created a post",
 	})
-	return
+	
 
 }
 
