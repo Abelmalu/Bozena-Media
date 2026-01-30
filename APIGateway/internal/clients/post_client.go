@@ -3,7 +3,6 @@ package clients
 import (
 	"context"
 	"time"
-
 	"github.com/abelmalu/golang-posts/post/proto/pb"
 	"google.golang.org/grpc"
 )
@@ -14,6 +13,7 @@ type PostClient struct{
 
 	client pb.PostServiceClient
 }
+
 
 func NewPostClient(conn *grpc.ClientConn) *PostClient{
 

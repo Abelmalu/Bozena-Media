@@ -41,8 +41,5 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK,gin.H{
-		"status":"success",
-		"message":resp,
-	})
+	c.JSON(http.StatusOK,resp)
 }

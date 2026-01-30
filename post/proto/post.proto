@@ -7,6 +7,9 @@ option go_package = "./proto/pb";
 service PostService{
 
     rpc CreatePost(CreatePostRequest) returns (CreatePostResponse);
+    rpc UpdatePost(UpdatePostRequest) returns (UpdatePostResponse);
+    rpc DeletePost(DeletePostRequest) returns (DeletePostResponse);
+    rpc ListPosts(ListPostsRequest) returns (ListPostsResponse);
 }
 
 message Post{
@@ -29,3 +32,36 @@ message CreatePostResponse {
     string message = 2;
 }
 
+message UpdatePostRequest{
+    int64 post_id = 1;
+    string title = 2;
+    string content = 3;
+
+}
+
+message UpdatePostResponse{
+    string status = 1;
+    string message = 2;
+
+}
+
+message DeletePostRequest{
+
+    int64 post_id = 1;
+
+}
+
+message DeletePostResponse{
+    string status = 1;
+    string message = 2;
+
+}
+
+message ListPostsRequest{
+
+
+}
+message ListPostsResponse {
+  repeated Post posts = 1;
+
+}
