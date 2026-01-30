@@ -22,7 +22,7 @@ func main(){
 	router := internal.SetupRoutes()
 	if err :=  router.Run(":8080"); err !=nil{
 
-		log.Println("The router error is ",err)
+		log.Fatalf("The router error is %v",err)
 	}
   
 

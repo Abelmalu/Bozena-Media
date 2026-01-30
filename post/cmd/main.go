@@ -23,6 +23,9 @@ func (s *postServer) CreatePost(ctx context.Context, req *pb.CreatePostRequest) 
 func main() {
     lis, _ := net.Listen("tcp", ":50051")
     s := grpc.NewServer()
+	// injecting post service to the grpc server 
     pb.RegisterPostServiceServer(s, &postServer{})
     s.Serve(lis)
 }
+
+

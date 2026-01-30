@@ -14,17 +14,20 @@ import (
 )
 
 func main() {
-    r := gin.Default()
 	
+    r := gin.Default()
 
-    // Connect to gRPC server once
-    conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+    log.Printf("the request is here ")
+
+
+    // postConnect to gRPC server once
+    postConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
     if err != nil {
         log.Fatalf("failed to connect to gRPC server: %v", err)
     }
-    defer conn.Close()
+    defer postConn.Close()
 
-    grpcClient := pb.NewPostServiceClient(conn)
+    grpcClient := pb.NewPostServiceClient(postConn)
 
     // HTTP POST /posts -> gRPC call
     r.POST("/posts", func(c *gin.Context) {
@@ -71,6 +74,8 @@ func main() {
             "message": grpcResp.Message,
         })
     })
+
+    log.Printf("this is the error or not error lets see it ")
 
     r.Run(":8080")
 }
