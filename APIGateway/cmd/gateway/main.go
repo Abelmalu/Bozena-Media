@@ -49,6 +49,7 @@ func main() {
 
         // Build gRPC request
         grpcReq := &pb.CreatePostRequest{
+            UserId: 1,
             Title:   reqBody.Title,
             Content: reqBody.Content,
         }
