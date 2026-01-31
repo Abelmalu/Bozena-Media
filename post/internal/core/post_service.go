@@ -12,7 +12,7 @@ type PostService interface {
 	CreatePost(ctx context.Context,post *models.Post)(*models.Post,error)
 	UpdatePost(ctx context.Context,ID int  )(error)
 	DeletePost(ctx context.Context, ID int )(error)
-	GetPosts(ctx context.Context)([]models.Post,error)
+	ListPosts(ctx context.Context)([]models.Post,error)
 
 
 

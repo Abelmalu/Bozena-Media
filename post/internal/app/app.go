@@ -7,7 +7,10 @@ import (
 	"net"
 	"time"
 
+	"github.com/abelmalu/golang-posts/post/internal/handlers"
 	"github.com/abelmalu/golang-posts/post/config"
+	"github.com/abelmalu/golang-posts/post/internal/repository"
+	"github.com/abelmalu/golang-posts/post/internal/service"
 	"github.com/abelmalu/golang-posts/post/proto/pb"
 	_ "github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -15,16 +18,15 @@ import (
 )
 
 type App struct {
-	config     *config.Config
-	DB         *sql.DB
-	
+	config *config.Config
+	DB     *sql.DB
 }
 
 type postServer struct {
-  pb.UnimplementedPostServiceServer
+	pb.UnimplementedPostServiceServer
 }
 
-// NewApp creates the application instance
+// NewApp creates the application instance  
 func NewApp() (*App, error) {
 
 	config, err := config.LoadConfig()
@@ -35,15 +37,15 @@ func NewApp() (*App, error) {
 	}
 
 	DBConPool, err := initDB(config)
-	if err != nil{
+	if err != nil {
 
-		log.Fatalf("Error while initiating db connection %v",err)
-		
+		log.Fatalf("Error while initiating db connection %v", err)
+
 	}
 
 	app := App{
-		config:config,
-		DB:DBConPool,
+		config: config,
+		DB:     DBConPool,
 	}
 
 	return &app, nil
@@ -76,16 +78,19 @@ func initDB(config *config.Config) (*sql.DB, error) {
 	return DBConPool, nil
 }
 
-// Run starts the gRPC server on the provided port 
-func (app *App) Run(){
+// Run starts the gRPC server on the provided port
+func (app *App) Run() {
 
-		 lis, _ := net.Listen("tcp", ":50051")
-    s := grpc.NewServer()
-	// injecting post service to the grpc server 
-    pb.RegisterPostServiceServer(s, &postServer{})
-    s.Serve(lis)
+	lis, _ := net.Listen("tcp", ":50051")
+	s := grpc.NewServer()
 
+	postRepo := repository.NewPostRepository(app.DB)
+	postService := service.NewPostService(postRepo)
+	postHandler := handlers.NewPostHandler(postService)
 
-
+	// injecting post service to the grpc server
+	pb.RegisterPostServiceServer(s, postHandler)
+	s.Serve(lis)
+	
 
 }
