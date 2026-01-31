@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net"
 	"time"
 
 	"github.com/abelmalu/golang-posts/post/config"
+	"github.com/abelmalu/golang-posts/post/proto/pb"
 	_ "github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"google.golang.org/grpc"
@@ -14,8 +16,12 @@ import (
 
 type App struct {
 	config     *config.Config
-	grpcServer *grpc.Server
 	DB         *sql.DB
+	
+}
+
+type postServer struct {
+  pb.UnimplementedPostServiceServer
 }
 
 // NewApp creates the application instance
@@ -28,9 +34,19 @@ func NewApp() (*App, error) {
 		log.Fatalf("Couldn't load configuration %v", err)
 	}
 
-	DBConPool, err = initDB(config)
+	DBConPool, err := initDB(config)
+	if err != nil{
 
-	return nil, nil
+		log.Fatalf("Error while initiating db connection %v",err)
+		
+	}
+
+	app := App{
+		config:config,
+		DB:DBConPool,
+	}
+
+	return &app, nil
 
 }
 
@@ -63,7 +79,11 @@ func initDB(config *config.Config) (*sql.DB, error) {
 // Run starts the gRPC server on the provided port 
 func (app *App) Run(){
 
-		grpcServer := grpc.NewServer()
+		 lis, _ := net.Listen("tcp", ":50051")
+    s := grpc.NewServer()
+	// injecting post service to the grpc server 
+    pb.RegisterPostServiceServer(s, &postServer{})
+    s.Serve(lis)
 
 
 
