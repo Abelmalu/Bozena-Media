@@ -83,12 +83,13 @@ func (app *App) Run() {
 
 	lis, _ := net.Listen("tcp", ":50051")
 	s := grpc.NewServer()
-
+	
+    // Dependency Injection for each layer one by one 
 	postRepo := repository.NewPostRepository(app.DB)
 	postService := service.NewPostService(postRepo)
 	postHandler := handlers.NewPostHandler(postService)
 
-	// injecting post service to the grpc server
+	
 	pb.RegisterPostServiceServer(s, postHandler)
 	s.Serve(lis)
 	

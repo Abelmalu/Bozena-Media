@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/abelmalu/golang-posts/internal/models"
+	"github.com/abelmalu/golang-posts/post/internal/models"
 	"github.com/abelmalu/golang-posts/post/internal/core"
 )
 
@@ -38,3 +38,4 @@ func (ps *PostService) ListPosts(ctx context.Context)([]models.Post,error){
 	panic("")
 }
 
+	
