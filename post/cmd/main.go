@@ -9,19 +9,21 @@ import (
 
 func main() {
 
-	//Initiating the application
+	// load environment variables using godoenv package 
 	if err := godotenv.Load(); err != nil{
 
 		log.Fatalf("Error while loading environment variables %v",err)
 
 	}
 
+	//Initiating the application
 	app, err := application.NewApp()
 	if err != nil {
 
 		log.Fatalf("Application Initializing Error %v", err)
 	}
 
+	// run the application instance 
 	app.Run()
 
 }

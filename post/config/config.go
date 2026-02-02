@@ -24,7 +24,7 @@ func LoadConfig() (*Config,error){
 
 	if portStr == "" {
 
-		portStr = "8080"
+		portStr = "50051"
 	}
 	cfg.GRPCPORT, err = strconv.Atoi(portStr)
 	if err != nil {
@@ -33,7 +33,7 @@ func LoadConfig() (*Config,error){
 
 	}
 
-	cfg.DBURL = os.Getenv("DB_URL_POST")
+	cfg.DBURL = os.Getenv("DB_URL")
 
 	if cfg.DBURL == ""{
 

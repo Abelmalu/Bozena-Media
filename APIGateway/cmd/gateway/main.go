@@ -6,12 +6,19 @@ import (
 	"github.com/abelmalu/golang-posts/APIGateway/internal/clients"
 	"github.com/abelmalu/golang-posts/APIGateway/internal/handlers"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	
 )
 
 func main() {
 
+
+	if err := godotenv.Load(); err != nil{
+
+		log.Fatalf("Error while loading env variabales %v",err)
+	}
 	postConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {

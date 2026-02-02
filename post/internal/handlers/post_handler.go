@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/abelmalu/golang-posts/post/internal/core"
 	"github.com/abelmalu/golang-posts/post/proto/pb"
@@ -20,10 +21,16 @@ func NewPostHandler(service core.PostService) *PostHandler {
 }
 
 func (ph *PostHandler) CreatePost(ctx context.Context, req *pb.CreatePostRequest) (*pb.CreatePostResponse, error) {
-	// extract user_id from context (JWT)
-	// insert into DB
+
+    fmt.Println(req.Title,req.Content)
+    print("nothing here")
+    fmt.Println(req.UserId)
+    
+	
+
+
 	return &pb.CreatePostResponse{
-		Status:  "success",
+		Status:  "what the hell no DB",
 		Message: "Post created",
 	}, nil
 }
