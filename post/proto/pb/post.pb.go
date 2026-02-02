@@ -151,8 +151,9 @@ func (x *CreatePostRequest) GetContent() string {
 
 type CreatePostResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	PostId        string                 `protobuf:"bytes,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Content       string                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -187,16 +188,23 @@ func (*CreatePostResponse) Descriptor() ([]byte, []int) {
 	return file_post_proto_post_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *CreatePostResponse) GetStatus() string {
+func (x *CreatePostResponse) GetPostId() string {
 	if x != nil {
-		return x.Status
+		return x.PostId
 	}
 	return ""
 }
 
-func (x *CreatePostResponse) GetMessage() string {
+func (x *CreatePostResponse) GetTitle() string {
 	if x != nil {
-		return x.Message
+		return x.Title
+	}
+	return ""
+}
+
+func (x *CreatePostResponse) GetContent() string {
+	if x != nil {
+		return x.Content
 	}
 	return ""
 }
@@ -502,10 +510,11 @@ const file_post_proto_post_proto_rawDesc = "" +
 	"\x11CreatePostRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x18\n" +
-	"\acontent\x18\x03 \x01(\tR\acontent\"F\n" +
-	"\x12CreatePostResponse\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\\\n" +
+	"\acontent\x18\x03 \x01(\tR\acontent\"]\n" +
+	"\x12CreatePostResponse\x12\x17\n" +
+	"\apost_id\x18\x01 \x01(\tR\x06postId\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x18\n" +
+	"\acontent\x18\x03 \x01(\tR\acontent\"\\\n" +
 	"\x11UpdatePostRequest\x12\x17\n" +
 	"\apost_id\x18\x01 \x01(\x03R\x06postId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x18\n" +

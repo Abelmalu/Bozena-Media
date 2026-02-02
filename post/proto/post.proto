@@ -28,8 +28,10 @@ message CreatePostRequest{
 }
 
 message CreatePostResponse {
-    string status = 1;
-    string message = 2;
+    string post_id = 1;
+    string title = 2;
+    string content = 3;
+
 }
 
 message UpdatePostRequest{

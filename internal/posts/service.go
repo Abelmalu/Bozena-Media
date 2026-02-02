@@ -12,7 +12,7 @@ import (
 func CreatePost(c *gin.Context) {
 	//Grabbing the value of userID from the context
 
-	log.Printf("in the handler")
+	
 	userIDValue, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -33,7 +33,8 @@ func CreatePost(c *gin.Context) {
 	}
 	post.UserID = userIDValue.(int)
 	query := `INSERT INTO posts (title,content,user_id) VALUES($1,$2,$3)`
-
+    
+	// this  continues to execute even if the request is canceled 
 	_, err := pkg.DB.Exec(query, post.Title, post.Content, post.UserID)
 
 	if err != nil {

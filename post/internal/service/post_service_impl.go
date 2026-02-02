@@ -21,9 +21,18 @@ func NewPostService(repository core.PostRepository) *PostService{
 }
 
 
-func (ps *PostService) CreatePost(post *models.Post)(*models.Post,error){
+func (ps *PostService) CreatePost(ctx context.Context,post *models.Post)(*models.Post,error){
 
-	panic("")
+	createdPost,err := ps.repo.CreatePost(ctx,post)
+
+	if err != nil{
+
+		return nil,err
+	}
+
+	return createdPost,nil
+
+	
 }
 func (ps *PostService) UpdatePost(postID string)(*models.Post,error){
 
