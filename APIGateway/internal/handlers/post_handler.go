@@ -19,6 +19,7 @@ func NewPostHandler(pc *clients.PostClient) *PostHandler {
 }
 
 func (h *PostHandler) CreatePost(c *gin.Context) {
+	
 	var req struct {
 		UserID  int64  `json:"user_id"`
 		Title   string `json:"title"`

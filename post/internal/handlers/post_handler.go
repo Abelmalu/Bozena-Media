@@ -48,7 +48,7 @@ func (ph *PostHandler) CreatePost(ctx context.Context, req *pb.CreatePostRequest
             return nil, status.Error(codes.InvalidArgument, err.Error())
         }
 
-        return nil, status.Error(codes.Internal, "internal server error")
+        return nil, status.Error(codes.Internal, "internal serverye error")
     }
 
     return &pb.CreatePostResponse{

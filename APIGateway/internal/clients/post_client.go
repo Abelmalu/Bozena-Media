@@ -2,7 +2,9 @@ package clients
 
 import (
 	"context"
+	"fmt"
 	"time"
+
 	"github.com/abelmalu/golang-posts/post/proto/pb"
 	"google.golang.org/grpc"
 )
@@ -24,6 +26,7 @@ func NewPostClient(conn *grpc.ClientConn) *PostClient{
 
 
 func (pc *PostClient) CreatePost(userID int64, title, content string) (*pb.CreatePostResponse, error) {
+	fmt.Println("the user id %v",userID)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 

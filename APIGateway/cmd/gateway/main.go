@@ -5,11 +5,13 @@ import (
 
 	"github.com/abelmalu/golang-posts/APIGateway/internal/clients"
 	"github.com/abelmalu/golang-posts/APIGateway/internal/handlers"
+	"github.com/abelmalu/golang-posts/APIGateway/internal/middleware"
+
+	//"github.com/abelmalu/golang-posts/APIGateway/internal/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	
 )
 
 func main() {
@@ -35,7 +37,27 @@ func main() {
 
 	r := gin.Default()
 
-	r.POST("/posts", postHandler.CreatePost)
+	//Authentication route group
+	auth := r.Group("api/auth")
+	{
+		{
+		auth.POST("/register", auth.Register)
+		auth.POST("/login", auth.Login)
+		auth.POST("/refresh", auth.RefreshHandler)
+		auth.POST("/logout", middleware.AuthMiddleware(), auth.Logout)
+
+	}
+	}
+
+	// post route group
+	post := r.Group("/api/posts")
+	post.Use(middleware.AuthMiddleware())
+	{
+		post.POST("/", postHandler.CreatePost)
+
+	}
+
+	
 
 	r.Run(":8080")
 
