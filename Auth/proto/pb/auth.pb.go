@@ -9,6 +9,7 @@ package pb
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -303,9 +304,6 @@ func (x *LoginResponse) GetRefreshToken() string {
 
 type LogoutRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	AccessToken   string                 `protobuf:"bytes,5,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	RefreshToken  string                 `protobuf:"bytes,6,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -338,27 +336,6 @@ func (x *LogoutRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use LogoutRequest.ProtoReflect.Descriptor instead.
 func (*LogoutRequest) Descriptor() ([]byte, []int) {
 	return file_Auth_proto_auth_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *LogoutRequest) GetUsername() string {
-	if x != nil {
-		return x.Username
-	}
-	return ""
-}
-
-func (x *LogoutRequest) GetAccessToken() string {
-	if x != nil {
-		return x.AccessToken
-	}
-	return ""
-}
-
-func (x *LogoutRequest) GetRefreshToken() string {
-	if x != nil {
-		return x.RefreshToken
-	}
-	return ""
 }
 
 type LogoutResponse struct {
@@ -409,7 +386,7 @@ var File_Auth_proto_auth_proto protoreflect.FileDescriptor
 
 const file_Auth_proto_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x15Auth/proto/auth.proto\x12\vauthservice\"s\n" +
+	"\x15Auth/proto/auth.proto\x12\vauthservice\x1a\x1bgoogle/protobuf/empty.proto\"s\n" +
 	"\x0fRegisterRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
@@ -430,17 +407,14 @@ const file_Auth_proto_auth_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1a\n" +
 	"\busername\x18\x03 \x01(\tR\busername\x12!\n" +
 	"\faccess_token\x18\x04 \x01(\tR\vaccessToken\x12#\n" +
-	"\rrefresh_token\x18\x05 \x01(\tR\frefreshToken\"s\n" +
-	"\rLogoutRequest\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
-	"\faccess_token\x18\x05 \x01(\tR\vaccessToken\x12#\n" +
-	"\rrefresh_token\x18\x06 \x01(\tR\frefreshToken\"*\n" +
+	"\rrefresh_token\x18\x05 \x01(\tR\frefreshToken\"\x0f\n" +
+	"\rLogoutRequest\"*\n" +
 	"\x0eLogoutResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage2\xd9\x01\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage2\xd5\x01\n" +
 	"\vAuthService\x12G\n" +
 	"\bRegister\x12\x1c.authservice.RegisterRequest\x1a\x1d.authservice.RegisterResponse\x12>\n" +
-	"\x05Login\x12\x19.authservice.LoginRequest\x1a\x1a.authservice.LoginResponse\x12A\n" +
-	"\x06Logout\x12\x1a.authservice.LogoutRequest\x1a\x1b.authservice.LogoutResponseB\fZ\n" +
+	"\x05Login\x12\x19.authservice.LoginRequest\x1a\x1a.authservice.LoginResponse\x12=\n" +
+	"\x06Logout\x12\x16.google.protobuf.Empty\x1a\x1b.authservice.LogoutResponseB\fZ\n" +
 	"./proto/pbb\x06proto3"
 
 var (
@@ -463,11 +437,12 @@ var file_Auth_proto_auth_proto_goTypes = []any{
 	(*LoginResponse)(nil),    // 3: authservice.LoginResponse
 	(*LogoutRequest)(nil),    // 4: authservice.LogoutRequest
 	(*LogoutResponse)(nil),   // 5: authservice.LogoutResponse
+	(*emptypb.Empty)(nil),    // 6: google.protobuf.Empty
 }
 var file_Auth_proto_auth_proto_depIdxs = []int32{
 	0, // 0: authservice.AuthService.Register:input_type -> authservice.RegisterRequest
 	2, // 1: authservice.AuthService.Login:input_type -> authservice.LoginRequest
-	4, // 2: authservice.AuthService.Logout:input_type -> authservice.LogoutRequest
+	6, // 2: authservice.AuthService.Logout:input_type -> google.protobuf.Empty
 	1, // 3: authservice.AuthService.Register:output_type -> authservice.RegisterResponse
 	3, // 4: authservice.AuthService.Login:output_type -> authservice.LoginResponse
 	5, // 5: authservice.AuthService.Logout:output_type -> authservice.LogoutResponse

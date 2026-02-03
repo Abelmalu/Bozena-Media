@@ -11,10 +11,10 @@ import (
 )
 
 type PostHandler struct {
-	postClient *clients.PostClient
+	postClient *client.PostClient
 }
 
-func NewPostHandler(pc *clients.PostClient) *PostHandler {
+func NewPostHandler(pc *client.PostClient) *PostHandler {
 	return &PostHandler{postClient: pc}
 }
 

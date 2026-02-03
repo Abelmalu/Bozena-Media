@@ -1,11 +1,13 @@
 syntax = "proto3";
+import "google/protobuf/empty.proto";
 package authservice;
 option go_package = "./proto/pb";
+
 
 service AuthService{
     rpc Register(RegisterRequest) returns (RegisterResponse);
     rpc Login(LoginRequest) returns (LoginResponse);
-    rpc Logout(LogoutRequest) returns (LogoutResponse);
+    rpc Logout(google.protobuf.Empty) returns (LogoutResponse);
 
 }
 
@@ -42,9 +44,7 @@ message LoginResponse {
 
 message LogoutRequest {
 
-    string username = 2;
-    string access_token = 5;
-    string refresh_token = 6;
+ 
 }
 
 message LogoutResponse{
