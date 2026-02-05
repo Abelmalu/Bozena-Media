@@ -28,12 +28,25 @@ func main() {
 		log.Fatalf("failed to connect to gRPC server: %v", err)
 
 	}
+	authConn, err := grpc.NewClient("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	if err != nil {
+
+		log.Fatalf("failed to connect to gRPC server: %v", err)
+
+	}
 
 	defer postConn.Close()
-    
-	postClient := client.NewPostClient(postConn)
 
+    //Dependency Injection for PostService
+	postClient := client.NewPostClient(postConn)
 	postHandler := handler.NewPostHandler(postClient)
+
+	//Dependency Injectiion for AuthService 
+	authClient := client.NewAuthClient(authConn)
+	authHandler := handler.NewAuthHandler(authClient)
+
+
 
 	r := gin.Default()
 
@@ -41,10 +54,10 @@ func main() {
 	auth := r.Group("api/auth")
 	{
 		{
-		auth.POST("/register", auth.Register)
-		auth.POST("/login", auth.Login)
-		auth.POST("/refresh", auth.RefreshHandler)
-		auth.POST("/logout", middleware.AuthMiddleware(), auth.Logout)
+		auth.POST("/register", authHandler.Register)
+		auth.POST("/login", authHandler.Login)
+		// auth.POST("/refresh", authHandler.RefreshHandler)
+		// auth.POST("/logout", middleware.AuthMiddleware(), auth.Logout)
 
 	}
 	}

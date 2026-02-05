@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -11,7 +12,7 @@ import (
 )
 
 type PostService interface{
-	CreatePost(userID int64, title, content string) (*pb.CreatePostResponse, error)
+	CreatePost(ctx context.Context,userID int64, title, content string) (*pb.CreatePostResponse, error)
 	ListPosts()(*pb.ListPostsResponse,error)
 	UpdatePost (postID int64, title, content string)(*pb.UpdatePostResponse,error)
 	DeletePost (postID int64)(*pb.DeletePostResponse,error)
@@ -41,8 +42,20 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 
 		return
 	}
+	userID,exists := c.Get("userID")
+	if !exists{
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status":  "error",
+			"message": "Unauthorized",
+		})
+		return
 
-	resp, err := h.postClient.CreatePost(req.UserID, req.Title, req.Content)
+	}
+	req.UserID = userID.(int64)
+
+	
+
+	resp, err := h.postClient.CreatePost(c.Request.Context(),req.UserID, req.Title, req.Content)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
