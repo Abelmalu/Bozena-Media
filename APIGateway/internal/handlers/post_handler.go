@@ -1,20 +1,27 @@
-package handlers
+package handler
 
 import (
 	"log"
 	"net/http"
 
-	"github.com/abelmalu/golang-posts/APIGateway/internal/clients"
 	"github.com/abelmalu/golang-posts/internal/models"
 	"github.com/abelmalu/golang-posts/pkg"
+	"github.com/abelmalu/golang-posts/post/proto/pb"
 	"github.com/gin-gonic/gin"
 )
 
-type PostHandler struct {
-	postClient *client.PostClient
+type PostService interface{
+	CreatePost(userID int64, title, content string) (*pb.CreatePostResponse, error)
+	ListPosts()(*pb.ListPostsResponse,error)
+	UpdatePost (postID int64, title, content string)(*pb.UpdatePostResponse,error)
+	DeletePost (postID int64)(*pb.DeletePostResponse,error)
 }
 
-func NewPostHandler(pc *client.PostClient) *PostHandler {
+type PostHandler struct {
+	postClient PostService
+}
+
+func NewPostHandler(pc PostService) *PostHandler {
 	return &PostHandler{postClient: pc}
 }
 

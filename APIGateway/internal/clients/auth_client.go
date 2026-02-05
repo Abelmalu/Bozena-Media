@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
-	"github.com/abelmalu/golang-posts/internal/models"
 	"google.golang.org/grpc"
      "google.golang.org/protobuf/types/known/emptypb"
 )
@@ -21,16 +20,16 @@ func NewAuthClient(conn *grpc.ClientConn) *AuthClient {
 	}
 }
 
-func (ac *AuthClient) Register(ctx context.Context,user *models.User)(*pb.RegisterResponse,error){
+func (ac *AuthClient) Register(ctx context.Context,userName,name,email,password string)(*pb.RegisterResponse,error){
 
 ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 return ac.client.Register(ctx,&pb.RegisterRequest{
-	Name:user.Username,
-	Username: user.Username,
-	Email: user.Email,
-	Password: user.Password,
+	Name:name,
+	Username: userName,
+	Email: email,
+	Password: password,
 })
 
 }

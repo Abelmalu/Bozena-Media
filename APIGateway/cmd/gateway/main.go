@@ -31,9 +31,9 @@ func main() {
 
 	defer postConn.Close()
     
-	postClient := clients.NewPostClient(postConn)
+	postClient := client.NewPostClient(postConn)
 
-	postHandler := handlers.NewPostHandler(postClient)
+	postHandler := handler.NewPostHandler(postClient)
 
 	r := gin.Default()
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"time"
-
 	"github.com/abelmalu/golang-posts/post/proto/pb"
 	"google.golang.org/grpc"
 )
