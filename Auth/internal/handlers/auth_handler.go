@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"log"
+
 	"github.com/abelmalu/golang-posts/Auth/internal/core"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type AuthHandler struct{
@@ -63,4 +65,11 @@ func (authHandler *AuthHandler) Register(ctx context.Context,req *pb.RegisterReq
 	},nil
 
 	
+}
+
+func (authHandler *AuthHandler)Login(context.Context, *pb.LoginRequest) (*pb.LoginResponse, error){
+	panic("")
+}
+func (authHandler *AuthHandler)Logout(context.Context, *emptypb.Empty) (*pb.LogoutResponse, error){
+	panic("")
 }

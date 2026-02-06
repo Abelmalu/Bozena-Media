@@ -27,7 +27,7 @@ func (authRepo *AuthRepository) Register(ctx context.Context,user *model.User)(*
 
 
 	query := `INSERT INTO users(name,username,email,password) VALUES($1,$2,$3,$4) RETURNING id,role`
-	if err := authRepo.DB.QueryRow(query, user.Name, user.Username, user.Email, user.Password).Scan(&newUser.ID, &newUser.Role); err != nil {
+	if err := authRepo.DB.QueryRowContext(ctx,query, user.Name, user.Username, user.Email, user.Password).Scan(&newUser.ID, &newUser.Role); err != nil {
 		// Change *pq.Error to *pgconn.PgError
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			return nil,pgErr

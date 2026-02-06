@@ -11,7 +11,7 @@ import (
 	handler "github.com/abelmalu/golang-posts/Auth/internal/handlers"
 	"github.com/abelmalu/golang-posts/Auth/internal/repository"
 	"github.com/abelmalu/golang-posts/Auth/internal/service"
-	"github.com/abelmalu/golang-posts/post/proto/pb"
+	"github.com/abelmalu/golang-posts/Auth/proto/pb"
 	_ "github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"google.golang.org/grpc"
@@ -23,7 +23,7 @@ type App struct {
 }
 
 type postServer struct {
-	pb.UnimplementedPostServiceServer
+	pb.UnimplementedAuthServiceServer
 }
 
 // NewApp creates the application instance  
@@ -90,7 +90,7 @@ func (app *App) Run() {
 	authHandler := handler.NewAuthHandler(authService)
 
 	
-	pb.RegisterPostServiceServer(s, authHandler)
+	pb.RegisterAuthServiceServer(s, authHandler)
 	s.Serve(lis)
 	
 
