@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"time"
 
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
+	"github.com/abelmalu/golang-posts/pkg"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -20,7 +22,7 @@ func NewAuthRepository(db *sql.DB) *AuthRepository{
 	}
 }
 
-func (authRepo *AuthRepository) Register(ctx context.Context,user model.User)(*model.User,error){
+func (authRepo *AuthRepository) Register(ctx context.Context,user *model.User)(*model.User,error){
 	var newUser model.User
 
 
@@ -37,4 +39,21 @@ func (authRepo *AuthRepository) Register(ctx context.Context,user model.User)(*m
 	}
 
 	return &newUser,nil
+}
+
+func (authRepo *AuthRepository)StoreRefreshTokens(userID int, refreshToken string, expiresAt time.Time, clientType string) (sql.Result, error) {
+
+	// hashing the token before inserting to a db
+	refreshToken = pkg.HashToken(refreshToken)
+
+	query := `INSERT INTO refresh_tokens (user_id,token_text,expires_at,client_type) VALUES($1,$2,$3,$4)`
+
+	result, err := authRepo.DB.Exec(query, userID, refreshToken, expiresAt, clientType)
+	if err != nil {
+
+		return nil, err
+	}
+
+	return result, nil
+
 }

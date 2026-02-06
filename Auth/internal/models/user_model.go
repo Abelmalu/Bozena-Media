@@ -12,3 +12,17 @@ type User struct{
 	CreatedAt string `db:"created_at"`
 	UpdatedAt string `db:"updated_at"`
 }
+
+
+// client types for mobile apps and browsers
+type ClientType string 
+
+const (
+	ClientWeb ClientType = "web"
+	ClientMobile ClientType = "mobile"
+)
+
+type TokenPair struct {
+	AccessToken  string
+	RefreshToken string
+}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc/metadata"
 )
 
 type AuthService interface {
@@ -21,6 +22,8 @@ func NewAuthHandler(au AuthService) *AuthHandler {
 
 	return &AuthHandler{client: au}
 }
+
+
 
 func (ah *AuthHandler) Register(c *gin.Context) {
 
@@ -39,21 +42,58 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		return
 
 	}
-	resp,err := ah.client.Register(c.Request.Context(),req.UserName,req.Name,req.Email,req.Password)
-	if err != nil{
-
-		c.JSON(http.StatusInternalServerError,gin.H{
-			"status":"error",
-			"message":"Internal Server Error",
+	clientTypeValue, exists := c.Get("X-Client-Type")
+	if !exists {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Bad Request",
 		})
-		return 
+
+		return
+
 	}
-	c.JSON(http.StatusCreated,resp)
+	//type insertion for clientype string 
+	clientType := clientTypeValue.(string)
+  
+	md := metadata.Pairs("x-client-type",clientType)
+	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
+
+	resp, err := ah.client.Register(ctx, req.UserName, req.Name, req.Email, req.Password)
+	if err != nil {
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Internal Server Error",
+		})
+		return
+	}
+	response := gin.H{"message": "Registered successfully"}
+
+	switch clientType{
+	case "web":
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    resp.RefreshToken,
+			MaxAge:   30 * 24 * 60 * 60,
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+		})
+
+		response["access_token"] = resp.AccessToken
+
+	case "mobile":
+		response["access_token"] = resp.AccessToken
+		response["refresh_token"] = resp.RefreshToken
+	}
+
+	c.JSON(http.StatusOK, response)
 
 }
 
-func (ah *AuthHandler) Login(c *gin.Context){
-	var req struct{
+func (ah *AuthHandler) Login(c *gin.Context) {
+	var req struct {
 		UserName string `json:"username"`
 		Password string `json:"password"`
 	}
@@ -67,21 +107,20 @@ func (ah *AuthHandler) Login(c *gin.Context){
 
 	}
 
-	resp,err := ah.client.Login(c,req.UserName,req.Password)
+	resp, err := ah.client.Login(c, req.UserName, req.Password)
 
-	if err != nil{
+	if err != nil {
 
-		c.JSON(http.StatusInternalServerError,gin.H{
-			"status":"error",
-			"message":"Internal Server Error",
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Internal Server Error",
 		})
-		return 
+		return
 	}
 
-	c.JSON(http.StatusAccepted,resp)
+	c.JSON(http.StatusAccepted, resp)
 
 }
-
 
 // func (ah *AuthHandler) Logout(c *gin.Context){
 // 	resp,err := ah.client.Logout()

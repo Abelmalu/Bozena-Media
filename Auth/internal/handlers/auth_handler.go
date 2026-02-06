@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log"
-
 	"github.com/abelmalu/golang-posts/Auth/internal/core"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
@@ -25,7 +24,7 @@ func NewAuthHandler(authServ core.AuthService) *AuthHandler{
 
 }
 // Register registers a new user into the system 
-func (ah *AuthHandler) Register(ctx context.Context,req *pb.RegisterRequest)(*pb.RegisterResponse,error){
+func (authHandler *AuthHandler) Register(ctx context.Context,req *pb.RegisterRequest)(*pb.RegisterResponse,error){
 
 	user := model.User{
 		Name: req.Name,
@@ -35,7 +34,7 @@ func (ah *AuthHandler) Register(ctx context.Context,req *pb.RegisterRequest)(*pb
 
 	}
 
-	createdUser,err := ah.service.Register(ctx,&user)
+	createdUser,tokens,err := authHandler.service.Register(ctx,&user)
 	if err != nil {
 
         log.Printf("CreateUser failed: %v", err)
@@ -58,8 +57,8 @@ func (ah *AuthHandler) Register(ctx context.Context,req *pb.RegisterRequest)(*pb
 		Name: createdUser.Name,
 		Username: createdUser.Username,
 		Email: createdUser.Email,
-		AccessToken: "createdUser.AccessToken",
-		RefreshToken: "createdUser.RefreshToken",
+		AccessToken: tokens.AccessToken,
+		RefreshToken: tokens.RefreshToken,
 
 	},nil
 

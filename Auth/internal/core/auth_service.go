@@ -7,5 +7,5 @@ import (
 )
 
 type AuthService interface {
-	Register(ctx context.Context,post *model.User) (*model.User, error)
+	Register(ctx context.Context,post *model.User) (*model.User,*model.TokenPair, error)
 }
