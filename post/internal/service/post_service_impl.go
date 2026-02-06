@@ -2,9 +2,10 @@ package service
 
 import (
 	"context"
+	"log"
 
-	"github.com/abelmalu/golang-posts/post/internal/models"
 	"github.com/abelmalu/golang-posts/post/internal/core"
+	"github.com/abelmalu/golang-posts/post/internal/models"
 )
 
 type PostService struct {
@@ -21,9 +22,9 @@ func NewPostService(repository core.PostRepository) *PostService{
 }
 
 
-func (ps *PostService) CreatePost(ctx context.Context,post *models.Post)(*models.Post,error){
+func (postService *PostService) CreatePost(ctx context.Context,post *models.Post)(*models.Post,error){
 
-	createdPost,err := ps.repo.CreatePost(ctx,post)
+	createdPost,err := postService.repo.CreatePost(ctx,post)
 
 	if err != nil{
 
@@ -42,9 +43,18 @@ func (ps *PostService) DeletePost(postID string)(error){
 
 	panic("")
 }
-func (ps *PostService) ListPosts(ctx context.Context)([]models.Post,error){
+func (postService *PostService) ListPosts(ctx context.Context)([]models.Post,error){
+   
+	posts,err := postService.repo.ListPosts(ctx)
 
-	panic("")
+	if err != nil{
+
+		log.Printf("the error is %v",err)
+		return nil,err
+	}
+
+	return posts,nil
+	
 }
 
 	

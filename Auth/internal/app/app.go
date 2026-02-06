@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"time"
-
 	"github.com/abelmalu/golang-posts/Auth/config"
 	handler "github.com/abelmalu/golang-posts/Auth/internal/handlers"
 	"github.com/abelmalu/golang-posts/Auth/internal/repository"

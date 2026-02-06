@@ -24,13 +24,13 @@ func NewPostHandler(service core.PostService) *PostHandler {
 	}
 }
 
-func (ph *PostHandler) CreatePost(ctx context.Context, req *pb.CreatePostRequest) (*pb.CreatePostResponse, error) {
+func (postHandler *PostHandler) CreatePost(ctx context.Context, req *pb.CreatePostRequest) (*pb.CreatePostResponse, error) {
   
 	post := models.Post{
 		Title:   req.Title,
 		Content: req.Content,
 	}
-     createdPost, err := ph.service.CreatePost(ctx,&post)
+     createdPost, err := postHandler.service.CreatePost(ctx,&post)
     if err != nil {
 
         log.Printf("CreatePost failed: %v", err)
@@ -57,4 +57,30 @@ func (ph *PostHandler) CreatePost(ctx context.Context, req *pb.CreatePostRequest
         Content: createdPost.Content,
     }, nil
 	
+}
+
+
+func (postHandler *PostHandler) ListPosts(ctx context.Context, req *pb.ListPostsRequest) (*pb.ListPostsResponse, error) {
+    posts, err := postHandler.service.ListPosts(ctx)
+    if err != nil {
+        log.Printf("error %v", err)
+        return nil, err
+    }
+
+    
+    pbPosts := make([]*pb.Post, len(posts))
+
+  
+    for i, p := range posts {
+        pbPosts[i] = &pb.Post{
+  
+            Title:   p.Title,
+            Content: p.Content,
+        }
+    }
+
+   
+    return &pb.ListPostsResponse{
+        Posts: pbPosts,
+    }, nil
 }

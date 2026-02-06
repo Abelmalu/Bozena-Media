@@ -1,17 +1,16 @@
 package middleware
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"strconv"
-
-	"github.com/abelmalu/golang-posts/pkg"
 	"github.com/gin-gonic/gin"
 )
 
 
 
-func AuthorizePostOwner() gin.HandlerFunc{
+func AuthorizePostOwner(DB *sql.DB) gin.HandlerFunc{
 
 	return func(c *gin.Context) {
 		userIDValue,exists := c.Get("userID")
@@ -41,7 +40,7 @@ func AuthorizePostOwner() gin.HandlerFunc{
 
 		query := 	`SELECT user_id FROM posts WHERE id=$1`
 
-		err = pkg.DB.QueryRow(query, postID).Scan(&postOwnerID)
+		err = DB.QueryRow(query, postID).Scan(&postOwnerID)
 
       
         if err != nil {

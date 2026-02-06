@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
@@ -34,6 +35,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		Password string `json:"password"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf(" error while decoding json %v",err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Bad Request",
@@ -42,24 +44,26 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		return
 
 	}
-	clientTypeValue, exists := c.Get("X-Client-Type")
-	if !exists {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"message": "Bad Request",
-		})
+	clientTypeValue := c.GetHeader("X-Client-Type")
+	// if !exists {
+	// 	log.Printf("here in the custom header %v",exists)
+	// 	c.JSON(http.StatusBadRequest, gin.H{
+	// 		"status":  "error",
+	// 		"message": "Bad Request",
+	// 	})
 
-		return
+	// 	return
 
-	}
+	// }
 	//type insertion for clientype string 
-	clientType := clientTypeValue.(string)
+	clientType := clientTypeValue
   
 	md := metadata.Pairs("x-client-type",clientType)
 	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
 
 	resp, err := ah.client.Register(ctx, req.UserName, req.Name, req.Email, req.Password)
 	if err != nil {
+		log.Printf("the error while calling client service %v",err)
 
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",

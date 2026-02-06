@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"log"
-
 	"github.com/abelmalu/golang-posts/post/internal/models"
 )
 
@@ -21,11 +20,11 @@ func NewPostRepository(DB *sql.DB) *PostRepository {
 
 }
 
-func (pr *PostRepository) CreatePost(ctx context.Context, post *models.Post) (*models.Post, error) {
+func (PostRepository *PostRepository) CreatePost(ctx context.Context, post *models.Post) (*models.Post, error) {
 	
 	query := `INSERT INTO posts (title,content,user_id) VALUES($1,$2,$3) RETURNING id`
 
-	err := pr.DB.QueryRowContext(ctx, query, post.Title, post.Content, post.UserID).Scan(
+	err := PostRepository.DB.QueryRowContext(ctx, query, post.Title, post.Content, post.UserID).Scan(
 		&post.Id,
 	)
 	if err != nil {
@@ -44,7 +43,31 @@ func (pr *PostRepository) DeletePost(postID string) error {
 
 	panic("")
 }
-func (pr *PostRepository) ListPosts(ctx context.Context) ([]models.Post, error) {
+func (PostRepository *PostRepository) ListPosts(ctx context.Context) ([]models.Post, error) {
 
-	panic("")
+	var posts []models.Post
+	query := `SELECT * FROM posts`
+
+	rows, err := PostRepository.DB.Query(query)
+	if err != nil {
+
+		log.Printf("error during db query %v", err)
+		
+		return nil,err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var post models.Post
+
+		rows.Scan(&post.Id, &post.Title, &post.Content, &post.UserID)
+		posts = append(posts, post)
+
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil,err
+	}
+
+	return posts,nil
 }
