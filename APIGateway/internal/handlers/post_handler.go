@@ -2,11 +2,7 @@ package handler
 
 import (
 	"context"
-	"log"
 	"net/http"
-
-	"github.com/abelmalu/golang-posts/internal/models"
-	"github.com/abelmalu/golang-posts/pkg"
 	"github.com/abelmalu/golang-posts/post/proto/pb"
 	"github.com/gin-gonic/gin"
 )
@@ -29,7 +25,6 @@ func NewPostHandler(pc PostService) *PostHandler {
 func (h *PostHandler) CreatePost(c *gin.Context) {
 	
 	var req struct {
-		UserID  int64  `json:"user_id"`
 		Title   string `json:"title"`
 		Content string `json:"content"`
 	}
@@ -42,7 +37,7 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 
 		return
 	}
-	userID,exists := c.Get("userID")
+	userIDValue,exists := c.Get("userID")
 	if !exists{
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"status":  "error",
@@ -51,11 +46,11 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 		return
 
 	}
-	req.UserID = userID.(int64)
+	userID := userIDValue.(int64)
 
 	
 
-	resp, err := h.postClient.CreatePost(c.Request.Context(),req.UserID, req.Title, req.Content)
+	resp, err := h.postClient.CreatePost(c.Request.Context(),userID, req.Title, req.Content)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
@@ -69,37 +64,37 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 
 //ListPosts get all posts from the db
 
-func GetPosts(c *gin.Context) {
-	var posts []models.Post
-	query := `SELECT * FROM posts`
+// func GetPosts(c *gin.Context) {
+// 	var posts []models.Post
+// 	query := `SELECT * FROM posts`
 
-	rows, err := pkg.DB.Query(query)
-	if err != nil {
+// 	rows, err := pkg.DB.Query(query)
+// 	if err != nil {
 
-		log.Printf("error during db query %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": "Internal Server Error",
-		})
-		return
-	}
-	defer rows.Close()
+// 		log.Printf("error during db query %v", err)
+// 		c.JSON(http.StatusInternalServerError, gin.H{
+// 			"status":  "error",
+// 			"message": "Internal Server Error",
+// 		})
+// 		return
+// 	}
+// 	defer rows.Close()
 
-	for rows.Next() {
-		var post models.Post
+// 	for rows.Next() {
+// 		var post models.Post
 
-		rows.Scan(&post.Id, &post.Title, &post.Content, &post.UserID)
-		posts = append(posts, post)
+// 		rows.Scan(&post.Id, &post.Title, &post.Content, &post.UserID)
+// 		posts = append(posts, post)
 
-	}
+// 	}
 
-	if err = rows.Err(); err != nil {
-		log.Printf("error after iterating rows: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": "Internal Server Error",
-		})
-		return
-	}
-	c.JSON(http.StatusOK, posts)
-}
+// 	if err = rows.Err(); err != nil {
+// 		log.Printf("error after iterating rows: %v", err)
+// 		c.JSON(http.StatusInternalServerError, gin.H{
+// 			"status":  "error",
+// 			"message": "Internal Server Error",
+// 		})
+// 		return
+// 	}
+// 	c.JSON(http.StatusOK, posts)
+// }

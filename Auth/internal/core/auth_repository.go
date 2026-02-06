@@ -6,6 +6,6 @@ import (
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 )
 
-type AuthService interface {
-	Register(ctx context.Context,post *model.User) (*model.User, error)
+type AuthRepository interface {
+	Register(ctx context.Context,user model.User)(*model.User,error)
 }

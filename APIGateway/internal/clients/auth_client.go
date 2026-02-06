@@ -22,7 +22,7 @@ func NewAuthClient(conn *grpc.ClientConn) *AuthClient {
 
 func (ac *AuthClient) Register(ctx context.Context,userName,name,email,password string)(*pb.RegisterResponse,error){
 
-ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
 return ac.client.Register(ctx,&pb.RegisterRequest{
@@ -37,7 +37,7 @@ return ac.client.Register(ctx,&pb.RegisterRequest{
 
 func (ac *AuthClient) Login(ctx context.Context,userName,password string)(*pb.LoginResponse,error){
 
-ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
 return ac.client.Login(ctx,&pb.LoginRequest{
@@ -49,7 +49,7 @@ return ac.client.Login(ctx,&pb.LoginRequest{
 
 func (ac *AuthClient) Logout(ctx context.Context,userName,password string)(*pb.LogoutResponse,error){
 
-ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
 return ac.client.Logout(ctx,&emptypb.Empty{})
