@@ -24,7 +24,16 @@ func NewAuthHandler(au AuthService) *AuthHandler {
 	return &AuthHandler{client: au}
 }
 
+// getClientType get client type header and inject into the contex metadata
+func getClientType(c *gin.Context) (context.Context, string) {
 
+	clientType := c.GetHeader("X-Client-Type")
+	md := metadata.Pairs("x-client-type", clientType)
+	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
+
+	return ctx, clientType
+
+}
 
 func (ah *AuthHandler) Register(c *gin.Context) {
 
@@ -35,7 +44,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		Password string `json:"password"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Printf(" error while decoding json %v",err)
+		log.Printf(" error while decoding json %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Bad Request",
@@ -44,26 +53,12 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		return
 
 	}
-	clientTypeValue := c.GetHeader("X-Client-Type")
-	// if !exists {
-	// 	log.Printf("here in the custom header %v",exists)
-	// 	c.JSON(http.StatusBadRequest, gin.H{
-	// 		"status":  "error",
-	// 		"message": "Bad Request",
-	// 	})
-
-	// 	return
-
-	// }
-	//type insertion for clientype string 
-	clientType := clientTypeValue
-  
-	md := metadata.Pairs("x-client-type",clientType)
-	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
+	// call getClienType to get the client type and inject it into the grpc metadata
+	ctx, clientType := getClientType(c)
 
 	resp, err := ah.client.Register(ctx, req.UserName, req.Name, req.Email, req.Password)
 	if err != nil {
-		log.Printf("the error while calling client service %v",err)
+		log.Printf("the error while calling client service %v", err)
 
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
@@ -73,7 +68,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 	}
 	response := gin.H{"message": "Registered successfully"}
 
-	switch clientType{
+	switch clientType {
 	case "web":
 		http.SetCookie(c.Writer, &http.Cookie{
 			Name:     "refresh_token",
@@ -110,8 +105,9 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 		return
 
 	}
+	ctx, clientType := getClientType(c)
 
-	resp, err := ah.client.Login(c, req.UserName, req.Password)
+	resp, err := ah.client.Login(ctx, req.UserName, req.Password)
 
 	if err != nil {
 
@@ -120,9 +116,30 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 			"message": "Internal Server Error",
 		})
 		return
+
+	}
+	response := gin.H{"message": "Registered successfully"}
+
+	switch clientType {
+	case "web":
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    resp.RefreshToken,
+			MaxAge:   30 * 24 * 60 * 60,
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+		})
+
+		response["access_token"] = resp.AccessToken
+
+	case "mobile":
+		response["access_token"] = resp.AccessToken
+		response["refresh_token"] = resp.RefreshToken
 	}
 
-	c.JSON(http.StatusAccepted, resp)
+	c.JSON(http.StatusOK, response)
 
 }
 

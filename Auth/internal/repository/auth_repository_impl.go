@@ -40,7 +40,23 @@ func (authRepo *AuthRepository) Register(ctx context.Context,user *model.User)(*
 
 	return &newUser,nil
 }
+func (authrepo *AuthRepository) Login(ctx context.Context,userName,password string)(*model.User,error){
+	var user model.User
+	query := `SELECT * FROM users WHERE username=$1`
+	err := authrepo.DB.QueryRowContext(ctx,query, userName).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.Role)
 
+	if err != nil {
+
+		log.Printf("Login DB Error %v", err)
+
+		return nil,err
+		
+	}
+
+
+  return &user,nil
+
+}
 func (authRepo *AuthRepository)StoreRefreshTokens(userID int, refreshToken string, expiresAt time.Time, clientType string) (sql.Result, error) {
 
 	// hashing the token before inserting to a db

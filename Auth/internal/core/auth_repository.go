@@ -10,5 +10,6 @@ import (
 
 type AuthRepository interface {
 	Register(ctx context.Context,user *model.User)(*model.User,error)
+	Login(ctx context.Context,userName,password string)(*model.User,error)
     StoreRefreshTokens(userID int, refreshToken string, expiresAt time.Time, clientType string) (sql.Result, error)
 }

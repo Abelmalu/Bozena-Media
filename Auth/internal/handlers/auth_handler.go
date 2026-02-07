@@ -67,8 +67,20 @@ func (authHandler *AuthHandler) Register(ctx context.Context,req *pb.RegisterReq
 	
 }
 
-func (authHandler *AuthHandler)Login(context.Context, *pb.LoginRequest) (*pb.LoginResponse, error){
-	panic("")
+func (authHandler *AuthHandler)Login(ctx context.Context, req  *pb.LoginRequest) (*pb.LoginResponse, error){
+	user,tokens, err := authHandler.service.Login(ctx,req.Username,req.Password)
+	if err != nil{
+
+		return  nil, status.Error(codes.Canceled, "user already exists") 
+	}
+
+	return &pb.LoginResponse{
+		Id:int64(user.ID),
+		Username: user.Username,
+		AccessToken: tokens.AccessToken,
+		RefreshToken: tokens.RefreshToken,
+
+	},nil
 }
 func (authHandler *AuthHandler)Logout(context.Context, *emptypb.Empty) (*pb.LogoutResponse, error){
 	panic("")

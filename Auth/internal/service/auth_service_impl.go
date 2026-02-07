@@ -75,6 +75,58 @@ func (authSer *AuthService) Register(ctx context.Context, user *model.User) (*mo
 	return createdUser, tokens,nil
 }
 
+func (authSer *AuthService) Login(ctx context.Context,userName,password string)(*model.User,*model.TokenPair,error){
+	var clientMetadata string
+	var clientType model.ClientType
+	if userName == "" {
+
+		return nil, nil, errors.New("username is required")
+	}
+
+	if password == "" {
+
+		return nil,nil, errors.New("password is required")
+	}
+
+	fetchedUser, err := authSer.repo.Login(ctx,userName,password)
+	if err != nil {
+		return nil,nil,errors.New("username already exists")
+	}
+
+	md, exists := metadata.FromIncomingContext(ctx)
+
+	if !exists {
+		return nil,nil, errors.New("Unknown device type")
+	}
+	values := md.Get("x-client-type")
+	if len(values) > 0 {
+		clientMetadata = values[0]
+	} else {
+
+		return nil, nil,errors.New("Unknown device type")
+
+	}
+	if clientMetadata == "web" {
+		clientType = model.ClientWeb
+
+	} else if clientMetadata == "mobile" {
+		clientType = model.ClientMobile
+	} else {
+
+		return nil, nil,errors.New("Unknown device type")
+
+	}
+	tokens, err := authSer.issueTokens(fetchedUser.ID, clientType, fetchedUser.Role)
+
+	return fetchedUser,tokens,nil
+
+
+
+
+
+
+}
+
 func (authSer *AuthService) issueTokens(userID int, clientType model.ClientType, userRole string) (*model.TokenPair, error) {
 
 	accessToken, err := pkg.GenerateAcessToken(userID, userRole)
