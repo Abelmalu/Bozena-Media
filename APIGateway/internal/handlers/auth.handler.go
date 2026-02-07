@@ -208,7 +208,7 @@ func(ah *AuthHandler) RefreshHandler(c *gin.Context) {
 
 	}
 
-	response := gin.H{"message": "Registered successfully"}
+	response := gin.H{"message": "Refreshed successfully"}
 
 	switch clientType {
 	case "web":

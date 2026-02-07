@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/abelmalu/golang-posts/APIGateway/internal/clients"
-	"github.com/abelmalu/golang-posts/APIGateway/internal/handlers"
+	client "github.com/abelmalu/golang-posts/APIGateway/internal/clients"
+	handler "github.com/abelmalu/golang-posts/APIGateway/internal/handlers"
 	"github.com/abelmalu/golang-posts/APIGateway/internal/middleware"
 
 	//"github.com/abelmalu/golang-posts/APIGateway/internal/middleware"
@@ -16,10 +16,9 @@ import (
 
 func main() {
 
+	if err := godotenv.Load(); err != nil {
 
-	if err := godotenv.Load(); err != nil{
-
-		log.Fatalf("Error while loading env variabales %v",err)
+		log.Fatalf("Error while loading env variabales %v", err)
 	}
 	postConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 
@@ -38,15 +37,13 @@ func main() {
 
 	defer postConn.Close()
 
-    //Dependency Injection for PostService
+	//Dependency Injection for PostService
 	postClient := client.NewPostClient(postConn)
 	postHandler := handler.NewPostHandler(postClient)
 
-	//Dependency Injectiion for AuthService 
+	//Dependency Injectiion for AuthService
 	authClient := client.NewAuthClient(authConn)
 	authHandler := handler.NewAuthHandler(authClient)
-
-
 
 	r := gin.Default()
 
@@ -54,12 +51,12 @@ func main() {
 	auth := r.Group("api/auth")
 	{
 		{
-		auth.POST("/register", authHandler.Register)
-		auth.POST("/login", authHandler.Login)
-		// auth.POST("/refresh", authHandler.RefreshHandler)
-		 auth.POST("/logout", middleware.AuthMiddleware(), authHandler.Logout)
+			auth.POST("/register", authHandler.Register)
+			auth.POST("/login", authHandler.Login)
+			auth.POST("/refresh", authHandler.RefreshHandler)
+			auth.POST("/logout", middleware.AuthMiddleware(), authHandler.Logout)
 
-	}
+		}
 	}
 
 	// post route group
@@ -69,8 +66,6 @@ func main() {
 		post.POST("/", postHandler.CreatePost)
 
 	}
-
-	
 
 	r.Run(":8080")
 

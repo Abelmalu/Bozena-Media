@@ -15,4 +15,5 @@ type AuthRepository interface {
     StoreRefreshTokens(userID int, refreshToken string, expiresAt time.Time, clientType string) (sql.Result, error)
 	RevokeRefreshToken(refreshToken string) error
 	GetRefreshToken(refreshToken string) (*model.RefreshToken, error)
+	GetUserByID(ID int) (*model.User, error)
 }

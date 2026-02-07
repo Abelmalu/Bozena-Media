@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/abelmalu/golang-posts/Auth/internal/core"
@@ -171,9 +172,46 @@ func (authSer *AuthService) RefreshHandler(ctx context.Context, refreshToken str
 		return nil,errors.New("unauthorized")
 	}
 
+	user, err := authSer.repo.GetUserByID(tokenRecord.ID)
+
+	if err != nil {
+		return nil, errors.New("unauthorized")
+
+	}
+	var clientType model.ClientType
+	userID := tokenRecord.UserID
+	clientTypeStr := tokenRecord.ClientType
+
+	switch clientTypeStr {
+	case "web":
+		clientType = model.ClientWeb
+	case "mobile":
+		clientType = model.ClientMobile
+
+	}
+
+	// revoke the old token so it can't be used anymore
+	if err := authSer.repo.RevokeRefreshToken(tokenRecord.TokenText); err != nil {
+
+		log.Printf("Couldn't Revoke the token %v", err)
+		return nil,err
+	}
+
+	// Generate new tokens Rotate refresh token (issue a new one)
+	tokens, err := authSer.issueTokens( userID, clientType, user.Role)
+
+	// store the refresh token
+	newExpireTime := time.Now().Add(24 * 30 * time.Hour)
+	_, err = authSer.repo.StoreRefreshTokens(userID, tokens.RefreshToken, newExpireTime, clientTypeStr)
+	if err != nil {
+
+		log.Printf("couldn't store a new refresh token %v", err)
+	}
 
 
-	return nil,nil
+
+
+	return tokens,nil
 
 }
 
