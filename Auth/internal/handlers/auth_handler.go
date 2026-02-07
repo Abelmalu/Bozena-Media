@@ -9,6 +9,7 @@ import (
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -82,6 +83,24 @@ func (authHandler *AuthHandler)Login(ctx context.Context, req  *pb.LoginRequest)
 
 	},nil
 }
-func (authHandler *AuthHandler)Logout(context.Context, *emptypb.Empty) (*pb.LogoutResponse, error){
-	panic("")
+func (authHandler *AuthHandler)Logout(ctx context.Context, req *emptypb.Empty) (*pb.LogoutResponse, error){
+	var refreshToken string
+	md, exists := metadata.FromIncomingContext(ctx)
+
+	if !exists {
+		return nil, errors.New("Unknown device type")
+	}
+	values := md.Get("refreshToken")
+	if len(values) > 0 {
+		refreshToken = values[0]
+	} else {
+
+		return nil, errors.New("Unknown device type")
+
+	}
+
+	authHandler.service.Logout(ctx,refreshToken)
+
+	return &pb.LogoutResponse{},nil
+	
 }

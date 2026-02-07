@@ -57,6 +57,32 @@ func (authrepo *AuthRepository) Login(ctx context.Context,userName,password stri
   return &user,nil
 
 }
+func (authRepo *AuthRepository) Logout(ctx context.Context, tokenID string) ( error){
+
+	
+
+		query := `DELETE FROM refresh_tokens WHERE token_text=$1`
+	
+		result, err := authRepo.DB.ExecContext(ctx,query, tokenID)
+	
+		if err != nil {
+	
+			log.Fatalf("DB Exec error %v", err)
+			return err
+		}
+	
+		_, err = result.RowsAffected()
+		if err != nil {
+	
+			log.Fatalf("db exec error %v", err)
+			return err
+		}
+		return err
+	
+	
+
+
+}
 func (authRepo *AuthRepository)StoreRefreshTokens(userID int, refreshToken string, expiresAt time.Time, clientType string) (sql.Result, error) {
 
 	// hashing the token before inserting to a db

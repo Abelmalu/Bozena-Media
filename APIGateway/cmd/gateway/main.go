@@ -57,7 +57,7 @@ func main() {
 		auth.POST("/register", authHandler.Register)
 		auth.POST("/login", authHandler.Login)
 		// auth.POST("/refresh", authHandler.RefreshHandler)
-		// auth.POST("/logout", middleware.AuthMiddleware(), auth.Logout)
+		 auth.POST("/logout", middleware.AuthMiddleware(), authHandler.Logout)
 
 	}
 	}

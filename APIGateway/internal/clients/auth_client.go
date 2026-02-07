@@ -47,7 +47,7 @@ return ac.client.Login(ctx,&pb.LoginRequest{
 
 }
 
-func (ac *AuthClient) Logout(ctx context.Context,userName,password string)(*pb.LogoutResponse,error){
+func (ac *AuthClient) Logout(ctx context.Context)(*pb.LogoutResponse,error){
 
 ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()

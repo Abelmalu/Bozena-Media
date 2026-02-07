@@ -127,6 +127,30 @@ func (authSer *AuthService) Login(ctx context.Context,userName,password string)(
 
 }
 
+func (authSer *AuthService) Logout(ctx context.Context, refreshToken string) (error){
+
+	// validate the token to check if it is tampered
+	_, err := pkg.ValidateRefreshToken(refreshToken)
+
+	if err != nil {
+
+		return err
+
+		
+	}
+
+	// hash the token to check with DB token
+	hashedRefreshToken := pkg.HashToken(refreshToken)
+	if err := authSer.repo.Logout(ctx,hashedRefreshToken); err != nil {
+
+		
+		return err 
+
+	}
+
+	return err
+}
+
 func (authSer *AuthService) issueTokens(userID int, clientType model.ClientType, userRole string) (*model.TokenPair, error) {
 
 	accessToken, err := pkg.GenerateAcessToken(userID, userRole)

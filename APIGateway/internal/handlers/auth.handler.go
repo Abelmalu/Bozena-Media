@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 
@@ -13,7 +14,7 @@ import (
 type AuthService interface {
 	Register(ctx context.Context, userName, name, email, password string) (*pb.RegisterResponse, error)
 	Login(ctx context.Context, userName, password string) (*pb.LoginResponse, error)
-	Logout(ctx context.Context, userName, password string) (*pb.LogoutResponse, error)
+	Logout(ctx context.Context) (*pb.LogoutResponse, error)
 }
 type AuthHandler struct {
 	client AuthService
@@ -33,6 +34,30 @@ func getClientType(c *gin.Context) (context.Context, string) {
 
 	return ctx, clientType
 
+}
+
+// ExtractRefreshToken extracts refresh tokens from the request 
+func ExtractRefreshToken(c *gin.Context) (string, error) {
+
+	//Extracting  refresh tokens from mobile app clients
+	var refreshToken string
+	if err := c.ShouldBindJSON(&refreshToken); err == nil {
+		if refreshToken != "" {
+			return refreshToken, nil
+		}
+	}
+
+	// Extracting HttpOnly cookie for web clients
+	if token, err := c.Cookie("refresh_token"); err == nil && token != "" {
+		return token, nil
+	}
+
+	//Extracting from custom header fallback
+	if token := c.GetHeader("X-Refresh-Token"); token != "" {
+		return token, nil
+	}
+
+	return "", errors.New("Refresh Token not found")
 }
 
 func (ah *AuthHandler) Register(c *gin.Context) {
@@ -143,6 +168,17 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 
 }
 
-// func (ah *AuthHandler) Logout(c *gin.Context){
-// 	resp,err := ah.client.Logout()
-// }
+func (ah *AuthHandler) Logout(c *gin.Context){
+	refreshToken, err := ExtractRefreshToken(c)
+	if err != nil {
+
+		log.Printf("refresh token extracting error %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
+		return
+	}
+	md := metadata.Pairs("refreshToken", refreshToken)
+	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
+	resp,err := ah.client.Logout(ctx)
+
+	c.JSON(http.StatusAccepted,resp)
+}

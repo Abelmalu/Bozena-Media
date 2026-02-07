@@ -11,7 +11,7 @@ import (
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var tokenStr string
-		// 1. Get the Authorization header
+		// 1. Get the Authorization header for mobile clients
 		authHeader := c.GetHeader("Authorization")
 
 		if strings.HasPrefix(authHeader, "Bearer ") {
