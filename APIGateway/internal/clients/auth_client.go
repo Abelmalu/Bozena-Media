@@ -55,3 +55,12 @@ ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 return ac.client.Logout(ctx,&emptypb.Empty{})
 
 }
+
+func (ac *AuthClient) RefreshHandler(ctx context.Context,refreshToken string)(*pb.RefreshResponse,error){
+    ctx,cancel := context.WithTimeout(ctx, 2 * time.Second)
+	defer cancel()
+
+	return ac.client.RefreshHandler(ctx,&pb.RefreshRequest{
+		RefreshToken: refreshToken,
+	})
+}

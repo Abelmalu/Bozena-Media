@@ -69,4 +69,6 @@ func (pc *PostClient) DeletePost (postID int64)(*pb.DeletePostResponse,error){
 	)
 
 }  
+
+
  

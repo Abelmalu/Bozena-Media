@@ -15,6 +15,7 @@ type AuthService interface {
 	Register(ctx context.Context, userName, name, email, password string) (*pb.RegisterResponse, error)
 	Login(ctx context.Context, userName, password string) (*pb.LoginResponse, error)
 	Logout(ctx context.Context) (*pb.LogoutResponse, error)
+	RefreshHandler(context.Context,string)(*pb.RefreshResponse,error)
 }
 type AuthHandler struct {
 	client AuthService
@@ -181,4 +182,55 @@ func (ah *AuthHandler) Logout(c *gin.Context){
 	resp,err := ah.client.Logout(ctx)
 
 	c.JSON(http.StatusAccepted,resp)
+}
+
+
+func(ah *AuthHandler) RefreshHandler(c *gin.Context) {
+
+	// extracting the refresh token from the request for both mobile and web clients
+	refreshToken, err := ExtractRefreshToken(c)
+	if err != nil {
+
+		log.Printf("refresh token extracting error %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
+		return
+	}
+
+	ctx,clientType := getClientType(c)
+
+	resp,err := ah.client.RefreshHandler(ctx,refreshToken)
+	if err != nil {
+
+		log.Printf("refresh token  error %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
+		return
+
+
+	}
+
+	response := gin.H{"message": "Registered successfully"}
+
+	switch clientType {
+	case "web":
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    resp.RefreshToken,
+			MaxAge:   30 * 24 * 60 * 60,
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+		})
+
+		response["access_token"] = resp.AccessToken
+
+	case "mobile":
+		response["access_token"] = resp.AccessToken
+		response["refresh_token"] = resp.RefreshToken
+	}
+
+	c.JSON(http.StatusOK, resp)
+
+
+
 }

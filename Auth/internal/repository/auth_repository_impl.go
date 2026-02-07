@@ -99,3 +99,67 @@ func (authRepo *AuthRepository)StoreRefreshTokens(userID int, refreshToken strin
 	return result, nil
 
 }
+
+
+func (authRepo *AuthRepository)  RevokeRefreshToken(refreshToken string) error {
+
+	query := `
+	
+	UPDATE refresh_tokens SET revoked=TRUE 
+	WHERE token_text = $1 AND revoked=FALSE `
+
+	result, err := authRepo.DB.Exec(query, refreshToken)
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	// detect reuse attempt
+	if rowsAffected == 0 {
+		// token was already revoked or doesn't exist
+		log.Printf("refresh token already revoked or not found")
+	}
+
+	return err
+
+}
+
+func (authRepo *AuthRepository) GetRefreshToken(refreshToken string) (*model.RefreshToken, error) {
+
+	var refreshRecord model.RefreshToken
+
+	// hashing the token because stored tokens are hashed
+	hashedrefreshToken := pkg.HashToken(refreshToken)
+
+	query := `SELECT * FROM refresh_tokens where token_text = $1;`
+
+	if err := authRepo.DB.QueryRow(query, hashedrefreshToken).Scan(&refreshRecord); err != nil {
+
+		return nil, err
+	}
+
+	return &refreshRecord, nil
+}
+
+
+func (authRepo *AuthRepository)  GetUserByID(ID int) (*model.User, error) {
+	var user model.User
+	query := `SELECT * FROM users WHERE id=$1`
+
+	err := authRepo.DB.QueryRow(query, ID).Scan(
+		&user.ID,
+		&user.Email,
+		&user.Password,
+		&user.Role,
+		&user.CreatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
+		return nil, err
+	}
+	return &user, nil
+}

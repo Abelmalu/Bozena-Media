@@ -13,4 +13,6 @@ type AuthRepository interface {
 	Login(ctx context.Context,userName,password string)(*model.User,error)
 	Logout(ctx context.Context, tokenID string) (error)
     StoreRefreshTokens(userID int, refreshToken string, expiresAt time.Time, clientType string) (sql.Result, error)
+	RevokeRefreshToken(refreshToken string) error
+	GetRefreshToken(refreshToken string) (*model.RefreshToken, error)
 }

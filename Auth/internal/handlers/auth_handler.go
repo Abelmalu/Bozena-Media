@@ -68,7 +68,7 @@ func (authHandler *AuthHandler) Register(ctx context.Context,req *pb.RegisterReq
 	
 }
 
-func (authHandler *AuthHandler)Login(ctx context.Context, req  *pb.LoginRequest) (*pb.LoginResponse, error){
+func (authHandler *AuthHandler) Login(ctx context.Context, req  *pb.LoginRequest) (*pb.LoginResponse, error){
 	user,tokens, err := authHandler.service.Login(ctx,req.Username,req.Password)
 	if err != nil{
 
@@ -101,6 +101,39 @@ func (authHandler *AuthHandler)Logout(ctx context.Context, req *emptypb.Empty) (
 
 	authHandler.service.Logout(ctx,refreshToken)
 
-	return &pb.LogoutResponse{},nil
+	return &pb.LogoutResponse{
+		Message: "Successfully Logged Out!",
+	},nil
 	
+}
+
+
+func (authHandler *AuthHandler) RefreshHandler(ctx context.Context, req *pb.RefreshRequest) (*pb.RefreshResponse, error){
+
+	// var clientType string
+	// md, exists := metadata.FromIncomingContext(ctx)
+
+	// if !exists {
+	// 	return nil, errors.New("Unknown device type")
+	// }
+	// values := md.Get("refreshToken")
+	// if len(values) > 0 {
+	// 	clientType = values[0]
+	// } else {
+
+	// 	return nil, errors.New("Unknown device type")
+
+	// }
+
+	tokens,err := authHandler.service.RefreshHandler(ctx,req.RefreshToken)
+	if err != nil {
+
+		return nil,err
+	}
+
+	return &pb.RefreshResponse{
+		AccessToken: tokens.AccessToken,
+		RefreshToken: tokens.RefreshToken,
+	},nil
+
 }
