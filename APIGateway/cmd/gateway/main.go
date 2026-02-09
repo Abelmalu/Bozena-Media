@@ -65,6 +65,15 @@ func main() {
 	{
 		post.POST("/", postHandler.CreatePost)
 
+		postOwner := post.Group("/:id")
+		{
+
+			postOwner.Use(middleware.AuthorizePostOwner())
+			postOwner.PUT("", postHandler.UpdatePost)
+			postOwner.DELETE("", postHandler.DeletePost)
+
+		}
+
 	}
 
 	r.Run(":8080")

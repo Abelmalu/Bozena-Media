@@ -2,7 +2,10 @@ package handler
 
 import (
 	"context"
+	"log"
 	"net/http"
+	"strconv"
+
 	"github.com/abelmalu/golang-posts/post/proto/pb"
 	"github.com/gin-gonic/gin"
 )
@@ -10,8 +13,8 @@ import (
 type PostService interface{
 	CreatePost(ctx context.Context,userID int64, title, content string) (*pb.CreatePostResponse, error)
 	ListPosts()(*pb.ListPostsResponse,error)
-	UpdatePost (postID int64, title, content string)(*pb.UpdatePostResponse,error)
-	DeletePost (postID int64)(*pb.DeletePostResponse,error)
+	UpdatePost (ctx context.Context,postID int64,title string,content string)(*pb.UpdatePostResponse,error)
+	DeletePost (ctx context.Context,postID int64)(*pb.DeletePostResponse,error)
 }
 
 type PostHandler struct {
@@ -22,7 +25,7 @@ func NewPostHandler(pc PostService) *PostHandler {
 	return &PostHandler{postClient: pc}
 }
 
-func (h *PostHandler) CreatePost(c *gin.Context) {
+func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 	
 	var req struct {
 		Title   string `json:"title"`
@@ -48,9 +51,7 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 	}
 	userID := userIDValue.(int64)
 
-	
-
-	resp, err := h.postClient.CreatePost(c.Request.Context(),userID, req.Title, req.Content)
+	resp, err := postHandler.postClient.CreatePost(c.Request.Context(),userID, req.Title, req.Content)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
@@ -62,39 +63,101 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-//ListPosts get all posts from the db
+func (postHandler *PostHandler) UpdatePost(c *gin.Context){
 
-// func ListPosts(c *gin.Context) {
-	
-// 	query := `SELECT * FROM posts`
+	var input struct {
+		Title   string `json:"title" db:"title"`
+		Content string `json:"content" db:"content"`
+	}
+	postIDStr := c.Param("id")
+	postIDValue, err := strconv.Atoi(postIDStr)
+	postID := int64(postIDValue)
 
-// 	rows, err := pkg.DB.Query(query)
-// 	if err != nil {
+	if err != nil {
 
-// 		log.Printf("error during db query %v", err)
-// 		c.JSON(http.StatusInternalServerError, gin.H{
-// 			"status":  "error",
-// 			"message": "Internal Server Error",
-// 		})
-// 		return
-// 	}
-// 	defer rows.Close()
+		log.Printf("error while Atoi, %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Internal Server Error",
+		})
+		return
 
-// 	for rows.Next() {
-// 		var post models.Post
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
 
-// 		rows.Scan(&post.Id, &post.Title, &post.Content, &post.UserID)
-// 		posts = append(posts, post)
+		log.Printf("error while parsing JSON %v", err)
 
-// 	}
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Bad Request",
+		})
+		return
+	}
 
-// 	if err = rows.Err(); err != nil {
-// 		log.Printf("error after iterating rows: %v", err)
-// 		c.JSON(http.StatusInternalServerError, gin.H{
-// 			"status":  "error",
-// 			"message": "Internal Server Error",
-// 		})
-// 		return
-// 	}
-// 	c.JSON(http.StatusOK, posts)
-// }
+	resp,err := postHandler.postClient.UpdatePost(c.Request.Context(),postID,input.Title,input.Content)
+	if err != nil{
+
+
+		log.Printf("error from post service %v",err)
+		c.JSON(http.StatusInternalServerError,gin.H{
+			"status":"error",
+			"message":"Internal Server Error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated,resp)
+}
+func (postHandler *PostHandler) DeletePost(c *gin.Context){
+
+	postIDStr := c.Param("id")
+	postID, err := strconv.Atoi(postIDStr)
+
+	if err != nil {
+
+		log.Printf("error while Atoi, %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Bad Request",
+		})
+		return
+
+	}
+
+	_, err = postHandler.postClient.DeletePost(c.Request.Context(),int64(postID))
+
+	if err != nil{
+
+		log.Printf("error from post service %v",err)
+		c.JSON(http.StatusInternalServerError,gin.H{
+			"status":"error",
+			"message":"Internal Server Error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{
+		"status":  "success",
+		"message": "Successfully created a post",
+	})
+}
+
+func (postHandler *PostHandler) ListPosts(c *gin.Context) {
+
+	resp,err := postHandler.postClient.ListPosts()
+
+	if err != nil{
+
+		log.Printf("the error is %v",err)
+		c.JSON(http.StatusInternalServerError,gin.H{
+			"status":"error",
+			"message":"Internal Server Error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK,resp)
+
+
+
+}

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	"github.com/abelmalu/golang-posts/post/internal/core"
@@ -35,13 +36,34 @@ func (postService *PostService) CreatePost(ctx context.Context,post *models.Post
 
 	
 }
-func (ps *PostService) UpdatePost(postID string)(*models.Post,error){
+func (postService *PostService) UpdatePost(ctx context.Context,postID int,title,content string) (*models.Post, error){
 
-	panic("")
+	if postID <= 0{
+
+		return nil, errors.New("post not found")
+	}
+
+	updatedPost,err := postService.repo.UpdatePost(ctx,postID,title,content)
+	if err != nil{
+
+		return nil,err
+	}
+
+	return updatedPost,nil
+
 }
-func (ps *PostService) DeletePost(postID string)(error){
+func (postService *PostService) DeletePost(ctx context.Context,postID int)(error){
 
-	panic("")
+	
+	if postID <= 0{
+
+		return  errors.New("post not found")
+	}
+	if err := postService.repo.DeletePost(ctx,postID); err != nil{
+
+		return err
+	}
+	return nil
 }
 func (postService *PostService) ListPosts(ctx context.Context)([]models.Post,error){
    
