@@ -7,8 +7,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/abelmalu/golang-posts/post/internal/handlers"
 	"github.com/abelmalu/golang-posts/post/config"
+	"github.com/abelmalu/golang-posts/post/internal/handlers"
+	"github.com/abelmalu/golang-posts/post/internal/interceptors"
 	"github.com/abelmalu/golang-posts/post/internal/repository"
 	"github.com/abelmalu/golang-posts/post/internal/service"
 	"github.com/abelmalu/golang-posts/post/proto/pb"
@@ -82,8 +83,12 @@ func initDB(config *config.Config) (*sql.DB, error) {
 func (app *App) Run() {
 
 	lis, _ := net.Listen("tcp", ":50051")
-	s := grpc.NewServer()
-	
+	s := grpc.NewServer(
+    grpc.ChainUnaryInterceptor(
+        interceptors.AuthInterceptor(),           // adds userID to context
+        interceptors.PostOwnershipInterceptor(app.DB), // checks if the user is post owner
+    ),
+)
     // Dependency Injection for each layer one by one 
 	postRepo := repository.NewPostRepository(app.DB)
 	postService := service.NewPostService(postRepo)

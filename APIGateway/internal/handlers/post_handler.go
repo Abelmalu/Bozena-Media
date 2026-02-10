@@ -5,14 +5,15 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-
+	"errors"
 	"github.com/abelmalu/golang-posts/post/proto/pb"
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc/metadata"
 )
 
 type PostService interface{
 	CreatePost(ctx context.Context,userID int64, title, content string) (*pb.CreatePostResponse, error)
-	ListPosts()(*pb.ListPostsResponse,error)
+	ListPosts(ctx context.Context)(*pb.ListPostsResponse,error)
 	UpdatePost (ctx context.Context,postID int64,title string,content string)(*pb.UpdatePostResponse,error)
 	DeletePost (ctx context.Context,postID int64)(*pb.DeletePostResponse,error)
 }
@@ -23,6 +24,22 @@ type PostHandler struct {
 
 func NewPostHandler(pc PostService) *PostHandler {
 	return &PostHandler{postClient: pc}
+}
+
+func addUserIDToContext(c *gin.Context)(context.Context,error){
+	userIDValue, exists := c.Get("userID")
+
+	if !exists {
+
+		return nil,errors.New("user not found in the request")
+	}
+	userID := userIDValue.(int)
+	userIDStr := strconv.Itoa(userID)
+	md := metadata.Pairs("user-id", userIDStr)
+
+	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
+
+	return ctx,nil
 }
 
 func (postHandler *PostHandler) CreatePost(c *gin.Context) {
@@ -97,7 +114,19 @@ func (postHandler *PostHandler) UpdatePost(c *gin.Context){
 		return
 	}
 
-	resp,err := postHandler.postClient.UpdatePost(c.Request.Context(),postID,input.Title,input.Content)
+	ctx,err := addUserIDToContext(c)
+	if err != nil {
+
+
+		log.Printf("the error is %v",err)
+		c.JSON(http.StatusUnauthorized,gin.H{
+			"Status":"Error",
+			"Message":"Unauthorized",
+
+		})
+	}
+
+	resp,err := postHandler.postClient.UpdatePost(ctx,postID,input.Title,input.Content)
 	if err != nil{
 
 
@@ -127,7 +156,19 @@ func (postHandler *PostHandler) DeletePost(c *gin.Context){
 
 	}
 
-	resp, err := postHandler.postClient.DeletePost(c.Request.Context(),int64(postID))
+		ctx,err := addUserIDToContext(c)
+	if err != nil {
+
+
+		log.Printf("the error is %v",err)
+		c.JSON(http.StatusUnauthorized,gin.H{
+			"Status":"Error",
+			"Message":"Unauthorized",
+
+		})
+	}
+
+	resp, err := postHandler.postClient.DeletePost(ctx,int64(postID))
 
 	if err != nil{
 
@@ -144,7 +185,19 @@ func (postHandler *PostHandler) DeletePost(c *gin.Context){
 
 func (postHandler *PostHandler) ListPosts(c *gin.Context) {
 
-	resp,err := postHandler.postClient.ListPosts()
+	ctx,err := addUserIDToContext(c)
+	if err != nil {
+
+
+		log.Printf("the error is %v",err)
+		c.JSON(http.StatusUnauthorized,gin.H{
+			"Status":"Error",
+			"Message":"Unauthorized",
+
+		})
+	}
+
+	resp,err := postHandler.postClient.ListPosts(ctx)
 
 	if err != nil{
 

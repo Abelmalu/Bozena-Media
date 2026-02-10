@@ -30,8 +30,8 @@ func (pc *PostClient) CreatePost(ctx context.Context, userID int64, title, conte
 	})
 }
 
-func (pc *PostClient) ListPosts() (*pb.ListPostsResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+func (pc *PostClient) ListPosts(ctx context.Context) (*pb.ListPostsResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
 	return pc.client.ListPosts(ctx, &pb.ListPostsRequest{})
