@@ -89,6 +89,7 @@ func (postHandler *PostHandler) UpdatePost(ctx context.Context, req *pb.UpdatePo
 	_, err := postHandler.service.UpdatePost(ctx, postID, req.Title, req.Content)
 
 	if err != nil {
+		log.Printf("error returned from repository %v",err)
 
 		return nil, err
 	}

@@ -131,10 +131,7 @@ func (postHandler *PostHandler) UpdatePost(c *gin.Context){
 
 
 		log.Printf("error from post service %v",err)
-		c.JSON(http.StatusInternalServerError,gin.H{
-			"status":"error",
-			"message":"Internal Server Error",
-		})
+		c.JSON(http.StatusBadRequest,err)
 		return
 	}
 

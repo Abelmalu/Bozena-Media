@@ -2,6 +2,7 @@ package interceptors
 
 import (
 	"context"
+	"log"
 	"strconv"
 
 	"google.golang.org/grpc"
@@ -18,6 +19,8 @@ func AuthInterceptor() grpc.UnaryServerInterceptor {
         handler grpc.UnaryHandler,
     ) (interface{}, error) {
 
+		log.Printf("inside of the auth interceptor")
+
         md, ok := metadata.FromIncomingContext(ctx)
         if !ok {
             return nil, status.Error(codes.Unauthenticated, "missing metadata")
@@ -27,7 +30,7 @@ func AuthInterceptor() grpc.UnaryServerInterceptor {
         if len(values) == 0 {
             return nil, status.Error(codes.Unauthenticated, "user-id not provided")
         }
-
+		log.Printf("the userId is %v",values[0])
         userID, err := strconv.Atoi(values[0])
         if err != nil {
             return nil, status.Error(codes.Unauthenticated, "invalid user-id")
