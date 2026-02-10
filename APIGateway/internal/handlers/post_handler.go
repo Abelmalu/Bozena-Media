@@ -49,10 +49,13 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 		return
 
 	}
-	userID := userIDValue.(int64)
+	userIDInt := userIDValue.(int)
+	userID := int64(userIDInt)
 
 	resp, err := postHandler.postClient.CreatePost(c.Request.Context(),userID, req.Title, req.Content)
 	if err != nil {
+
+		log.Printf("the error is %v",err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Internal Server Error",
@@ -124,7 +127,7 @@ func (postHandler *PostHandler) DeletePost(c *gin.Context){
 
 	}
 
-	_, err = postHandler.postClient.DeletePost(c.Request.Context(),int64(postID))
+	resp, err := postHandler.postClient.DeletePost(c.Request.Context(),int64(postID))
 
 	if err != nil{
 
@@ -136,10 +139,7 @@ func (postHandler *PostHandler) DeletePost(c *gin.Context){
 		return
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{
-		"status":  "success",
-		"message": "Successfully created a post",
-	})
+	c.JSON(http.StatusAccepted, resp)
 }
 
 func (postHandler *PostHandler) ListPosts(c *gin.Context) {

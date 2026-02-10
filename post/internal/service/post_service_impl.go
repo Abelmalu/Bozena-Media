@@ -52,7 +52,7 @@ func (postService *PostService) UpdatePost(ctx context.Context,postID int,title,
 	return updatedPost,nil
 
 }
-func (postService *PostService) DeletePost(ctx context.Context,postID int)(error){
+func (postService *PostService) DeletePost(ctx context.Context,postID int) error{
 
 	
 	if postID <= 0{

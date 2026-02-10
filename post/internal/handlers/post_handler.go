@@ -29,7 +29,9 @@ func (postHandler *PostHandler) CreatePost(ctx context.Context, req *pb.CreatePo
 	post := models.Post{
 		Title:   req.Title,
 		Content: req.Content,
+		UserID: int(req.UserId),
 	}
+	
 	createdPost, err := postHandler.service.CreatePost(ctx, &post)
 	if err != nil {
 
@@ -73,6 +75,7 @@ func (postHandler *PostHandler) ListPosts(ctx context.Context, req *pb.ListPosts
 
 			Title:   p.Title,
 			Content: p.Content,
+			Id:int64(p.ID) ,
 		}
 	}
 
@@ -102,7 +105,7 @@ func (postHandler *PostHandler) DeletePost(ctx context.Context, req *pb.DeletePo
 
     if err := postHandler.service.DeletePost(ctx,int(req.PostId)); err != nil{
 
-
+        
         return nil,err
     }
   return &pb.DeletePostResponse{

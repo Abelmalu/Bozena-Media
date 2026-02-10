@@ -64,11 +64,13 @@ func main() {
 	post.Use(middleware.AuthMiddleware())
 	{
 		post.POST("/", postHandler.CreatePost)
+		post.GET("/", postHandler.ListPosts)
+
 
 		postOwner := post.Group("/:id")
 		{
 
-			postOwner.Use(middleware.AuthorizePostOwner())
+		
 			postOwner.PUT("", postHandler.UpdatePost)
 			postOwner.DELETE("", postHandler.DeletePost)
 

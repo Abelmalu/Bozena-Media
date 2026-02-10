@@ -54,7 +54,7 @@ func (pr *PostRepository) UpdatePost(ctx context.Context, ID int, title string, 
 
 	return &post, nil
 }
-func (pr *PostRepository) DeletePost(ctx context.Context,postID int) error {
+func (pr *PostRepository) DeletePost(ctx context.Context,postID int)(error) {
 
 	query := `DELETE FROM posts WHERE id=$1`
 
