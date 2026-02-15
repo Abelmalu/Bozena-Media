@@ -23,9 +23,7 @@ type App struct {
 	DB     *sql.DB
 }
 
-type postServer struct {
-	pb.UnimplementedPostServiceServer
-}
+
 
 // NewApp creates the application instance  
 func NewApp() (*App, error) {
