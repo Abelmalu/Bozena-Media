@@ -30,6 +30,7 @@ func AuthInterceptor() grpc.UnaryServerInterceptor {
         if len(values) == 0 {
             return nil, status.Error(codes.Unauthenticated, "user-id not provided")
         }
+        
 		log.Printf("the userId is %v",values[0])
         userID, err := strconv.Atoi(values[0])
         if err != nil {
