@@ -2,10 +2,12 @@ package handler
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
-	"errors"
+
 	"github.com/abelmalu/golang-posts/post/proto/pb"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/metadata"
@@ -28,6 +30,7 @@ func NewPostHandler(pc PostService) *PostHandler {
 
 func addUserIDToContext(c *gin.Context)(context.Context,error){
 	userIDValue, exists := c.Get("userID")
+	fmt.Println("here in the add user context")
 
 	if !exists {
 
@@ -68,8 +71,10 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 	}
 	userIDInt := userIDValue.(int)
 	userID := int64(userIDInt)
+	ctx,err := addUserIDToContext(c)
 
-	resp, err := postHandler.postClient.CreatePost(c.Request.Context(),userID, req.Title, req.Content)
+
+	resp, err := postHandler.postClient.CreatePost(ctx,userID, req.Title, req.Content)
 	if err != nil {
 
 		log.Printf("the error is %v",err)

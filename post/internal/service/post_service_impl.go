@@ -69,6 +69,10 @@ func (postService *PostService) ListPosts(ctx context.Context)([]models.Post,err
    
 	posts,err := postService.repo.ListPosts(ctx)
 
+	log.Printf("posts inside of service")
+	log.Print(posts[1].Content)
+	
+
 	if err != nil{
 
 		log.Printf("the error is %v",err)

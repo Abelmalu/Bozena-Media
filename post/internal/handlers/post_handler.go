@@ -67,7 +67,7 @@ func (postHandler *PostHandler) ListPosts(ctx context.Context, req *pb.ListPosts
 		log.Printf("error %v", err)
 		return nil, err
 	}
-
+	
 	pbPosts := make([]*pb.Post, len(posts))
 
 	for i, p := range posts {
@@ -78,6 +78,10 @@ func (postHandler *PostHandler) ListPosts(ctx context.Context, req *pb.ListPosts
 			Id:int64(p.ID) ,
 		}
 	}
+
+
+	log.Printf("content of the first post")
+	log.Print(pbPosts[0])
 
 	return &pb.ListPostsResponse{
 		Posts: pbPosts,
