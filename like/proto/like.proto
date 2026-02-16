@@ -1,0 +1,22 @@
+syntax = "proto3";
+package postservice;
+
+option go_package = "./proto/pb";
+
+
+
+
+service LikeService {
+    rpc LikePost(LikeRequest) returns (LikeResponse);
+}
+
+
+message LikeRequest {
+    int64 post_id = 1;
+    int64 user_id = 2;
+}
+
+message LikeResponse {
+    bool success = 1;
+    string message = 2;     
+}
