@@ -22,8 +22,6 @@ func NewAuthClient(conn *grpc.ClientConn) *AuthClient {
 
 func (ac *AuthClient) Register(ctx context.Context,userName,name,email,password string)(*pb.RegisterResponse,error){
 
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
 
 return ac.client.Register(ctx,&pb.RegisterRequest{
 	Name:name,
@@ -33,7 +31,6 @@ return ac.client.Register(ctx,&pb.RegisterRequest{
 })
 
 }
-
 
 func (ac *AuthClient) Login(ctx context.Context,userName,password string)(*pb.LoginResponse,error){
 

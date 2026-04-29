@@ -80,8 +80,7 @@ func (postHandler *PostHandler) ListPosts(ctx context.Context, req *pb.ListPosts
 	}
 
 
-	log.Printf("content of the first post")
-	log.Print(pbPosts[0])
+
 
 	return &pb.ListPostsResponse{
 		Posts: pbPosts,

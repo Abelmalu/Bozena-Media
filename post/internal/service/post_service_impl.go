@@ -68,9 +68,6 @@ func (postService *PostService) DeletePost(ctx context.Context,postID int) error
 func (postService *PostService) ListPosts(ctx context.Context)([]models.Post,error){
    
 	posts,err := postService.repo.ListPosts(ctx)
-
-	log.Printf("posts inside of service")
-	log.Print(posts[1].Content)
 	
 
 	if err != nil{
