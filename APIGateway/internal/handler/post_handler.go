@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
+	appErrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	"github.com/abelmalu/golang-posts/post/proto/pb"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/metadata"
@@ -53,35 +54,25 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"message": "Bad Request",
-		})
-
+		c.Error(appErrors.NewValidationError("Invalid request body", nil, err))
 		return
 	}
-	userIDValue,exists := c.Get("userID")
-	if !exists{
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"status":  "error",
-			"message": "Unauthorized",
-		})
+	userIDValue, exists := c.Get("userID")
+	if !exists {
+		c.Error(appErrors.NewAppError(appErrors.TypeUnauthorized, "User ID not found in session", nil))
 		return
-
 	}
 	userIDInt := userIDValue.(int)
 	userID := int64(userIDInt)
-	ctx,err := addUserIDToContext(c)
-
-
-	resp, err := postHandler.postClient.CreatePost(ctx,userID, req.Title, req.Content)
+	ctx, err := addUserIDToContext(c)
 	if err != nil {
+		c.Error(appErrors.NewInternalError("Failed to prepare request context", err))
+		return
+	}
 
-		log.Printf("the error is %v",err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": "Internal Server Error",
-		})
+	resp, err := postHandler.postClient.CreatePost(ctx, userID, req.Title, req.Content)
+	if err != nil {
+		c.Error(appErrors.FromGRPC(err))
 		return
 	}
 

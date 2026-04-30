@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	appErrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/metadata"
@@ -71,13 +72,8 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Printf(" error while decoding json %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"message": "Bad Request",
-		})
-
+		c.Error(appErrors.NewValidationError("Invalid request body", nil, err))
 		return
-
 	}
 	// call getClienType to get the client type and inject it into the grpc metadata
 	ctx, clientType := getClientType(c)
@@ -85,11 +81,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 	resp, err := ah.client.Register(ctx, req.UserName, req.Name, req.Email, req.Password)
 	if err != nil {
 		log.Printf("the error while calling client service %v", err)
-
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": "Internal Server Error",
-		})
+		c.Error(appErrors.FromGRPC(err))
 		return
 	}
 	response := gin.H{"message": "Registered successfully"}
@@ -123,26 +115,16 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 		Password string `json:"password"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"message": "Bad Request",
-		})
-
+		c.Error(appErrors.NewValidationError("Invalid request body", nil, err))
 		return
-
 	}
 	ctx, clientType := getClientType(c)
 
 	resp, err := ah.client.Login(ctx, req.UserName, req.Password)
 
 	if err != nil {
-
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": "Internal Server Error",
-		})
+		c.Error(appErrors.FromGRPC(err))
 		return
-
 	}
 	response := gin.H{"message": "Registered successfully"}
 
@@ -172,14 +154,18 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 func (ah *AuthHandler) Logout(c *gin.Context){
 	refreshToken, err := ExtractRefreshToken(c)
 	if err != nil {
-
 		log.Printf("refresh token extracting error %v", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
+		c.Error(appErrors.NewAppError(appErrors.TypeUnauthorized, "Refresh token not found", err))
 		return
 	}
 	md := metadata.Pairs("refreshToken", refreshToken)
 	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
 	resp,err := ah.client.Logout(ctx)
+	if err != nil {
+		log.Printf("logout error %v", err)
+		c.Error(appErrors.FromGRPC(err))
+		return
+	}
 
 	c.JSON(http.StatusAccepted,resp)
 }
@@ -190,9 +176,8 @@ func(ah *AuthHandler) RefreshHandler(c *gin.Context) {
 	// extracting the refresh token from the request for both mobile and web clients
 	refreshToken, err := ExtractRefreshToken(c)
 	if err != nil {
-
 		log.Printf("refresh token extracting error %v", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
+		c.Error(appErrors.NewAppError(appErrors.TypeUnauthorized, "Refresh token not found", err))
 		return
 	}
 
@@ -200,12 +185,9 @@ func(ah *AuthHandler) RefreshHandler(c *gin.Context) {
 
 	resp,err := ah.client.RefreshHandler(ctx,refreshToken)
 	if err != nil {
-
 		log.Printf("refresh token  error %v", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "Unauthorized"})
+		c.Error(appErrors.FromGRPC(err))
 		return
-
-
 	}
 
 	response := gin.H{"message": "Refreshed successfully"}
@@ -229,7 +211,7 @@ func(ah *AuthHandler) RefreshHandler(c *gin.Context) {
 		response["refresh_token"] = resp.RefreshToken
 	}
 
-	c.JSON(http.StatusOK, resp)
+	c.JSON(http.StatusOK, response)
 
 
 
