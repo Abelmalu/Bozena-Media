@@ -4,6 +4,7 @@ import (
 	"log"
 
 	client "github.com/abelmalu/golang-posts/APIGateway/internal/clients"
+	"github.com/abelmalu/golang-posts/platform"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -14,11 +15,12 @@ type Client struct {
 
 	authClient client.AuthClient
 	postClient client.PostClient
+	logger *platform.Logger
 }
 
 
 
-func NewClient() *Client{
+func NewClient(logger *platform.Logger) *Client{
 
 	  	postConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 
@@ -44,6 +46,7 @@ func NewClient() *Client{
 	return &Client{
 		authClient:*client.NewAuthClient(authConn) ,
 		postClient: *client.NewPostClient(postConn),
+		logger: logger,
 
 	}
 

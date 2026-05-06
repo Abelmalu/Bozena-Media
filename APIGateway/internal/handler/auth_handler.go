@@ -8,6 +8,7 @@ import (
 
 	appErrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
+	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/metadata"
 )
@@ -20,11 +21,17 @@ type AuthService interface {
 }
 type AuthHandler struct {
 	client AuthService
+	logger *platform.Logger
+
 }
 
-func NewAuthHandler(au AuthService) *AuthHandler {
+func NewAuthHandler(au AuthService,logger *platform.Logger) *AuthHandler {
 
-	return &AuthHandler{client: au}
+	return &AuthHandler{
+		client: au,
+		logger: logger,
+	
+	}
 }
 
 // getClientType get client type header and inject into the contex metadata

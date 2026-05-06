@@ -2,6 +2,7 @@ package initiator
 
 import (
 	"github.com/abelmalu/golang-posts/APIGateway/internal/handler"
+	"github.com/abelmalu/golang-posts/platform"
 )
 
 
@@ -13,12 +14,12 @@ type Handler struct{
 
 }
 
-func InitHandler(client Client ) *Handler{
+func InitHandler(client Client,logger *platform.Logger ) *Handler{
 
 
 	return &Handler{
-		authHandler: *handler.NewAuthHandler(&client.authClient),
-		postHandler: *handler.NewPostHandler(&client.postClient),
+		authHandler: *handler.NewAuthHandler(&client.authClient,logger),
+		postHandler: *handler.NewPostHandler(&client.postClient,logger),
 	}
 
 

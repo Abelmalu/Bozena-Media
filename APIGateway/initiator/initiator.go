@@ -9,11 +9,14 @@ func Initialize() {
 
 	router := gin.Default()
 
+	//initializing loggers 
+	logger := InitLogger()
+
 	// initializing clients
-	clients := NewClient()
+	clients := NewClient(logger)
 
 	// initializing handlers
-	handlers := InitHandler(*clients)
+	handlers := InitHandler(*clients,logger)
 
 	//initializing routes
 	InitRoute(router, *handlers)

@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	appErrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
+	"github.com/abelmalu/golang-posts/platform"
 	"github.com/abelmalu/golang-posts/post/proto/pb"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/metadata"
@@ -23,10 +24,15 @@ type PostService interface{
 
 type PostHandler struct {
 	postClient PostService
+	logger *platform.Logger
+
 }
 
-func NewPostHandler(pc PostService) *PostHandler {
-	return &PostHandler{postClient: pc}
+func NewPostHandler(pc PostService,logger *platform.Logger) *PostHandler {
+	return &PostHandler{
+		postClient: pc,
+		logger: logger,
+	}
 }
 
 func addUserIDToContext(c *gin.Context)(context.Context,error){
