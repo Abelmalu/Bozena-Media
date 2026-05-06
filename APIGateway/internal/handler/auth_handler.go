@@ -10,6 +10,7 @@ import (
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -121,7 +122,20 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 		UserName string `json:"username"`
 		Password string `json:"password"`
 	}
+	userAgent := c.GetHeader("User-Agent")
+	sourceApp := c.GetHeader("source_app")
+	requestID,ok := c.Get("request_id")
+	requestIDValue := requestID.(string)
+
+	ah.logger.RequestStart(c.Request.Method,c.Request.URL.RequestURI(),userAgent,sourceApp,requestIDValue)
+   
+	if !ok {
+		ah.logger.Error("couldn't get request ID",zap.Error(errors.New("couldn't find request ID")))
+        c.Error( errors.New("couldn't find request ID"),)
+		return
+	}
 	if err := c.ShouldBindJSON(&req); err != nil {
+		ah.logger.Error("")
 		c.Error(appErrors.NewValidationError("Invalid request body", nil, err))
 		return
 	}

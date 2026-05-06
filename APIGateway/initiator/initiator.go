@@ -7,7 +7,7 @@ import (
 
 func Initialize() {
 
-	router := gin.Default()
+	router := gin.New()
 
 	//initializing loggers 
 	logger := InitLogger()

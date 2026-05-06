@@ -1,9 +1,8 @@
-package errors
+package ierrors
 
 import (
 	"fmt"
 	"net/http"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -23,7 +22,7 @@ const (
 type AppError struct {
 	Type      ErrorType              `json:"type"`
 	Code      string                 `json:"code,omitempty"`
-	Message   string                 `json:"message"`
+	Message   ErrorMessage                 `json:"message"`
 	Cause     error                  `json:"-"`
 	Details   map[string]interface{} `json:"details,omitempty"`
 	RequestID string                 `json:"request_id,omitempty"`
@@ -40,7 +39,7 @@ func (e *AppError) Unwrap() error {
 	return e.Cause
 }
 
-func NewAppError(errType ErrorType, message string, cause error) *AppError {
+func NewAppError(errType ErrorType, message ErrorMessage, cause error) *AppError {
 	return &AppError{
 		Type:    errType,
 		Message: message,
@@ -48,7 +47,7 @@ func NewAppError(errType ErrorType, message string, cause error) *AppError {
 	}
 }
 
-func NewValidationError(message string, details map[string]interface{}, cause error) *AppError {
+func NewValidationError(message ErrorMessage, details map[string]interface{}, cause error) *AppError {
 	return &AppError{
 		Type:    TypeValidation,
 		Message: message,
@@ -58,7 +57,7 @@ func NewValidationError(message string, details map[string]interface{}, cause er
 	}
 }
 
-func NewNotFoundError(message string, cause error) *AppError {
+func NewNotFoundError(message ErrorMessage, cause error) *AppError {
 	return &AppError{
 		Type:    TypeNotFound,
 		Message: message,
@@ -66,7 +65,7 @@ func NewNotFoundError(message string, cause error) *AppError {
 	}
 }
 
-func NewConflictError(message string, cause error) *AppError {
+func NewConflictError(message ErrorMessage, cause error) *AppError {
 	return &AppError{
 		Type:    TypeConflict,
 		Message: message,
@@ -74,7 +73,7 @@ func NewConflictError(message string, cause error) *AppError {
 	}
 }
 
-func NewInternalError(message string, cause error) *AppError {
+func NewInternalError(message ErrorMessage, cause error) *AppError {
 	return &AppError{
 		Type:    TypeInternal,
 		Message: message,
@@ -113,18 +112,31 @@ func FromGRPC(err error) *AppError {
 
 	switch st.Code() {
 	case codes.InvalidArgument:
-		return NewValidationError(st.Message(), nil, err)
+		errStr := st.Message()
+	    var MSGInvalidArgument ErrorMessage = ErrorMessage(errStr)
+		return NewValidationError(MSGInvalidArgument, nil, err)
 	case codes.NotFound:
-		return NewNotFoundError(st.Message(), err)
+		errStr := st.Message()
+        var MSGNotFound ErrorMessage = ErrorMessage(errStr)
+		return NewNotFoundError(MSGNotFound, err)
 	case codes.AlreadyExists:
-		return NewConflictError(st.Message(), err)
+		errStr := st.Message()
+        var MSGAreadyExists ErrorMessage = ErrorMessage(errStr)
+	
+		return NewConflictError(MSGAreadyExists, err)
 	case codes.Unauthenticated:
-		return NewAppError(TypeUnauthorized, st.Message(), err)
+		errStr := st.Message()
+        var MSGUnauthenticated ErrorMessage = ErrorMessage(errStr)
+		return NewAppError(TypeUnauthorized,MSGUnauthenticated , err)
 	case codes.PermissionDenied:
-		return NewAppError(TypeForbidden, st.Message(), err)
+		errStr := st.Message()
+        var MSGPermissionDenied ErrorMessage = ErrorMessage(errStr)
+		return NewAppError(TypeForbidden, MSGPermissionDenied, err)
 	case codes.DeadlineExceeded:
-		return NewAppError(TypeTimeout, "Request timed out", err)
+		errStr := st.Message()
+        var MSGDeadlineExceeded ErrorMessage = ErrorMessage(errStr)
+		return NewAppError(TypeTimeout, MSGDeadlineExceeded, err)
 	default:
-		return NewInternalError(st.Message(), err)
+		return NewInternalError(MSGSomethingWentWrong, err)
 	}
 }
