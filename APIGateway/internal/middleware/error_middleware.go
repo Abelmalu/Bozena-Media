@@ -11,7 +11,6 @@ import (
 func ErrorHandlerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
-
 		// Only handle if there are errors
 		if len(c.Errors) > 0 {
 			err := c.Errors.Last().Err
