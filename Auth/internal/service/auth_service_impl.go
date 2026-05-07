@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/abelmalu/golang-posts/Auth/internal/core"
+	ierrors "github.com/abelmalu/golang-posts/Auth/internal/errors"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 	"github.com/abelmalu/golang-posts/pkg"
 	"google.golang.org/grpc/metadata"
@@ -25,7 +26,7 @@ func (authSer *AuthService) Register(ctx context.Context, user *model.User) (*mo
 	var clientType model.ClientType
 	if user.Name == "" {
 
-		return nil, nil, errors.New("name is required")
+		return nil, nil, ierrors.NewValidationError(ierrors.MSGUsernameIsRequired,nil,nil)
 	}
 
 	if user.Username == "" {

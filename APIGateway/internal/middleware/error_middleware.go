@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"log"
 	"time"
 	"github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	"github.com/gin-gonic/gin"
@@ -26,11 +25,7 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 			// Add RequestID to the error for response
 			appErr.RequestID = requestID
 
-			// Log the actual cause if it's an internal error or has a cause
-			if appErr.Type == ierrors.TypeInternal || appErr.Cause != nil {
-				log.Printf("[ERROR] request_id=%s type=%s message=%s cause=%v", 
-					requestID, appErr.Type, appErr.Message, appErr.Cause)
-			}
+			
 
 			// Final API response
 			c.AbortWithStatusJSON(appErr.HTTPStatus(), gin.H{

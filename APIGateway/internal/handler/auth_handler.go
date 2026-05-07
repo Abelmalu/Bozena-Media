@@ -152,7 +152,7 @@ func (ah *AuthHandler) Login(c *gin.Context) {
    
 	
 	if err := c.ShouldBindJSON(&req); err != nil {
-		ah.logger.Error("Error Unamarshaling request",zap.Error(err))
+		ah.logger.Error("Error Unmarshaling request",zap.Error(err))
 		c.Error(appErrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
 		return
 	}

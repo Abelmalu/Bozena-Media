@@ -3,9 +3,8 @@ package handler
 import (
 	"context"
 	"errors"
-	"log"
-
 	"github.com/abelmalu/golang-posts/Auth/internal/core"
+	ierrors "github.com/abelmalu/golang-posts/Auth/internal/errors"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
 	"google.golang.org/grpc/codes"
@@ -28,7 +27,6 @@ func NewAuthHandler(authServ core.AuthService) *AuthHandler{
 }
 // Register registers a new user into the system 
 func (authHandler *AuthHandler) Register(ctx context.Context,req *pb.RegisterRequest)(*pb.RegisterResponse,error){
-
 	user := model.User{
 		Name: req.Name,
 		Username: req.Username,
@@ -38,23 +36,25 @@ func (authHandler *AuthHandler) Register(ctx context.Context,req *pb.RegisterReq
 	}
 
 	createdUser,tokens,err := authHandler.service.Register(ctx,&user)
-	if err != nil {
 
-        log.Printf("CreateUser failed: %v", err)
-
-        // Map errors to gRPC status codes
-        if errors.Is(err, context.Canceled) {
-            return nil, status.Error(codes.Canceled, "request canceled")
-        }
-
-        if errors.Is(err, context.DeadlineExceeded) {
-            return nil, status.Error(codes.DeadlineExceeded, "timeout")
-        }
-
-        
-
-        return nil, status.Error(codes.Internal, "internal server error")
-    }
+	var appErr *ierrors.AppError
+	if errors.As(err, &appErr) {
+      switch appErr.Type {
+      case ierrors.TypeValidation:
+          return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+      case ierrors.TypeConflict:
+          return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+      case ierrors.TypeUnauthorized:
+          return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+      case ierrors.TypeNotFound:
+          return nil, status.Error(codes.NotFound, string(appErr.Message))
+      case ierrors.TypeTimeout:
+          return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+      default:
+          return nil, status.Error(codes.Internal, "internal error")
+      }
+  }
+	
 
 	return &pb.RegisterResponse{
 		Name: createdUser.Name,
