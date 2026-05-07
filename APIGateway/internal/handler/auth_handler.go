@@ -5,8 +5,10 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
 	appErrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
+	ierrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
@@ -78,8 +80,21 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
+	startTime := time.Now()
+	userAgent := c.GetHeader("User-Agent")
+	sourceApp := c.GetHeader("source_app")
+	requestID,ok := c.Get("request_id")
+	if !ok {
+
+		ah.logger.Error("Error getting request ID")
+		  c.Error( errors.New("couldn't find request ID"),)
+		return
+	}
+	requestIDValue := requestID.(string)
+
+	ah.logger.RequestStart(c.Request.Method,c.Request.URL.RequestURI(),userAgent,sourceApp,requestIDValue)
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Printf(" error while decoding json %v", err)
+		ah.logger.Error("error while marshaling request",zap.Error(err))
 		c.Error(appErrors.NewValidationError("Invalid request body", nil, err))
 		return
 	}
@@ -88,7 +103,8 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 
 	resp, err := ah.client.Register(ctx, req.UserName, req.Name, req.Email, req.Password)
 	if err != nil {
-		log.Printf("the error while calling client service %v", err)
+		
+		ah.logger.Error("GRPC Error ",zap.Error(err))
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
@@ -112,7 +128,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		response["access_token"] = resp.AccessToken
 		response["refresh_token"] = resp.RefreshToken
 	}
-
+	ah.logger.RequestEnd(c.Request.Method,c.Request.URL.RequestURI(),http.StatusOK,time.Since(startTime),requestIDValue)
 	c.JSON(http.StatusOK, response)
 
 }
@@ -122,21 +138,23 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 		UserName string `json:"username"`
 		Password string `json:"password"`
 	}
+	startTime := time.Now()
 	userAgent := c.GetHeader("User-Agent")
 	sourceApp := c.GetHeader("source_app")
 	requestID,ok := c.Get("request_id")
 	requestIDValue := requestID.(string)
-
-	ah.logger.RequestStart(c.Request.Method,c.Request.URL.RequestURI(),userAgent,sourceApp,requestIDValue)
-   
 	if !ok {
 		ah.logger.Error("couldn't get request ID",zap.Error(errors.New("couldn't find request ID")))
         c.Error( errors.New("couldn't find request ID"),)
 		return
 	}
+
+	ah.logger.RequestStart(c.Request.Method,c.Request.URL.RequestURI(),userAgent,sourceApp,requestIDValue)
+   
+	
 	if err := c.ShouldBindJSON(&req); err != nil {
-		ah.logger.Error("")
-		c.Error(appErrors.NewValidationError("Invalid request body", nil, err))
+		ah.logger.Error("Error Unamarshaling request",zap.Error(err))
+		c.Error(appErrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
 		return
 	}
 	ctx, clientType := getClientType(c)
@@ -144,10 +162,11 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 	resp, err := ah.client.Login(ctx, req.UserName, req.Password)
 
 	if err != nil {
+		ah.logger.Error("GRPC Error",zap.Error(err))
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
-	response := gin.H{"message": "Registered successfully"}
+	response := gin.H{"message": "Login successfull"}
 
 	switch clientType {
 	case "web":
@@ -168,36 +187,67 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 		response["refresh_token"] = resp.RefreshToken
 	}
 
+	ah.logger.RequestEnd(c.Request.Method,c.Request.URL.RequestURI(),http.StatusOK,time.Since(startTime),requestIDValue)
+
 	c.JSON(http.StatusOK, response)
 
 }
 
 func (ah *AuthHandler) Logout(c *gin.Context){
+	startTime := time.Now()
+	userAgent := c.GetHeader("User-Agent")
+	sourceApp := c.GetHeader("source_app")
+	requestID,ok := c.Get("request_id")
+	requestIDValue := requestID.(string)
+	if !ok {
+		ah.logger.Error("couldn't get request ID",zap.Error(errors.New("couldn't find request ID")))
+        c.Error( errors.New("couldn't find request ID"),)
+		return
+	}
+
+	ah.logger.RequestStart(c.Request.Method,c.Request.URL.RequestURI(),userAgent,sourceApp,requestIDValue)
+   
 	refreshToken, err := ExtractRefreshToken(c)
 	if err != nil {
-		log.Printf("refresh token extracting error %v", err)
-		c.Error(appErrors.NewAppError(appErrors.TypeUnauthorized, "Refresh token not found", err))
+		ah.logger.Error("refresh token extracting error", zap.Error(err))
+		c.Error(appErrors.NewAppError(appErrors.TypeUnauthorized, ierrors.MSGRefreshTokenNotFound, err))
 		return
 	}
 	md := metadata.Pairs("refreshToken", refreshToken)
 	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
 	resp,err := ah.client.Logout(ctx)
 	if err != nil {
-		log.Printf("logout error %v", err)
+
+		ah.logger.Error("GRPC Error", zap.Error(err))
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
 
+	ah.logger.RequestEnd(c.Request.Method,c.Request.URL.RequestURI(),http.StatusOK,time.Since(startTime),requestIDValue)
 	c.JSON(http.StatusAccepted,resp)
 }
 
 
 func(ah *AuthHandler) RefreshHandler(c *gin.Context) {
 
+	startTime := time.Now()
+	userAgent := c.GetHeader("User-Agent")
+	sourceApp := c.GetHeader("source_app")
+	requestID,ok := c.Get("request_id")
+	requestIDValue := requestID.(string)
+	if !ok {
+		ah.logger.Error("couldn't get request ID",zap.Error(errors.New("couldn't find request ID")))
+        c.Error( errors.New("couldn't find request ID"),)
+		return
+	}
+
+	ah.logger.RequestStart(c.Request.Method,c.Request.URL.RequestURI(),userAgent,sourceApp,requestIDValue)
+   
+
 	// extracting the refresh token from the request for both mobile and web clients
 	refreshToken, err := ExtractRefreshToken(c)
 	if err != nil {
-		log.Printf("refresh token extracting error %v", err)
+	ah.logger.Error("refresh token extracting error ", zap.Error(err))
 		c.Error(appErrors.NewAppError(appErrors.TypeUnauthorized, "Refresh token not found", err))
 		return
 	}
@@ -206,7 +256,8 @@ func(ah *AuthHandler) RefreshHandler(c *gin.Context) {
 
 	resp,err := ah.client.RefreshHandler(ctx,refreshToken)
 	if err != nil {
-		log.Printf("refresh token  error %v", err)
+			ah.logger.Error("GRPC Error ", zap.Error(err))
+
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
@@ -231,6 +282,8 @@ func(ah *AuthHandler) RefreshHandler(c *gin.Context) {
 		response["access_token"] = resp.AccessToken
 		response["refresh_token"] = resp.RefreshToken
 	}
+
+	ah.logger.RequestEnd(c.Request.Method,c.Request.URL.RequestURI(),http.StatusOK,time.Since(startTime),requestIDValue)
 
 	c.JSON(http.StatusOK, response)
 
