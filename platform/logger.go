@@ -49,7 +49,7 @@ func (logger *Logger) Info(message string, fields ...zap.Field) {
 	logger.zapLogger.Info(message, fields...)
 }
 
-func (logger *Logger) Error(message string, fields ...zap.Field) {
+func (logger *Logger) Error(message errors, fields ...zap.Field) {
 
 	logger.zapLogger.Error(message, fields...)
 
