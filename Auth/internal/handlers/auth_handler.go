@@ -3,10 +3,12 @@ package handler
 import (
 	"context"
 	"errors"
+
 	"github.com/abelmalu/golang-posts/Auth/internal/core"
 	ierrors "github.com/abelmalu/golang-posts/Auth/internal/errors"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
+	"github.com/abelmalu/golang-posts/platform"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -17,6 +19,8 @@ type AuthHandler struct{
 
 	pb.UnimplementedAuthServiceServer
 	service core.AuthService
+	logger *platform.Logger
+
 
 }
 

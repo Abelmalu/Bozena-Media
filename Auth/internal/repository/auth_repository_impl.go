@@ -8,11 +8,13 @@ import (
 
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 	"github.com/abelmalu/golang-posts/pkg"
+	"github.com/abelmalu/golang-posts/platform"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type AuthRepository struct {
 	DB *sql.DB
+	logger *platform.Logger
 }
 
 func NewAuthRepository(db *sql.DB) *AuthRepository{
@@ -32,11 +34,11 @@ func (authRepo *AuthRepository) Register(ctx context.Context,user *model.User)(*
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			return nil,pgErr
 		}
-		log.Printf("Registration DB Error %v", err)
 
 		return nil,err
 
-	}
+
+	} 
 
 	return &newUser,nil
 }
