@@ -15,6 +15,8 @@ const (
 	TypeForbidden    ErrorType = "FORBIDDEN"
 	TypeInternal     ErrorType = "INTERNAL"
 	TypeTimeout      ErrorType = "TIMEOUT"
+	TypeCancelled    ErrorType = "CANCELLED"
+	TypeDatabase     ErrorType = "DATABASE"
 )
 
 type AppError struct {
@@ -76,6 +78,37 @@ func NewInternalError(message ErrorMessage, cause error) *AppError {
 		Type:    TypeInternal,
 		Message: message,
 		Cause:   cause,
+	}
+}
+
+func NewTimeoutError(message ErrorMessage,cause error) *AppError{
+
+	return &AppError{
+		Type: TypeTimeout,
+		Message: message,
+		Cause: cause,
+	}
+}
+
+func NewCancellationError(message ErrorMessage,cause error) *AppError{
+
+	return &AppError{
+		Type:TypeCancelled,
+		Message: message,
+		Cause: cause,
+
+
+	}
+
+}
+
+func NewDatabaseError(message ErrorMessage,cause error) (*AppError){
+
+
+	return &AppError{
+		Type:TypeDatabase,
+		Message: message,
+		Cause: cause,
 	}
 }
 

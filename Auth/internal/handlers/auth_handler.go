@@ -54,6 +54,8 @@ func (authHandler *AuthHandler) Register(ctx context.Context,req *pb.RegisterReq
           return nil, status.Error(codes.NotFound, string(appErr.Message))
       case ierrors.TypeTimeout:
           return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+	  case ierrors.TypeCancelled:
+		  return nil,status.Error(codes.Canceled, string(appErr.Message))
       default:
           return nil, status.Error(codes.Internal, "internal error")
       }

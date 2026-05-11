@@ -3,9 +3,11 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 	"time"
 
+	ierrors "github.com/abelmalu/golang-posts/Auth/internal/errors"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 	"github.com/abelmalu/golang-posts/pkg"
 	"github.com/abelmalu/golang-posts/platform"
@@ -13,79 +15,96 @@ import (
 )
 
 type AuthRepository struct {
-	DB *sql.DB
+	DB     *sql.DB
 	logger *platform.Logger
 }
 
-func NewAuthRepository(db *sql.DB) *AuthRepository{
+func NewAuthRepository(db *sql.DB) *AuthRepository {
 
 	return &AuthRepository{
-		DB:db,
+		DB: db,
 	}
 }
 
-func (authRepo *AuthRepository) Register(ctx context.Context,user *model.User)(*model.User,error){
+func (authRepo *AuthRepository) Register(ctx context.Context, user *model.User) (*model.User, error) {
 	var newUser model.User
 
-
 	query := `INSERT INTO users(name,username,email,password) VALUES($1,$2,$3,$4) RETURNING id,role`
-	if err := authRepo.DB.QueryRowContext(ctx,query, user.Name, user.Username, user.Email, user.Password).Scan(&newUser.ID, &newUser.Role); err != nil {
+	if err := authRepo.DB.QueryRowContext(ctx, query, user.Name, user.Username, user.Email, user.Password).Scan(&newUser.ID, &newUser.Role); err != nil {
 		// Change *pq.Error to *pgconn.PgError
-		if pgErr, ok := err.(*pgconn.PgError); ok {
-			return nil,pgErr
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+
+			switch pgErr.Code {
+
+			case "23505":
+				switch pgErr.ConstraintName {
+				case "users_username_key":
+					return nil, ierrors.NewValidationError(ierrors.MSGUsenameAlreadyExists, nil, err)
+				case "users_email_key":
+					return nil, ierrors.NewValidationError(ierrors.MSGEmailAlreadyExists, nil, err)
+
+				default:
+					return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+
+				}
+			default:
+				return nil,ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+			}
+
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+
+		}
+		if errors.Is(err, context.Canceled) {
+			return nil, ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+
 		}
 
-		return nil,err
+	}
 
-
-	} 
-
-	return &newUser,nil
+	return &newUser, nil
 }
-func (authrepo *AuthRepository) Login(ctx context.Context,userName,password string)(*model.User,error){
+func (authrepo *AuthRepository) Login(ctx context.Context, userName, password string) (*model.User, error) {
 	var user model.User
 	query := `SELECT * FROM users WHERE username=$1`
-	err := authrepo.DB.QueryRowContext(ctx,query, userName).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.Role)
+	err := authrepo.DB.QueryRowContext(ctx, query, userName).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.Role)
 
 	if err != nil {
 
 		log.Printf("Login DB Error %v", err)
 
-		return nil,err
-		
+		return nil, err
+
 	}
 
-
-  return &user,nil
+	return &user, nil
 
 }
-func (authRepo *AuthRepository) Logout(ctx context.Context, tokenID string) ( error){
+func (authRepo *AuthRepository) Logout(ctx context.Context, tokenID string) error {
 
-	
+	query := `DELETE FROM refresh_tokens WHERE token_text=$1`
 
-		query := `DELETE FROM refresh_tokens WHERE token_text=$1`
-	
-		result, err := authRepo.DB.ExecContext(ctx,query, tokenID)
-	
-		if err != nil {
-	
-			log.Fatalf("DB Exec error %v", err)
-			return err
-		}
-	
-		_, err = result.RowsAffected()
-		if err != nil {
-	
-			log.Fatalf("db exec error %v", err)
-			return err
-		}
+	result, err := authRepo.DB.ExecContext(ctx, query, tokenID)
+
+	if err != nil {
+
+		log.Fatalf("DB Exec error %v", err)
 		return err
-	
-	
+	}
 
+	_, err = result.RowsAffected()
+	if err != nil {
+
+		log.Fatalf("db exec error %v", err)
+		return err
+	}
+	return err
 
 }
-func (authRepo *AuthRepository)StoreRefreshTokens(userID int, refreshToken string, expiresAt time.Time, clientType string) (sql.Result, error) {
+func (authRepo *AuthRepository) StoreRefreshTokens(userID int, refreshToken string, expiresAt time.Time, clientType string) (sql.Result, error) {
 
 	// hashing the token before inserting to a db
 	refreshToken = pkg.HashToken(refreshToken)
@@ -102,8 +121,7 @@ func (authRepo *AuthRepository)StoreRefreshTokens(userID int, refreshToken strin
 
 }
 
-
-func (authRepo *AuthRepository)  RevokeRefreshToken(refreshToken string) error {
+func (authRepo *AuthRepository) RevokeRefreshToken(refreshToken string) error {
 
 	query := `
 	
@@ -144,8 +162,7 @@ func (authRepo *AuthRepository) GetRefreshToken(refreshToken string) (*model.Ref
 	return &refreshRecord, nil
 }
 
-
-func (authRepo *AuthRepository)  GetUserByID(ID int) (*model.User, error) {
+func (authRepo *AuthRepository) GetUserByID(ID int) (*model.User, error) {
 	var user model.User
 	query := `SELECT * FROM users WHERE id=$1`
 
