@@ -14,6 +14,11 @@ MSGEmailAlreadyExists ErrorMessage = "email already exists"
 MSGSomethingWentWrong  ErrorMessage = "something went wrong"
 MSGDatabaseError       ErrorMessage = "database error"
 MSGNotFound            ErrorMessage = "not found"
+MSGUnkownDevice		   ErrorMessage = "Unknown device type"
+MSGFailedToValidateToken ErrorMessage = "unexpected signing method"
+MSGRefreshTokenIsRequired ErrorMessage = "refresh token is required"
+MSGUnauthorizedAccess ErrorMessage = "Unauthorized"
+
 
 
 

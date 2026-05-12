@@ -2,12 +2,10 @@ package service
 
 import (
 	"context"
-	"errors"
-	"log"
 	"time"
 
 	"github.com/abelmalu/golang-posts/Auth/internal/core"
-	"github.com/abelmalu/golang-posts/Auth/internal/errors"
+	ierrors "github.com/abelmalu/golang-posts/Auth/internal/errors"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 	"github.com/abelmalu/golang-posts/pkg"
 	"github.com/abelmalu/golang-posts/platform"
@@ -15,9 +13,8 @@ import (
 )
 
 type AuthService struct {
-	repo core.AuthRepository
+	repo   core.AuthRepository
 	logger *platform.Logger
-
 }
 
 func NewAuthService(authRepo core.AuthRepository) *AuthService {
@@ -55,61 +52,14 @@ func (authSer *AuthService) Register(ctx context.Context, user *model.User) (*mo
 	md, exists := metadata.FromIncomingContext(ctx)
 
 	if !exists {
-		return nil, nil, errors.New("Unknown device type")
+		return nil, nil, ierrors.NewValidationError(ierrors.MSGUnkownDevice, nil, nil)
 	}
 	values := md.Get("x-client-type")
 	if len(values) > 0 {
 		clientMetadata = values[0]
 	} else {
 
-		return nil, nil, errors.New("Unknown device type")
-
-	}
-	switch clientMetadata {
-case "web":
-		clientType = model.ClientWeb
-
-	case "mobile":
-		clientType = model.ClientMobile
-	default:
-
-		return nil, nil, errors.New("Unknown device type")
-
-	}
-	tokens, err := authSer.issueTokens(createdUser.ID, clientType, createdUser.Role)
-
-	return createdUser, tokens, nil
-}
-
-func (authSer *AuthService) Login(ctx context.Context, userName, password string) (*model.User, *model.TokenPair, error) {
-	var clientMetadata string
-	var clientType model.ClientType
-	if userName == "" {
-
-		return nil, nil, errors.New("username is required")
-	}
-
-	if password == "" {
-
-		return nil, nil, errors.New("password is required")
-	}
-
-	fetchedUser, err := authSer.repo.Login(ctx, userName, password)
-	if err != nil {
-		return nil, nil, errors.New("username already exists")
-	}
-
-	md, exists := metadata.FromIncomingContext(ctx)
-
-	if !exists {
-		return nil, nil, errors.New("Unknown device type")
-	}
-	values := md.Get("x-client-type")
-	if len(values) > 0 {
-		clientMetadata = values[0]
-	} else {
-
-		return nil, nil, errors.New("Unknown device type")
+		return nil, nil, ierrors.NewValidationError(ierrors.MSGUnkownDevice, nil, nil)
 
 	}
 	switch clientMetadata {
@@ -120,10 +70,66 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 		clientType = model.ClientMobile
 	default:
 
-		return nil, nil, errors.New("Unknown device type")
+		return nil, nil, ierrors.NewValidationError(ierrors.MSGUnkownDevice, nil, nil)
+
+	}
+	tokens, err := authSer.issueTokens(createdUser.ID, clientType, createdUser.Role)
+	if err != nil {
+
+		return nil, nil, err
+	}
+
+	return createdUser, tokens, nil
+}
+
+func (authSer *AuthService) Login(ctx context.Context, userName, password string) (*model.User, *model.TokenPair, error) {
+	var clientMetadata string
+	var clientType model.ClientType
+	if userName == "" {
+
+		return nil, nil, ierrors.NewValidationError(ierrors.MSGUsernameIsRequired, nil, nil)
+
+	}
+
+	if password == "" {
+
+		return nil, nil, ierrors.NewValidationError(ierrors.MSGPasswordIsRequired, nil, nil)
+	}
+
+	fetchedUser, err := authSer.repo.Login(ctx, userName, password)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	md, exists := metadata.FromIncomingContext(ctx)
+
+	if !exists {
+		return nil, nil, ierrors.NewValidationError(ierrors.MSGUnkownDevice, nil, nil)
+	}
+	values := md.Get("x-client-type")
+	if len(values) > 0 {
+		clientMetadata = values[0]
+	} else {
+
+		return nil, nil, ierrors.NewValidationError(ierrors.MSGUnkownDevice, nil, nil)
+
+	}
+	switch clientMetadata {
+	case "web":
+		clientType = model.ClientWeb
+
+	case "mobile":
+		clientType = model.ClientMobile
+	default:
+
+		return nil, nil, ierrors.NewValidationError(ierrors.MSGUnkownDevice, nil, nil)
 
 	}
 	tokens, err := authSer.issueTokens(fetchedUser.ID, clientType, fetchedUser.Role)
+	if err != nil {
+
+		return nil, nil, err
+	}
 
 	return fetchedUser, tokens, nil
 
@@ -136,7 +142,8 @@ func (authSer *AuthService) Logout(ctx context.Context, refreshToken string) err
 
 	if err != nil {
 
-		return err
+				return ierrors.NewUnauthorizedError(ierrors.MSGUnauthorizedAccess,nil)
+
 
 	}
 
@@ -155,18 +162,18 @@ func (authSer *AuthService) RefreshHandler(ctx context.Context, refreshToken str
 
 	if refreshToken == "" {
 
-		return nil, errors.New("empty refresh token")
+		return nil, ierrors.NewValidationError(ierrors.MSGRefreshTokenIsRequired, nil, nil)
 	}
 
 	// Get the refresh token from the DB
 	tokenRecord, err := authSer.repo.GetRefreshToken(refreshToken)
 	if err != nil {
 
-		return nil, errors.New("unauthorized")
+		return nil, err
 	}
 	// check if it is revoked or has expired
 	if tokenRecord.Revoked || tokenRecord.ExpiresAt.Before(time.Now()) {
-		return nil, errors.New("unauthorized")
+		return nil, ierrors.NewUnauthorizedError(ierrors.MSGUnauthorizedAccess, nil)
 
 	}
 	// validate the token to check if it is tampered or expired
@@ -174,13 +181,14 @@ func (authSer *AuthService) RefreshHandler(ctx context.Context, refreshToken str
 
 	if err != nil {
 
-		return nil, errors.New("unauthorized")
+		return nil, ierrors.NewUnauthorizedError(ierrors.MSGUnauthorizedAccess, nil)
+
 	}
 
 	user, err := authSer.repo.GetUserByID(tokenRecord.ID)
 
 	if err != nil {
-		return nil, errors.New("unauthorized")
+		return nil, err
 
 	}
 	var clientType model.ClientType
@@ -198,19 +206,23 @@ func (authSer *AuthService) RefreshHandler(ctx context.Context, refreshToken str
 	// revoke the old token so it can't be used anymore
 	if err := authSer.repo.RevokeRefreshToken(tokenRecord.TokenText); err != nil {
 
-		log.Printf("Couldn't Revoke the token %v", err)
 		return nil, err
 	}
 
 	// Generate new tokens Rotate refresh token (issue a new one)
 	tokens, err := authSer.issueTokens(userID, clientType, user.Role)
+	if err != nil{
+
+		return nil,err
+	}
 
 	// store the refresh token
 	newExpireTime := time.Now().Add(24 * 30 * time.Hour)
 	_, err = authSer.repo.StoreRefreshTokens(userID, tokens.RefreshToken, newExpireTime, clientTypeStr)
 	if err != nil {
 
-		log.Printf("couldn't store a new refresh token %v", err)
+		return nil,err
+
 	}
 
 	return tokens, nil
@@ -222,12 +234,13 @@ func (authSer *AuthService) issueTokens(userID int, clientType model.ClientType,
 	accessToken, err := pkg.GenerateAcessToken(userID, userRole)
 	if err != nil {
 
-		return nil, err
+		return nil, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
 	}
 	refreshToken, err, expiresAt := pkg.GenerateRefreshToken(userID)
 	if err != nil {
 
-		return nil, err
+		return nil, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
+
 	}
 
 	_, err = authSer.repo.StoreRefreshTokens(userID, refreshToken, expiresAt, string(clientType))

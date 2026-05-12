@@ -73,6 +73,15 @@ func NewConflictError(message ErrorMessage, cause error) *AppError {
 	}
 }
 
+func NewUnauthorizedError(message ErrorMessage,cause error)  *AppError{
+
+	return &AppError{
+		Type:TypeUnauthorized,
+		Message: message,
+		Cause: cause,
+	}
+}
+
 func NewInternalError(message ErrorMessage, cause error) *AppError {
 	return &AppError{
 		Type:    TypeInternal,
