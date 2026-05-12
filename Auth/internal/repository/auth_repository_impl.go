@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
 	"time"
 
 	ierrors "github.com/abelmalu/golang-posts/Auth/internal/errors"
@@ -45,11 +44,11 @@ func (authRepo *AuthRepository) Register(ctx context.Context, user *model.User) 
 					return nil, ierrors.NewValidationError(ierrors.MSGEmailAlreadyExists, nil, err)
 
 				default:
-					return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+					return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 				}
 			default:
-				return nil,ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 			}
 
 		}
@@ -63,6 +62,8 @@ func (authRepo *AuthRepository) Register(ctx context.Context, user *model.User) 
 
 		}
 
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
 	}
 
 	return &newUser, nil
@@ -70,14 +71,23 @@ func (authRepo *AuthRepository) Register(ctx context.Context, user *model.User) 
 func (authrepo *AuthRepository) Login(ctx context.Context, userName, password string) (*model.User, error) {
 	var user model.User
 	query := `SELECT * FROM users WHERE username=$1`
-	err := authrepo.DB.QueryRowContext(ctx, query, userName).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.Role)
+	if err := authrepo.DB.QueryRowContext(ctx, query, userName).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.Role); err != nil {
 
-	if err != nil {
+		var pgErr *pgconn.PgError
 
-		log.Printf("Login DB Error %v", err)
+		if errors.As(err, &pgErr) {
 
-		return nil, err
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
+		}
+
+		if errors.Is(err, sql.ErrNoRows) {
+
+			return nil, ierrors.NewNotFoundError(ierrors.MSGNotFound, err)
+
+		}
+
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 	}
 
 	return &user, nil
@@ -89,20 +99,35 @@ func (authRepo *AuthRepository) Logout(ctx context.Context, tokenID string) erro
 
 	result, err := authRepo.DB.ExecContext(ctx, query, tokenID)
 
+	var pgErr *pgconn.PgError
 	if err != nil {
 
-		log.Fatalf("DB Exec error %v", err)
-		return err
+		if errors.As(err, &pgErr) {
+
+			return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+
+		return ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+
+	}
+	if errors.Is(err, context.Canceled) {
+
+		return ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
 	}
 
 	_, err = result.RowsAffected()
 	if err != nil {
 
-		log.Fatalf("db exec error %v", err)
-		return err
-	}
-	return err
+		if errors.Is(err, sql.ErrNoRows) {
 
+			return ierrors.NewNotFoundError(ierrors.MSGNotFound, err)
+
+		}
+
+	}
+	return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 }
 func (authRepo *AuthRepository) StoreRefreshTokens(userID int, refreshToken string, expiresAt time.Time, clientType string) (sql.Result, error) {
 
@@ -112,9 +137,23 @@ func (authRepo *AuthRepository) StoreRefreshTokens(userID int, refreshToken stri
 	query := `INSERT INTO refresh_tokens (user_id,token_text,expires_at,client_type) VALUES($1,$2,$3,$4)`
 
 	result, err := authRepo.DB.Exec(query, userID, refreshToken, expiresAt, clientType)
+	var pgErr *pgconn.PgError
 	if err != nil {
 
-		return nil, err
+		if errors.As(err, &pgErr) {
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return nil, ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 	}
 
 	return result, nil
@@ -131,17 +170,36 @@ func (authRepo *AuthRepository) RevokeRefreshToken(refreshToken string) error {
 	result, err := authRepo.DB.Exec(query, refreshToken)
 
 	rowsAffected, err := result.RowsAffected()
+	var pgErr *pgconn.PgError
 	if err != nil {
-		return err
+
+		if errors.As(err, &pgErr) {
+
+			return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 	}
 
 	// detect reuse attempt
 	if rowsAffected == 0 {
 		// token was already revoked or doesn't exist
-		log.Printf("refresh token already revoked or not found")
+		if errors.Is(err, sql.ErrNoRows) {
+
+			return ierrors.NewNotFoundError(ierrors.MSGNotFound, err)
+		}
+
 	}
 
-	return err
+	return nil
 
 }
 
@@ -155,8 +213,19 @@ func (authRepo *AuthRepository) GetRefreshToken(refreshToken string) (*model.Ref
 	query := `SELECT * FROM refresh_tokens where token_text = $1;`
 
 	if err := authRepo.DB.QueryRow(query, hashedrefreshToken).Scan(&refreshRecord); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
 
-		return nil, err
+			return nil, ierrors.NewNotFoundError(ierrors.MSGNotFound, err)
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return nil, ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 	}
 
 	return &refreshRecord, nil
@@ -175,10 +244,20 @@ func (authRepo *AuthRepository) GetUserByID(ID int) (*model.User, error) {
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+
+			return nil, ierrors.NewNotFoundError(ierrors.MSGNotFound, err)
 		}
-		return nil, err
+
+		if errors.Is(err, context.Canceled) {
+
+			return nil, ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 	}
 	return &user, nil
 }

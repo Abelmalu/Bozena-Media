@@ -13,6 +13,7 @@ MSGUsenameAlreadyExists ErrorMessage = "username already exists"
 MSGEmailAlreadyExists ErrorMessage = "email already exists"
 MSGSomethingWentWrong  ErrorMessage = "something went wrong"
 MSGDatabaseError       ErrorMessage = "database error"
+MSGNotFound            ErrorMessage = "not found"
 
 
 
