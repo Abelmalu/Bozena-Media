@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -37,7 +36,6 @@ func NewPostHandler(pc PostService,logger *platform.Logger) *PostHandler {
 
 func addUserIDToContext(c *gin.Context)(context.Context,error){
 	userIDValue, exists := c.Get("userID")
-	fmt.Println("here in the add user context")
 
 	if !exists {
 

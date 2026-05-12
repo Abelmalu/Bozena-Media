@@ -18,7 +18,7 @@ func InitRoute(router *gin.Engine, handler Handler) {
 	routing.InitAuthRoute(authRouter,&handler.authHandler)
 
 	//post routes initialization
-	postRouter := router.Group("/api/posts")
+	postRouter := router.Group("api/posts")
 	routing.InitPostRoute(postRouter,&handler.postHandler)
 
 

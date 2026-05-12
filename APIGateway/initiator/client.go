@@ -37,8 +37,7 @@ func NewClient(logger *platform.Logger) *Client{
 
 	}
 
-	defer postConn.Close()
-	// defer authConn.Close()
+	
 
 	
 
