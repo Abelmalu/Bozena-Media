@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
 
+	ierrors "github.com/abelmalu/golang-posts/post/internal/errors"
 	"github.com/abelmalu/golang-posts/post/internal/models"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type PostRepository struct {
@@ -28,10 +29,24 @@ func (PostRepository *PostRepository) CreatePost(ctx context.Context, post *mode
 	err := PostRepository.DB.QueryRowContext(ctx, query, post.Title, post.Content, post.UserID).Scan(
 		&post.ID,
 	)
+	var appErr *pgconn.PgError
 	if err != nil {
 
-		log.Printf("Error while inserting a post %v", err)
-		return nil, errors.New("Failed to create a post")
+		if errors.As(err, &appErr) {
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return nil, ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
 	}
 
 	return post, nil
@@ -42,44 +57,64 @@ func (pr *PostRepository) UpdatePost(ctx context.Context, ID int, title string, 
 
 	query := `UPDATE posts SET title=$1, content=$2 WHERE id=$3  RETURNING id, title, content`
 
-	err := pr.DB.QueryRowContext(ctx,query, title, content, ID).
+	err := pr.DB.QueryRowContext(ctx, query, title, content, ID).
 		Scan(&post.ID, &post.Title, &post.Content)
 
+	var appErr *pgconn.PgError
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.New("post not found")
+
+		if errors.As(err, &appErr) {
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 		}
-		return nil, err
+		if errors.Is(err, context.Canceled) {
+
+			return nil, ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
 	}
 
 	return &post, nil
 }
-func (pr *PostRepository) DeletePost(ctx context.Context,postID int)(error) {
+func (pr *PostRepository) DeletePost(ctx context.Context, postID int) error {
 
 	query := `DELETE FROM posts WHERE id=$1`
 
-	result,err := pr.DB.ExecContext(ctx,query,postID)
-	
-	if err != nil{
-		log.Printf("DB erro %v", err)
-		
-		return nil
- 
+	result, err := pr.DB.ExecContext(ctx, query, postID)
+
+	var appErr *pgconn.PgError
+	if err != nil {
+
+		if errors.As(err, &appErr) {
+
+			return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
 	}
-	rowsAffected,err := result.RowsAffected()
-	if err != nil{
-
-		log.Printf("DB erro %v", err)
-		
-		return nil
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 	}
 
-	if rowsAffected == 0{
-		log.Printf("DB erro rows affected came zero")
-	
-		return err
-
+	if rowsAffected == 0 {
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 	}
 	return nil
@@ -92,9 +127,25 @@ func (PostRepository *PostRepository) ListPosts(ctx context.Context) ([]models.P
 	rows, err := PostRepository.DB.Query(query)
 	if err != nil {
 
-		log.Printf("error during db query %v", err)
+		var appErr *pgconn.PgError
+		if err != nil {
 
-		return nil, err
+			if errors.As(err, &appErr) {
+
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			}
+			if errors.Is(err, context.Canceled) {
+
+				return nil, ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+			}
+			if errors.Is(err, context.DeadlineExceeded) {
+
+				return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+			}
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+		}
 	}
 	defer rows.Close()
 
@@ -107,7 +158,8 @@ func (PostRepository *PostRepository) ListPosts(ctx context.Context) ([]models.P
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
 	}
 
 	return posts, nil

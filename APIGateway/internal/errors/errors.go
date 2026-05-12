@@ -22,7 +22,7 @@ const (
 type AppError struct {
 	Type      ErrorType              `json:"type"`
 	Code      string                 `json:"code,omitempty"`
-	Message   ErrorMessage                 `json:"message"`
+	Message   ErrorMessage           `json:"message"`
 	Cause     error                  `json:"-"`
 	Details   map[string]interface{} `json:"details,omitempty"`
 	RequestID string                 `json:"request_id,omitempty"`

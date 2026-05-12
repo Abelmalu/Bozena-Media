@@ -83,7 +83,7 @@ func (authrepo *AuthRepository) Login(ctx context.Context, userName, password st
 
 		if errors.Is(err, sql.ErrNoRows) {
 
-			return nil, ierrors.NewNotFoundError(ierrors.MSGNotFound, err)
+			return nil, ierrors.NewNotFoundError(ierrors.MSGUserNotFound, err)
 
 		}
 

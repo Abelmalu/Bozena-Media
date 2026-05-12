@@ -76,10 +76,26 @@ func (authHandler *AuthHandler) Register(ctx context.Context,req *pb.RegisterReq
 
 func (authHandler *AuthHandler) Login(ctx context.Context, req  *pb.LoginRequest) (*pb.LoginResponse, error){
 	user,tokens, err := authHandler.service.Login(ctx,req.Username,req.Password)
-	if err != nil{
+		var appErr *ierrors.AppError
+	if errors.As(err, &appErr) {
+      switch appErr.Type {
+      case ierrors.TypeValidation:
+          return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+      case ierrors.TypeConflict:
+          return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+      case ierrors.TypeUnauthorized:
+          return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+      case ierrors.TypeNotFound:
+          return nil, status.Error(codes.NotFound, string(appErr.Message))
+      case ierrors.TypeTimeout:
+          return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+	  case ierrors.TypeCancelled:
+		  return nil,status.Error(codes.Canceled, string(appErr.Message))
+      default:
+          return nil, status.Error(codes.Internal, "internal error")
+      }
 
-		return  nil, status.Error(codes.Canceled, "user already exists") 
-	}
+  }
 
 	return &pb.LoginResponse{
 		Id:int64(user.ID),
@@ -94,18 +110,38 @@ func (authHandler *AuthHandler)Logout(ctx context.Context, req *emptypb.Empty) (
 	md, exists := metadata.FromIncomingContext(ctx)
 
 	if !exists {
-		return nil, errors.New("Unknown device type")
+		return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
 	}
 	values := md.Get("refreshToken")
 	if len(values) > 0 {
 		refreshToken = values[0]
 	} else {
 
-		return nil, errors.New("Unknown device type")
+		return nil, status.Error(codes.Unauthenticated, "You are not authenticated")
 
 	}
 
-	authHandler.service.Logout(ctx,refreshToken)
+	err := authHandler.service.Logout(ctx,refreshToken)
+
+	var appErr *ierrors.AppError
+	if errors.As(err, &appErr) {
+      switch appErr.Type {
+      case ierrors.TypeValidation:
+          return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+      case ierrors.TypeConflict:
+          return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+      case ierrors.TypeUnauthorized:
+          return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+      case ierrors.TypeNotFound:
+          return nil, status.Error(codes.NotFound, string(appErr.Message))
+      case ierrors.TypeTimeout:
+          return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+	  case ierrors.TypeCancelled:
+		  return nil,status.Error(codes.Canceled, string(appErr.Message))
+      default:
+          return nil, status.Error(codes.Internal, "internal error")
+      }
+  }
 
 	return &pb.LogoutResponse{
 		Message: "Successfully Logged Out!",
@@ -116,25 +152,32 @@ func (authHandler *AuthHandler)Logout(ctx context.Context, req *emptypb.Empty) (
 
 func (authHandler *AuthHandler) RefreshHandler(ctx context.Context, req *pb.RefreshRequest) (*pb.RefreshResponse, error){
 
-	// var clientType string
-	// md, exists := metadata.FromIncomingContext(ctx)
-
-	// if !exists {
-	// 	return nil, errors.New("Unknown device type")
-	// }
-	// values := md.Get("refreshToken")
-	// if len(values) > 0 {
-	// 	clientType = values[0]
-	// } else {
-
-	// 	return nil, errors.New("Unknown device type")
-
-	// }
 
 	tokens,err := authHandler.service.RefreshHandler(ctx,req.RefreshToken)
 	if err != nil {
 
-		return nil,err
+		var appErr *ierrors.AppError
+
+		if errors.As(err,&appErr){
+			 switch appErr.Type {
+      case ierrors.TypeValidation:
+          return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+      case ierrors.TypeConflict:
+          return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+      case ierrors.TypeUnauthorized:
+          return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+      case ierrors.TypeNotFound:
+          return nil, status.Error(codes.NotFound, string(appErr.Message))
+      case ierrors.TypeTimeout:
+          return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+	  case ierrors.TypeCancelled:
+		  return nil,status.Error(codes.Canceled, string(appErr.Message))
+      default:
+          return nil, status.Error(codes.Internal, "internal error")
+      }
+
+
+		}
 	}
 
 	return &pb.RefreshResponse{

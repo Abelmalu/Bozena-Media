@@ -38,7 +38,6 @@ func (e *AppError) Error() string {
 func (e *AppError) Unwrap() error {
 	return e.Cause
 }
-
 func NewAppError(errType ErrorType, message ErrorMessage, cause error) *AppError {
 	return &AppError{
 		Type:    errType,

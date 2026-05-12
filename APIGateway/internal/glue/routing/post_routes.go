@@ -15,7 +15,9 @@ func InitPostRoute(router *gin.RouterGroup, handler *handler.PostHandler) {
 			Method:      http.MethodPost,
 			Path:        "/",
 			Handler:     handler.CreatePost,
-			Middlewares: []func() gin.HandlerFunc{},
+			Middlewares: [
+				
+			]func() gin.HandlerFunc{middleware.AuthMiddleware},
 		},
 		{
 			Method:      http.MethodGet,

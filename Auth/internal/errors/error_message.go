@@ -18,8 +18,7 @@ MSGUnkownDevice		   ErrorMessage = "Unknown device type"
 MSGFailedToValidateToken ErrorMessage = "unexpected signing method"
 MSGRefreshTokenIsRequired ErrorMessage = "refresh token is required"
 MSGUnauthorizedAccess ErrorMessage = "Unauthorized"
-
-
+MSGUserNotFound 	  ErrorMessage = "Invalid username or password"
 
 
 
