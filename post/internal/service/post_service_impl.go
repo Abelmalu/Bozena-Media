@@ -2,10 +2,9 @@ package service
 
 import (
 	"context"
-	"errors"
-	"log"
 
 	"github.com/abelmalu/golang-posts/post/internal/core"
+	ierrors "github.com/abelmalu/golang-posts/post/internal/errors"
 	"github.com/abelmalu/golang-posts/post/internal/models"
 )
 
@@ -13,71 +12,63 @@ type PostService struct {
 	repo core.PostRepository
 }
 
-
-func NewPostService(repository core.PostRepository) *PostService{
-
+func NewPostService(repository core.PostRepository) *PostService {
 
 	return &PostService{
-		repo:repository,
+		repo: repository,
 	}
 }
 
+func (postService *PostService) CreatePost(ctx context.Context, post *models.Post) (*models.Post, error) {
 
-func (postService *PostService) CreatePost(ctx context.Context,post *models.Post)(*models.Post,error){
+	createdPost, err := postService.repo.CreatePost(ctx, post)
 
-	createdPost,err := postService.repo.CreatePost(ctx,post)
+	if err != nil {
 
-	if err != nil{
-
-		return nil,err
+		return nil, err
 	}
 
-	return createdPost,nil
-
-	
-}
-func (postService *PostService) UpdatePost(ctx context.Context,postID int,title,content string) (*models.Post, error){
-
-	if postID <= 0{
-
-		return nil, errors.New("post not found")
-	}
-
-	updatedPost,err := postService.repo.UpdatePost(ctx,postID,title,content)
-	if err != nil{
-
-		return nil,err
-	}
-
-	return updatedPost,nil
+	return createdPost, nil
 
 }
-func (postService *PostService) DeletePost(ctx context.Context,postID int) error{
+func (postService *PostService) UpdatePost(ctx context.Context, postID int, title, content string) (*models.Post, error) {
 
-	
-	if postID <= 0{
+	if postID <= 0 {
 
-		return  errors.New("post not found")
+		return nil, ierrors.NewValidationError(ierrors.MSGPathParamError, nil, nil)
 	}
-	if err := postService.repo.DeletePost(ctx,postID); err != nil{
+
+	updatedPost, err := postService.repo.UpdatePost(ctx, postID, title, content)
+	if err != nil {
+
+		return nil, err
+	}
+
+	return updatedPost, nil
+
+}
+func (postService *PostService) DeletePost(ctx context.Context, postID int) error {
+
+	if postID <= 0 {
+
+		return ierrors.NewValidationError(ierrors.MSGPathParamError, nil, nil)
+
+	}
+	if err := postService.repo.DeletePost(ctx, postID); err != nil {
 
 		return err
 	}
 	return nil
 }
-func (postService *PostService) ListPosts(ctx context.Context)([]models.Post,error){
-   
-	posts,err := postService.repo.ListPosts(ctx)
-	
+func (postService *PostService) ListPosts(ctx context.Context) ([]models.Post, error) {
 
-	if err != nil{
+	posts, err := postService.repo.ListPosts(ctx)
 
-		log.Printf("the error is %v",err)
-		return nil,err
+	if err != nil {
+
+		return nil, err
 	}
 
-	return posts,nil
-	
-}
+	return posts, nil
 
-	
+}

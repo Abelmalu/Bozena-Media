@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
-
 	"github.com/abelmalu/golang-posts/Auth/internal/core"
 	ierrors "github.com/abelmalu/golang-posts/Auth/internal/errors"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
@@ -90,6 +90,23 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 		return nil, nil, ierrors.NewValidationError(ierrors.MSGUsernameIsRequired, nil, nil)
 
 	}
+	
+	//checking if the user canceled the request or the reques timeouts
+	if err := ctx.Err(); err != nil {
+
+		switch{
+		case errors.Is(err,context.Canceled):
+
+			return nil, nil,ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+		
+		case errors.Is(err,context.DeadlineExceeded):
+
+			return nil, nil,ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		
+		}
+		
+		
+	}
 
 	if password == "" {
 
@@ -142,8 +159,7 @@ func (authSer *AuthService) Logout(ctx context.Context, refreshToken string) err
 
 	if err != nil {
 
-				return ierrors.NewUnauthorizedError(ierrors.MSGUnauthorizedAccess,nil)
-
+		return ierrors.NewUnauthorizedError(ierrors.MSGUnauthorizedAccess, nil)
 
 	}
 
@@ -211,9 +227,9 @@ func (authSer *AuthService) RefreshHandler(ctx context.Context, refreshToken str
 
 	// Generate new tokens Rotate refresh token (issue a new one)
 	tokens, err := authSer.issueTokens(userID, clientType, user.Role)
-	if err != nil{
+	if err != nil {
 
-		return nil,err
+		return nil, err
 	}
 
 	// store the refresh token
@@ -221,7 +237,7 @@ func (authSer *AuthService) RefreshHandler(ctx context.Context, refreshToken str
 	_, err = authSer.repo.StoreRefreshTokens(userID, tokens.RefreshToken, newExpireTime, clientTypeStr)
 	if err != nil {
 
-		return nil,err
+		return nil, err
 
 	}
 

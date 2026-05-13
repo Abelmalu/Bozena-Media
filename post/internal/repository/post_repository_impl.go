@@ -125,7 +125,7 @@ func (PostRepository *PostRepository) ListPosts(ctx context.Context) ([]models.P
 	query := `SELECT * FROM posts`
 
 	rows, err := PostRepository.DB.Query(query)
-	if err != nil {
+
 
 		var appErr *pgconn.PgError
 		if err != nil {
@@ -146,7 +146,7 @@ func (PostRepository *PostRepository) ListPosts(ctx context.Context) ([]models.P
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 		}
-	}
+	
 	defer rows.Close()
 
 	for rows.Next() {

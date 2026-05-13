@@ -103,7 +103,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 	resp, err := ah.client.Register(ctx, req.UserName, req.Name, req.Email, req.Password)
 	if err != nil {
 		
-		ah.logger.Error("GRPC Error ",zap.Error(err))
+		ah.logger.Error("GRPC Error",zap.Error(err))
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
