@@ -22,9 +22,12 @@ type AuthHandler struct {
 	logger  *platform.Logger
 }
 
-func NewAuthHandler(authServ core.AuthService) *AuthHandler {
+func NewAuthHandler(authServ core.AuthService, logger *platform.Logger) *AuthHandler {
 
-	return &AuthHandler{service: authServ}
+	return &AuthHandler{
+		service: authServ,
+		logger:  logger,
+	}
 
 }
 
@@ -38,36 +41,39 @@ func (authHandler *AuthHandler) Register(ctx context.Context, req *pb.RegisterRe
 	}
 
 	createdUser, tokens, err := authHandler.service.Register(ctx, &user)
-	authHandler.logger.Error("[Auth Service]",zap.Error(err))
+	if err != nil {
+		authHandler.logger.Error("[Auth Service]", zap.Error(err))
 
-	var appErr *ierrors.AppError
-	if errors.As(err, &appErr) {
-		switch appErr.Type {
-		case ierrors.TypeValidation:
-			return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
-		case ierrors.TypeConflict:
-			return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
-		case ierrors.TypeUnauthorized:
-			return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
-		case ierrors.TypeNotFound:
-			return nil, status.Error(codes.NotFound, string(appErr.Message))
-		case ierrors.TypeTimeout:
-			return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
-		case ierrors.TypeCancelled:
-			return nil, status.Error(codes.Canceled, string(appErr.Message))
-		default:
-			return nil, status.Error(codes.Internal, "internal error")
+		var appErr *ierrors.AppError
+		if errors.As(err, &appErr) {
+			switch appErr.Type {
+			case ierrors.TypeValidation:
+				return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+			case ierrors.TypeConflict:
+				return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+			case ierrors.TypeUnauthorized:
+				return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+			case ierrors.TypeNotFound:
+				return nil, status.Error(codes.NotFound, string(appErr.Message))
+			case ierrors.TypeTimeout:
+				return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+			case ierrors.TypeCancelled:
+				return nil, status.Error(codes.Canceled, string(appErr.Message))
+			default:
+				return nil, status.Error(codes.Internal, "internal error")
+			}
 		}
-	}
 
 		if errors.Is(err, context.Canceled) {
 
-		return nil, status.Error(codes.Canceled, "Request canceled")
-	}
+			return nil, status.Error(codes.Canceled, "Request canceled")
+		}
 
-	if errors.Is(err, context.DeadlineExceeded) {
+		if errors.Is(err, context.DeadlineExceeded) {
 
-		return nil, status.Error(codes.DeadlineExceeded, "Request timed out")
+			return nil, status.Error(codes.DeadlineExceeded, "Request timed out")
+		}
+
 	}
 
 	return &pb.RegisterResponse{
@@ -82,36 +88,40 @@ func (authHandler *AuthHandler) Register(ctx context.Context, req *pb.RegisterRe
 
 func (authHandler *AuthHandler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 	user, tokens, err := authHandler.service.Login(ctx, req.Username, req.Password)
-	authHandler.logger.Error("[Auth Service]",zap.Error(err))
+	if err != nil {
 
-	var appErr *ierrors.AppError
-	if errors.As(err, &appErr) {
-		switch appErr.Type {
-		case ierrors.TypeValidation:
-			return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
-		case ierrors.TypeConflict:
-			return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
-		case ierrors.TypeUnauthorized:
-			return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
-		case ierrors.TypeNotFound:
-			return nil, status.Error(codes.NotFound, string(appErr.Message))
-		case ierrors.TypeTimeout:
-			return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
-		case ierrors.TypeCancelled:
-			return nil, status.Error(codes.Canceled, string(appErr.Message))
-		default:
-			return nil, status.Error(codes.Internal, "internal error")
+		authHandler.logger.Error("[Auth Service]", zap.Error(err))
+
+		var appErr *ierrors.AppError
+		if errors.As(err, &appErr) {
+			switch appErr.Type {
+			case ierrors.TypeValidation:
+				return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+			case ierrors.TypeConflict:
+				return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+			case ierrors.TypeUnauthorized:
+				return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+			case ierrors.TypeNotFound:
+				return nil, status.Error(codes.NotFound, string(appErr.Message))
+			case ierrors.TypeTimeout:
+				return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+			case ierrors.TypeCancelled:
+				return nil, status.Error(codes.Canceled, string(appErr.Message))
+			default:
+				return nil, status.Error(codes.Internal, "internal error")
+			}
+
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return nil, status.Error(codes.Canceled, "Request canceled")
 		}
 
-	}
-	if errors.Is(err, context.Canceled) {
+		if errors.Is(err, context.DeadlineExceeded) {
 
-		return nil, status.Error(codes.Canceled, "Request canceled")
-	}
+			return nil, status.Error(codes.DeadlineExceeded, "Request timed out")
+		}
 
-	if errors.Is(err, context.DeadlineExceeded) {
-
-		return nil, status.Error(codes.DeadlineExceeded, "Request timed out")
 	}
 
 	return &pb.LoginResponse{
@@ -138,54 +148,12 @@ func (authHandler *AuthHandler) Logout(ctx context.Context, req *emptypb.Empty) 
 	}
 
 	err := authHandler.service.Logout(ctx, refreshToken)
-	authHandler.logger.Error("[Auth Service]",zap.Error(err))
-
-
-	var appErr *ierrors.AppError
-	if errors.As(err, &appErr) {
-		switch appErr.Type {
-		case ierrors.TypeValidation:
-			return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
-		case ierrors.TypeConflict:
-			return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
-		case ierrors.TypeUnauthorized:
-			return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
-		case ierrors.TypeNotFound:
-			return nil, status.Error(codes.NotFound, string(appErr.Message))
-		case ierrors.TypeTimeout:
-			return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
-		case ierrors.TypeCancelled:
-			return nil, status.Error(codes.Canceled, string(appErr.Message))
-		default:
-			return nil, status.Error(codes.Internal, "internal error")
-		}
-	}
-		if errors.Is(err, context.Canceled) {
-
-		return nil, status.Error(codes.Canceled, "Request canceled")
-	}
-
-	if errors.Is(err, context.DeadlineExceeded) {
-
-		return nil, status.Error(codes.DeadlineExceeded, "Request timed out")
-	}
-
-	return &pb.LogoutResponse{
-		Message: "Successfully Logged Out!",
-	}, nil
-
-}
-
-func (authHandler *AuthHandler) RefreshHandler(ctx context.Context, req *pb.RefreshRequest) (*pb.RefreshResponse, error) {
-
-	tokens, err := authHandler.service.RefreshHandler(ctx, req.RefreshToken)
-	
-	authHandler.logger.Error("[Auth Service]",zap.Error(err))
 
 	if err != nil {
 
-		var appErr *ierrors.AppError
+		authHandler.logger.Error("[Auth Service]", zap.Error(err))
 
+		var appErr *ierrors.AppError
 		if errors.As(err, &appErr) {
 			switch appErr.Type {
 			case ierrors.TypeValidation:
@@ -203,18 +171,67 @@ func (authHandler *AuthHandler) RefreshHandler(ctx context.Context, req *pb.Refr
 			default:
 				return nil, status.Error(codes.Internal, "internal error")
 			}
-
 		}
+		if errors.Is(err, context.Canceled) {
+
+			return nil, status.Error(codes.Canceled, "Request canceled")
+		}
+
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, status.Error(codes.DeadlineExceeded, "Request timed out")
+		}
+
 	}
+
+	return &pb.LogoutResponse{
+		Message: "Successfully Logged Out!",
+	}, nil
+
+}
+
+func (authHandler *AuthHandler) RefreshHandler(ctx context.Context, req *pb.RefreshRequest) (*pb.RefreshResponse, error) {
+
+	tokens, err := authHandler.service.RefreshHandler(ctx, req.RefreshToken)
+
+	if err != nil {
+
+		authHandler.logger.Error("[Auth Service]", zap.Error(err))
+
+		if err != nil {
+
+			var appErr *ierrors.AppError
+
+			if errors.As(err, &appErr) {
+				switch appErr.Type {
+				case ierrors.TypeValidation:
+					return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+				case ierrors.TypeConflict:
+					return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+				case ierrors.TypeUnauthorized:
+					return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+				case ierrors.TypeNotFound:
+					return nil, status.Error(codes.NotFound, string(appErr.Message))
+				case ierrors.TypeTimeout:
+					return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+				case ierrors.TypeCancelled:
+					return nil, status.Error(codes.Canceled, string(appErr.Message))
+				default:
+					return nil, status.Error(codes.Internal, "internal error")
+				}
+
+			}
+		}
 
 		if errors.Is(err, context.Canceled) {
 
-		return nil, status.Error(codes.Canceled, "Request canceled")
-	}
+			return nil, status.Error(codes.Canceled, "Request canceled")
+		}
 
-	if errors.Is(err, context.DeadlineExceeded) {
+		if errors.Is(err, context.DeadlineExceeded) {
 
-		return nil, status.Error(codes.DeadlineExceeded, "Request timed out")
+			return nil, status.Error(codes.DeadlineExceeded, "Request timed out")
+		}
 	}
 
 	return &pb.RefreshResponse{

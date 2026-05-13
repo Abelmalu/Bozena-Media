@@ -28,6 +28,7 @@ func InitZapLogger() *Logger {
 		//logger, err = zap.NewDevelopment()
 		config := zap.NewDevelopmentConfig() 
 		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		config.DisableStacktrace = true 
 
 		logger, err = config.Build()
 		

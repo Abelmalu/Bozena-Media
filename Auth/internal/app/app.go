@@ -12,6 +12,7 @@ import (
 	"github.com/abelmalu/golang-posts/Auth/internal/repository"
 	"github.com/abelmalu/golang-posts/Auth/internal/service"
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
+	"github.com/abelmalu/golang-posts/platform"
 	_ "github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"google.golang.org/grpc"
@@ -83,11 +84,13 @@ func (app *App) Run() {
 
 	lis, _ := net.Listen("tcp", ":50052")
 	s := grpc.NewServer()
+
+	logger := platform.InitZapLogger()
 	
     // Dependency Injection for each layer one by one 
 	authRepo := repository.NewAuthRepository(app.DB)
 	authService := service.NewAuthService(authRepo)
-	authHandler := handler.NewAuthHandler(authService)
+	authHandler := handler.NewAuthHandler(authService,logger)
 
 	
 	pb.RegisterAuthServiceServer(s, authHandler)
