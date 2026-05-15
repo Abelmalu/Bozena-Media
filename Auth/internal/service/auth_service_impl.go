@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"time"
+
 	"github.com/abelmalu/golang-posts/Auth/internal/core"
 	ierrors "github.com/abelmalu/golang-posts/Auth/internal/errors"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
@@ -90,22 +91,21 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 		return nil, nil, ierrors.NewValidationError(ierrors.MSGUsernameIsRequired, nil, nil)
 
 	}
-	
+
 	//checking if the user canceled the request or the reques timeouts
 	if err := ctx.Err(); err != nil {
 
-		switch{
-		case errors.Is(err,context.Canceled):
+		switch {
+		case errors.Is(err, context.Canceled):
 
-			return nil, nil,ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
-		
-		case errors.Is(err,context.DeadlineExceeded):
+			return nil, nil, ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
 
-			return nil, nil,ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
-		
+		case errors.Is(err, context.DeadlineExceeded):
+
+			return nil, nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+
 		}
-		
-		
+
 	}
 
 	if password == "" {

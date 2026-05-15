@@ -38,7 +38,7 @@ func (PostRepository *PostRepository) CreatePost(ctx context.Context, post *mode
 		}
 		if errors.Is(err, context.Canceled) {
 
-			return nil, ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
 		}
 		if errors.Is(err, context.DeadlineExceeded) {
 
@@ -69,7 +69,7 @@ func (pr *PostRepository) UpdatePost(ctx context.Context, ID int, title string, 
 		}
 		if errors.Is(err, context.Canceled) {
 
-			return nil, ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
 		}
 		if errors.Is(err, context.DeadlineExceeded) {
 
@@ -97,7 +97,7 @@ func (pr *PostRepository) DeletePost(ctx context.Context, postID int) error {
 		}
 		if errors.Is(err, context.Canceled) {
 
-			return ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+			return ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
 		}
 		if errors.Is(err, context.DeadlineExceeded) {
 
@@ -126,27 +126,26 @@ func (PostRepository *PostRepository) ListPosts(ctx context.Context) ([]models.P
 
 	rows, err := PostRepository.DB.Query(query)
 
+	var appErr *pgconn.PgError
+	if err != nil {
 
-		var appErr *pgconn.PgError
-		if err != nil {
-
-			if errors.As(err, &appErr) {
-
-				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
-			}
-			if errors.Is(err, context.Canceled) {
-
-				return nil, ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
-			}
-			if errors.Is(err, context.DeadlineExceeded) {
-
-				return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
-			}
+		if errors.As(err, &appErr) {
 
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
-
 		}
-	
+		if errors.Is(err, context.Canceled) {
+
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+	}
+
 	defer rows.Close()
 
 	for rows.Next() {

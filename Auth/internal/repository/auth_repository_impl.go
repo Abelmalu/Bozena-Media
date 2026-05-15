@@ -58,7 +58,7 @@ func (authRepo *AuthRepository) Register(ctx context.Context, user *model.User) 
 
 		}
 		if errors.Is(err, context.Canceled) {
-			return nil, ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
 
 		}
 
@@ -114,7 +114,7 @@ func (authRepo *AuthRepository) Logout(ctx context.Context, tokenID string) erro
 	}
 	if errors.Is(err, context.Canceled) {
 
-		return ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+		return ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
 	}
 
 	_, err = result.RowsAffected()
@@ -146,7 +146,7 @@ func (authRepo *AuthRepository) StoreRefreshTokens(userID int, refreshToken stri
 		}
 		if errors.Is(err, context.Canceled) {
 
-			return nil, ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
 		}
 		if errors.Is(err, context.DeadlineExceeded) {
 
@@ -179,7 +179,7 @@ func (authRepo *AuthRepository) RevokeRefreshToken(refreshToken string) error {
 		}
 		if errors.Is(err, context.Canceled) {
 
-			return ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+			return ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
 		}
 		if errors.Is(err, context.DeadlineExceeded) {
 
@@ -219,7 +219,7 @@ func (authRepo *AuthRepository) GetRefreshToken(refreshToken string) (*model.Ref
 		}
 		if errors.Is(err, context.Canceled) {
 
-			return nil, ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
 		}
 		if errors.Is(err, context.DeadlineExceeded) {
 
@@ -251,7 +251,7 @@ func (authRepo *AuthRepository) GetUserByID(ID int) (*model.User, error) {
 
 		if errors.Is(err, context.Canceled) {
 
-			return nil, ierrors.NewCancellationError(ierrors.MSGRequestCancelled, err)
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
 		}
 		if errors.Is(err, context.DeadlineExceeded) {
 

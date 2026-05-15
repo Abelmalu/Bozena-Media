@@ -52,7 +52,7 @@ func NewValidationError(message ErrorMessage, details map[string]interface{}, ca
 		Message: message,
 		Details: details,
 		Cause:   cause,
-		Code:"VALIDATION_ERROR",
+		Code:    "VALIDATION_ERROR",
 	}
 }
 
@@ -72,12 +72,12 @@ func NewConflictError(message ErrorMessage, cause error) *AppError {
 	}
 }
 
-func NewUnauthorizedError(message ErrorMessage,cause error)  *AppError{
+func NewUnauthorizedError(message ErrorMessage, cause error) *AppError {
 
 	return &AppError{
-		Type:TypeUnauthorized,
+		Type:    TypeUnauthorized,
 		Message: message,
-		Cause: cause,
+		Cause:   cause,
 	}
 }
 
@@ -89,34 +89,31 @@ func NewInternalError(message ErrorMessage, cause error) *AppError {
 	}
 }
 
-func NewTimeoutError(message ErrorMessage,cause error) *AppError{
+func NewTimeoutError(message ErrorMessage, cause error) *AppError {
 
 	return &AppError{
-		Type: TypeTimeout,
+		Type:    TypeTimeout,
 		Message: message,
-		Cause: cause,
+		Cause:   cause,
 	}
 }
 
-func NewCancellationError(message ErrorMessage,cause error) *AppError{
+func NewCancelationError(message ErrorMessage, cause error) *AppError {
 
 	return &AppError{
-		Type:TypeCancelled,
+		Type:    TypeCancelled,
 		Message: message,
-		Cause: cause,
-
-
+		Cause:   cause,
 	}
 
 }
 
-func NewDatabaseError(message ErrorMessage,cause error) (*AppError){
-
+func NewDatabaseError(message ErrorMessage, cause error) *AppError {
 
 	return &AppError{
-		Type:TypeDatabase,
+		Type:    TypeDatabase,
 		Message: message,
-		Cause: cause,
+		Cause:   cause,
 	}
 }
 
@@ -138,5 +135,3 @@ func (e *AppError) HTTPStatus() int {
 		return http.StatusInternalServerError
 	}
 }
-
-

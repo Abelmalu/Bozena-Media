@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type ErrorType string 
+type ErrorType string
 
 const (
 	TypeValidation   ErrorType = "VALIDATION"
@@ -23,13 +23,12 @@ const (
 )
 
 type AppError struct {
-  Type ErrorType  `json:"type"`
-  Code string 	  `json:"code"`
-  Message ErrorMessage `json:"message"`
-  Detail  map[string]interface{} `json:"detail,omitempty"`
-  RequestID string `json:"request_id"`
-  Cause error `json:"-"`
-  
+	Type      ErrorType              `json:"type"`
+	Code      string                 `json:"code"`
+	Message   ErrorMessage           `json:"message"`
+	Detail    map[string]interface{} `json:"detail,omitempty"`
+	RequestID string                 `json:"request_id"`
+	Cause     error                  `json:"-"`
 }
 
 func (e *AppError) Error() string {
@@ -39,13 +38,11 @@ func (e *AppError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Type, e.Message)
 }
 
-func (e *AppError) UnWrap()error{
+func (e *AppError) UnWrap() error {
 
 	return e.Cause
 
-
 }
-
 
 func NewAppError(errType ErrorType, message ErrorMessage, cause error) *AppError {
 	return &AppError{
@@ -55,14 +52,12 @@ func NewAppError(errType ErrorType, message ErrorMessage, cause error) *AppError
 	}
 }
 
-
-
 func NewValidationError(message ErrorMessage, details map[string]interface{}, cause error) *AppError {
 	return &AppError{
 		Type:    TypeValidation,
 		Message: message,
 		Cause:   cause,
-		Code:"VALIDATION_ERROR",
+		Code:    "VALIDATION_ERROR",
 	}
 }
 
@@ -90,34 +85,31 @@ func NewInternalError(message ErrorMessage, cause error) *AppError {
 	}
 }
 
-func NewTimeoutError(message ErrorMessage,cause error) *AppError{
+func NewTimeoutError(message ErrorMessage, cause error) *AppError {
 
 	return &AppError{
-		Type: TypeTimeout,
+		Type:    TypeTimeout,
 		Message: message,
-		Cause: cause,
+		Cause:   cause,
 	}
 }
 
-func NewCancellationError(message ErrorMessage,cause error) *AppError{
+func NewCancelationError(message ErrorMessage, cause error) *AppError {
 
 	return &AppError{
-		Type:TypeCancelled,
+		Type:    TypeCancelled,
 		Message: message,
-		Cause: cause,
-
-
+		Cause:   cause,
 	}
 
 }
 
-func NewDatabaseError(message ErrorMessage,cause error) (*AppError){
-
+func NewDatabaseError(message ErrorMessage, cause error) *AppError {
 
 	return &AppError{
-		Type:TypeDatabase,
+		Type:    TypeDatabase,
 		Message: message,
-		Cause: cause,
+		Cause:   cause,
 	}
 }
 
@@ -153,28 +145,28 @@ func FromGRPC(err error) *AppError {
 	switch st.Code() {
 	case codes.InvalidArgument:
 		errStr := st.Message()
-	    var MSGInvalidArgument ErrorMessage = ErrorMessage(errStr)
+		var MSGInvalidArgument ErrorMessage = ErrorMessage(errStr)
 		return NewValidationError(MSGInvalidArgument, nil, err)
 	case codes.NotFound:
 		errStr := st.Message()
-        var MSGNotFound ErrorMessage = ErrorMessage(errStr)
+		var MSGNotFound ErrorMessage = ErrorMessage(errStr)
 		return NewNotFoundError(MSGNotFound, err)
 	case codes.AlreadyExists:
 		errStr := st.Message()
-        var MSGAreadyExists ErrorMessage = ErrorMessage(errStr)
-	
+		var MSGAreadyExists ErrorMessage = ErrorMessage(errStr)
+
 		return NewConflictError(MSGAreadyExists, err)
 	case codes.Unauthenticated:
 		errStr := st.Message()
-        var MSGUnauthenticated ErrorMessage = ErrorMessage(errStr)
-		return NewAppError(TypeUnauthorized,MSGUnauthenticated , err)
+		var MSGUnauthenticated ErrorMessage = ErrorMessage(errStr)
+		return NewAppError(TypeUnauthorized, MSGUnauthenticated, err)
 	case codes.PermissionDenied:
 		errStr := st.Message()
-        var MSGPermissionDenied ErrorMessage = ErrorMessage(errStr)
+		var MSGPermissionDenied ErrorMessage = ErrorMessage(errStr)
 		return NewAppError(TypeForbidden, MSGPermissionDenied, err)
 	case codes.DeadlineExceeded:
 		errStr := st.Message()
-        var MSGDeadlineExceeded ErrorMessage = ErrorMessage(errStr)
+		var MSGDeadlineExceeded ErrorMessage = ErrorMessage(errStr)
 		return NewAppError(TypeTimeout, MSGDeadlineExceeded, err)
 	default:
 		return NewInternalError(MSGSomethingWentWrong, err)
