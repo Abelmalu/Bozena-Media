@@ -33,16 +33,30 @@ func NewAuthHandler(authServ core.AuthService, logger *platform.Logger) *AuthHan
 
 // Register registers a new user into the system
 func (authHandler *AuthHandler) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+	var requestID string
 	user := model.User{
 		Name:     req.Name,
 		Username: req.Username,
 		Email:    req.Email,
 		Password: req.Password,
 	}
+	md, exists := metadata.FromIncomingContext(ctx)
+
+	if !exists {
+		return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
+	}
+	values := md.Get("requestID")
+	if len(values) > 0 {
+		requestID = values[0]
+	} else {
+
+		return nil, status.Error(codes.InvalidArgument, "missing request ID")
+
+	}
 
 	createdUser, tokens, err := authHandler.service.Register(ctx, &user)
 	if err != nil {
-		authHandler.logger.Error("[Auth Service]", zap.Error(err))
+		authHandler.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
 
 		var appErr *ierrors.AppError
 		if errors.As(err, &appErr) {
@@ -87,10 +101,27 @@ func (authHandler *AuthHandler) Register(ctx context.Context, req *pb.RegisterRe
 }
 
 func (authHandler *AuthHandler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+
+	var requestID string
+	md, exists := metadata.FromIncomingContext(ctx)
+
+	if !exists {
+		return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
+	}
+
+	values := md.Get("requestID")
+	if len(values) > 0 {
+		requestID = values[0]
+	} else {
+
+		return nil, status.Error(codes.InvalidArgument, "missing request ID")
+
+	}
 	user, tokens, err := authHandler.service.Login(ctx, req.Username, req.Password)
+
 	if err != nil {
 
-		authHandler.logger.Error("[Auth Service]", zap.Error(err))
+		authHandler.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
 
 		var appErr *ierrors.AppError
 		if errors.As(err, &appErr) {
@@ -133,6 +164,7 @@ func (authHandler *AuthHandler) Login(ctx context.Context, req *pb.LoginRequest)
 }
 func (authHandler *AuthHandler) Logout(ctx context.Context, req *emptypb.Empty) (*pb.LogoutResponse, error) {
 	var refreshToken string
+	var requestID string
 	md, exists := metadata.FromIncomingContext(ctx)
 
 	if !exists {
@@ -146,12 +178,21 @@ func (authHandler *AuthHandler) Logout(ctx context.Context, req *emptypb.Empty) 
 		return nil, status.Error(codes.Unauthenticated, "You are not authenticated")
 
 	}
+	requestIDValues := md.Get("requesID")
+	if len(requestIDValues) > 0 {
+
+		requestID = requestIDValues[0]
+	} else {
+
+		return nil, status.Error(codes.InvalidArgument, "missing request ID")
+
+	}
 
 	err := authHandler.service.Logout(ctx, refreshToken)
 
 	if err != nil {
 
-		authHandler.logger.Error("[Auth Service]", zap.Error(err))
+		authHandler.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
 
 		var appErr *ierrors.AppError
 		if errors.As(err, &appErr) {
@@ -192,11 +233,29 @@ func (authHandler *AuthHandler) Logout(ctx context.Context, req *emptypb.Empty) 
 
 func (authHandler *AuthHandler) RefreshHandler(ctx context.Context, req *pb.RefreshRequest) (*pb.RefreshResponse, error) {
 
+var requestID string
+	md, exists := metadata.FromIncomingContext(ctx)
+
+	if !exists {
+		return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
+	}
+
+	
+requestIDValues := md.Get("requesID")
+	if len(requestIDValues) > 0 {
+
+		requestID = requestIDValues[0]
+	} else {
+
+		return nil, status.Error(codes.InvalidArgument, "missing request ID")
+
+	}
+	
 	tokens, err := authHandler.service.RefreshHandler(ctx, req.RefreshToken)
 
 	if err != nil {
 
-		authHandler.logger.Error("[Auth Service]", zap.Error(err))
+		authHandler.logger.Error("[Auth Service]", zap.Error(err),zap.String("requestID",requestID))
 
 		if err != nil {
 
