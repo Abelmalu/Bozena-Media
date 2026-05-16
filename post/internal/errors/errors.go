@@ -1,6 +1,7 @@
 package ierrors
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -20,6 +21,13 @@ const (
 	TypeTimeout      ErrorType = "TIMEOUT"
 	TypeCancelled    ErrorType = "CANCELLED"
 	TypeDatabase     ErrorType = "DATABASE"
+)
+
+//constant errors 
+var (
+
+	ErrMetaDataNotFound = errors.New("meta data not found")
+	ErrRequestIDNotFound = errors.New("reques id not found")
 )
 
 type AppError struct {

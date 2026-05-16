@@ -8,7 +8,7 @@ import (
 
 	appErrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	ierrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
-	"github.com/abelmalu/golang-posts/pkg/utils"
+	"github.com/abelmalu/golang-posts/APIGateway/pkg/utils"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/abelmalu/golang-posts/post/proto/pb"
 	"github.com/gin-gonic/gin"
@@ -193,8 +193,8 @@ func (postHandler *PostHandler) DeletePost(c *gin.Context) {
 }
 
 func (postHandler *PostHandler) ListPosts(c *gin.Context) {
-	requestID,err := utils.GetRequestID(c,postHandler.logger)
-	if err != nil{
+	requestID, err := utils.GetRequestID(c, postHandler.logger)
+	if err != nil {
 
 		return
 	}
@@ -211,7 +211,7 @@ func (postHandler *PostHandler) ListPosts(c *gin.Context) {
 
 	if err != nil {
 
-		postHandler.logger.Error("GRPC Error",zap.Error(err),zap.String("requestID",requestID))
+		postHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}

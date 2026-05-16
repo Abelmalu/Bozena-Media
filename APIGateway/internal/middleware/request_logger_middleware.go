@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"time"
-	"github.com/abelmalu/golang-posts/pkg/utils"
+	"github.com/abelmalu/golang-posts/APIGateway/pkg/utils"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 )

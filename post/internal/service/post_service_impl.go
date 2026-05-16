@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/abelmalu/golang-posts/post/internal/core"
-	ierrors "github.com/abelmalu/golang-posts/post/internal/errors"
+	"github.com/abelmalu/golang-posts/post/internal/errors"
 	"github.com/abelmalu/golang-posts/post/internal/models"
 )
 
@@ -20,6 +20,13 @@ func NewPostService(repository core.PostRepository) *PostService {
 }
 
 func (postService *PostService) CreatePost(ctx context.Context, post *models.Post) (*models.Post, error) {
+
+	if post.Title == ""{
+
+		return nil,ierrors.NewValidationError(ierrors.MSGTitleIsRrequired,nil,nil)
+
+
+	}
 
 	createdPost, err := postService.repo.CreatePost(ctx, post)
 
@@ -51,7 +58,7 @@ func (postService *PostService) DeletePost(ctx context.Context, postID int) erro
 
 	if postID <= 0 {
 
-		return ierrors.NewValidationError(ierrors.MSGPathParamError, nil, nil)
+		return ierrors.NewValidationError(ierrors.MSGTitleIsRrequired, nil, nil)
 
 	}
 	if err := postService.repo.DeletePost(ctx, postID); err != nil {

@@ -7,6 +7,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/abelmalu/golang-posts/platform"
 	"github.com/abelmalu/golang-posts/post/config"
 	"github.com/abelmalu/golang-posts/post/internal/handlers"
 	"github.com/abelmalu/golang-posts/post/internal/interceptors"
@@ -87,10 +88,15 @@ func (app *App) Run() {
         interceptors.PostOwnershipInterceptor(app.DB), // checks if the user is post owner
     ),
 )
+
+	// Initialize logger for the post service 
+	logger := platform.InitZapLogger()
+
+	
     // Dependency Injection for each layer one by one 
 	postRepo := repository.NewPostRepository(app.DB)
 	postService := service.NewPostService(postRepo)
-	postHandler := handlers.NewPostHandler(postService)
+	postHandler := handlers.NewPostHandler(postService,logger)
 
 	
 	pb.RegisterPostServiceServer(s, postHandler)

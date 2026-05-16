@@ -3,11 +3,14 @@ package handlers
 import (
 	"context"
 	"errors"
-	"log"
 
+	"github.com/abelmalu/golang-posts/platform"
 	"github.com/abelmalu/golang-posts/post/internal/core"
+	ierrors "github.com/abelmalu/golang-posts/post/internal/errors"
 	"github.com/abelmalu/golang-posts/post/internal/models"
+	"github.com/abelmalu/golang-posts/post/pkg/utils"
 	"github.com/abelmalu/golang-posts/post/proto/pb"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -16,11 +19,13 @@ import (
 type PostHandler struct {
 	pb.UnimplementedPostServiceServer
 	service core.PostService
+	logger  *platform.Logger
 }
 
-func NewPostHandler(service core.PostService) *PostHandler {
+func NewPostHandler(service core.PostService, logger *platform.Logger) *PostHandler {
 	return &PostHandler{
 		service: service,
+		logger:  logger,
 	}
 }
 
@@ -29,13 +34,46 @@ func (postHandler *PostHandler) CreatePost(ctx context.Context, req *pb.CreatePo
 	post := models.Post{
 		Title:   req.Title,
 		Content: req.Content,
-		UserID: int(req.UserId),
+		UserID:  int(req.UserId),
 	}
-	
-	createdPost, err := postHandler.service.CreatePost(ctx, &post)
-	if err != nil {
+	var appErr *ierrors.AppError
+	requestID, err := utils.GetRequestID(ctx)
 
-		log.Printf("CreatePost failed: %v", err)
+	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
+
+		return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
+
+	}
+	if errors.Is(err, ierrors.ErrRequestIDNotFound) {
+
+		return nil, status.Error(codes.InvalidArgument, "missing request ID")
+
+	}
+
+	createdPost, err := postHandler.service.CreatePost(ctx, &post)
+
+	if err != nil {
+		postHandler.logger.Error("Post Service Error", zap.Error(err), zap.String("requestID", requestID))
+
+		if errors.As(err, &appErr) {
+			switch appErr.Type {
+			case ierrors.TypeValidation:
+				return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+			case ierrors.TypeConflict:
+				return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+			case ierrors.TypeUnauthorized:
+				return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+			case ierrors.TypeNotFound:
+				return nil, status.Error(codes.NotFound, string(appErr.Message))
+			case ierrors.TypeTimeout:
+				return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+			case ierrors.TypeCancelled:
+				return nil, status.Error(codes.Canceled, string(appErr.Message))
+
+			default:
+				return nil, status.Error(codes.Internal, "internal error")
+			}
+		}
 
 		// Map errors to gRPC status codes
 		if errors.Is(err, context.Canceled) {
@@ -44,10 +82,6 @@ func (postHandler *PostHandler) CreatePost(ctx context.Context, req *pb.CreatePo
 
 		if errors.Is(err, context.DeadlineExceeded) {
 			return nil, status.Error(codes.DeadlineExceeded, "timeout")
-		}
-
-		if err.Error() == "title required" {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		return nil, status.Error(codes.Internal, "internal server error")
@@ -62,12 +96,56 @@ func (postHandler *PostHandler) CreatePost(ctx context.Context, req *pb.CreatePo
 }
 
 func (postHandler *PostHandler) ListPosts(ctx context.Context, req *pb.ListPostsRequest) (*pb.ListPostsResponse, error) {
-	posts, err := postHandler.service.ListPosts(ctx)
-	if err != nil {
-		log.Printf("error %v", err)
-		return nil, err
+	var appErr *ierrors.AppError
+	requestID, err := utils.GetRequestID(ctx)
+
+	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
+
+		return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
+
 	}
-	
+	if errors.Is(err, ierrors.ErrRequestIDNotFound) {
+
+		return nil, status.Error(codes.InvalidArgument, "missing request ID")
+
+	}
+
+	posts, err := postHandler.service.ListPosts(ctx)
+
+	if err != nil {
+
+		postHandler.logger.Error("Post Service Error", zap.Error(err), zap.String("requestID", requestID))
+
+		if errors.As(err, &appErr) {
+			switch appErr.Type {
+			case ierrors.TypeValidation:
+				return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+			case ierrors.TypeConflict:
+				return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+			case ierrors.TypeUnauthorized:
+				return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+			case ierrors.TypeNotFound:
+				return nil, status.Error(codes.NotFound, string(appErr.Message))
+			case ierrors.TypeTimeout:
+				return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+			case ierrors.TypeCancelled:
+				return nil, status.Error(codes.Canceled, string(appErr.Message))
+
+			default:
+				return nil, status.Error(codes.Internal, "internal error")
+			}
+		}
+
+		if errors.Is(err, context.Canceled) {
+
+			return nil, status.Error(codes.Canceled, string(appErr.Message))
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+
+		}
+	}
 	pbPosts := make([]*pb.Post, len(posts))
 
 	for i, p := range posts {
@@ -75,12 +153,9 @@ func (postHandler *PostHandler) ListPosts(ctx context.Context, req *pb.ListPosts
 
 			Title:   p.Title,
 			Content: p.Content,
-			Id:int64(p.ID) ,
+			Id:      int64(p.ID),
 		}
 	}
-
-
-
 
 	return &pb.ListPostsResponse{
 		Posts: pbPosts,
@@ -89,12 +164,54 @@ func (postHandler *PostHandler) ListPosts(ctx context.Context, req *pb.ListPosts
 
 func (postHandler *PostHandler) UpdatePost(ctx context.Context, req *pb.UpdatePostRequest) (*pb.UpdatePostResponse, error) {
 	postID := int(req.PostId)
-	_, err := postHandler.service.UpdatePost(ctx, postID, req.Title, req.Content)
+	var appErr *ierrors.AppError
+	requestID, err := utils.GetRequestID(ctx)
+
+	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
+
+		return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
+
+	}
+	if errors.Is(err, ierrors.ErrRequestIDNotFound) {
+
+		return nil, status.Error(codes.InvalidArgument, "missing request ID")
+
+	}
+
+	_, err = postHandler.service.UpdatePost(ctx, postID, req.Title, req.Content)
 
 	if err != nil {
-		log.Printf("error returned from repository %v",err)
+		postHandler.logger.Error("Post service error", zap.Error(err), zap.String("requestID", requestID))
+		if errors.As(err, &appErr) {
+			switch appErr.Type {
+			case ierrors.TypeValidation:
+				return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+			case ierrors.TypeConflict:
+				return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+			case ierrors.TypeUnauthorized:
+				return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+			case ierrors.TypeNotFound:
+				return nil, status.Error(codes.NotFound, string(appErr.Message))
+			case ierrors.TypeTimeout:
+				return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+			case ierrors.TypeCancelled:
+				return nil, status.Error(codes.Canceled, string(appErr.Message))
 
-		return nil, err
+			default:
+				return nil, status.Error(codes.Internal, "internal error")
+			}
+		}
+
+		if errors.Is(err, context.Canceled) {
+
+			return nil, status.Error(codes.Canceled, string(appErr.Message))
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+
+		}
+
 	}
 
 	return &pb.UpdatePostResponse{
@@ -104,19 +221,64 @@ func (postHandler *PostHandler) UpdatePost(ctx context.Context, req *pb.UpdatePo
 
 }
 
-func (postHandler *PostHandler) DeletePost(ctx context.Context, req *pb.DeletePostRequest) (*pb.DeletePostResponse, error){
+func (postHandler *PostHandler) DeletePost(ctx context.Context, req *pb.DeletePostRequest) (*pb.DeletePostResponse, error) {
+	var appErr *ierrors.AppError
 
+	requestID, err := utils.GetRequestID(ctx)
 
-    if err := postHandler.service.DeletePost(ctx,int(req.PostId)); err != nil{
+	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
 
-        
-        return nil,err
-    }
-  return &pb.DeletePostResponse{
-    Status:"Success",
-    Message: "Successfully Deleted a Post",
-  },nil
+		return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
 
+	}
+	if errors.Is(err, ierrors.ErrRequestIDNotFound) {
 
+		return nil, status.Error(codes.InvalidArgument, "missing request ID")
+
+	}
+
+	err = postHandler.service.DeletePost(ctx, int(req.PostId))
+	if err != nil {
+
+		postHandler.logger.Error("Post service error", zap.Error(err), zap.String("requestID", requestID))
+
+		if errors.As(err, &appErr) {
+
+			switch appErr.Type {
+			case ierrors.TypeValidation:
+				return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+			case ierrors.TypeConflict:
+				return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+			case ierrors.TypeUnauthorized:
+				return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+			case ierrors.TypeNotFound:
+				return nil, status.Error(codes.NotFound, string(appErr.Message))
+			case ierrors.TypeTimeout:
+				return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+			case ierrors.TypeCancelled:
+				return nil, status.Error(codes.Canceled, string(appErr.Message))
+
+			default:
+				return nil, status.Error(codes.Internal, "internal error")
+			}
+
+		}
+
+		if errors.Is(err, context.Canceled) {
+
+			return nil, status.Error(codes.Canceled, string(appErr.Message))
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+
+		}
+
+	}
+
+	return &pb.DeletePostResponse{
+		Status:  "Success",
+		Message: "Successfully Deleted a Post",
+	}, nil
 
 }

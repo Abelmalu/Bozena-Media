@@ -8,6 +8,7 @@ import (
 	ierrors "github.com/abelmalu/golang-posts/Auth/internal/errors"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
+	"github.com/abelmalu/golang-posts/Auth/pkg/utils"
 	"github.com/abelmalu/golang-posts/platform"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -33,26 +34,26 @@ func NewAuthHandler(authServ core.AuthService, logger *platform.Logger) *AuthHan
 
 // Register registers a new user into the system
 func (authHandler *AuthHandler) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
-	var requestID string
+	
 	user := model.User{
 		Name:     req.Name,
 		Username: req.Username,
 		Email:    req.Email,
 		Password: req.Password,
 	}
-	md, exists := metadata.FromIncomingContext(ctx)
+	requestID,err := utils.GetRequestID(ctx)
 
-	if !exists {
-		return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
+	if errors.Is(err,ierrors.ErrMetaDataNotFound){
+
+			return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
+
 	}
-	values := md.Get("requestID")
-	if len(values) > 0 {
-		requestID = values[0]
-	} else {
+	if errors.Is(err,ierrors.ErrRequestIDNotFound){
 
 		return nil, status.Error(codes.InvalidArgument, "missing request ID")
 
 	}
+	
 
 	createdUser, tokens, err := authHandler.service.Register(ctx, &user)
 	if err != nil {
@@ -73,6 +74,7 @@ func (authHandler *AuthHandler) Register(ctx context.Context, req *pb.RegisterRe
 				return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
 			case ierrors.TypeCancelled:
 				return nil, status.Error(codes.Canceled, string(appErr.Message))
+
 			default:
 				return nil, status.Error(codes.Internal, "internal error")
 			}
@@ -102,21 +104,19 @@ func (authHandler *AuthHandler) Register(ctx context.Context, req *pb.RegisterRe
 
 func (authHandler *AuthHandler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 
-	var requestID string
-	md, exists := metadata.FromIncomingContext(ctx)
+		requestID,err := utils.GetRequestID(ctx)
 
-	if !exists {
-		return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
+	if errors.Is(err,ierrors.ErrMetaDataNotFound){
+
+			return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
+
 	}
-
-	values := md.Get("requestID")
-	if len(values) > 0 {
-		requestID = values[0]
-	} else {
+	if errors.Is(err,ierrors.ErrRequestIDNotFound){
 
 		return nil, status.Error(codes.InvalidArgument, "missing request ID")
 
 	}
+	
 	user, tokens, err := authHandler.service.Login(ctx, req.Username, req.Password)
 
 	if err != nil {
@@ -233,23 +233,19 @@ func (authHandler *AuthHandler) Logout(ctx context.Context, req *emptypb.Empty) 
 
 func (authHandler *AuthHandler) RefreshHandler(ctx context.Context, req *pb.RefreshRequest) (*pb.RefreshResponse, error) {
 
-var requestID string
-	md, exists := metadata.FromIncomingContext(ctx)
+	requestID,err := utils.GetRequestID(ctx)
 
-	if !exists {
-		return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
+	if errors.Is(err,ierrors.ErrMetaDataNotFound){
+
+			return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
+
 	}
-
-	
-requestIDValues := md.Get("requesID")
-	if len(requestIDValues) > 0 {
-
-		requestID = requestIDValues[0]
-	} else {
+	if errors.Is(err,ierrors.ErrRequestIDNotFound){
 
 		return nil, status.Error(codes.InvalidArgument, "missing request ID")
 
 	}
+	
 	
 	tokens, err := authHandler.service.RefreshHandler(ctx, req.RefreshToken)
 

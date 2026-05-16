@@ -20,7 +20,7 @@ MSGRefreshTokenIsRequired ErrorMessage = "refresh token is required"
 MSGUnauthorizedAccess ErrorMessage = "Unauthorized"
 MSGUserNotFound 	  ErrorMessage = "Invalid username or password"
 MSGPathParamError          ErrorMessage = "path parameter can not be less than zero"
-
+MSGTitleIsRrequired ErrorMessage = "Title is required"
 
 
 )

@@ -8,7 +8,7 @@ import (
 	appErrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	ierrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
-	"github.com/abelmalu/golang-posts/pkg/utils"
+	"github.com/abelmalu/golang-posts/APIGateway/pkg/utils"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
