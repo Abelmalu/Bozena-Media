@@ -14,10 +14,8 @@ const RequestIDHeader = "X-Request-ID"
 
 func RequestIDMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		requestID := c.GetHeader(RequestIDHeader)
-		if requestID == "" {
-			requestID = uuid.New().String()
-		}
+			requestID := uuid.New().String()
+		
 
 		// Set in Gin context for easy access in handlers
 		c.Set(string(RequestIDKey), requestID)

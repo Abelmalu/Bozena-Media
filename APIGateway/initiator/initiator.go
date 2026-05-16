@@ -19,7 +19,7 @@ func Initialize() {
 	handlers := InitHandler(*clients,logger)
 
 	//initializing routes
-	InitRoute(router, *handlers)
+	InitRoute(router, *handlers,logger)
 
 	//start the gin server 
 	server.StartServer(router)

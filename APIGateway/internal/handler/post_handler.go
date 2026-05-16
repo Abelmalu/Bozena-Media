@@ -58,7 +58,7 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.Error(appErrors.NewValidationError("Invalid request body", nil, err))
+		c.Error(appErrors.NewValidationError(appErrors.MSGInvalidRequestBody, nil, err))
 		return
 	}
 	userIDValue, exists := c.Get("userID")
