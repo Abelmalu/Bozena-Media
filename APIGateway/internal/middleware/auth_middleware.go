@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"github.com/abelmalu/golang-posts/pkg"
+	"github.com/abelmalu/golang-posts/APIGateway/pkg/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -42,7 +42,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// Validate the token
 
-		tokenClaims, err := pkg.ValidateAccessToken(tokenStr)
+		tokenClaims, err := utils.ValidateAccessToken(tokenStr)
 
 		if err != nil {
 			log.Printf("invalid token, %v", err)

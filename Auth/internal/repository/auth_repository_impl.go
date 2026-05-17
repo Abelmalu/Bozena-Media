@@ -8,7 +8,7 @@ import (
 
 	ierrors "github.com/abelmalu/golang-posts/Auth/internal/errors"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
-	"github.com/abelmalu/golang-posts/pkg"
+	"github.com/abelmalu/golang-posts/Auth/pkg/utils"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -132,7 +132,7 @@ func (authRepo *AuthRepository) Logout(ctx context.Context, tokenID string) erro
 func (authRepo *AuthRepository) StoreRefreshTokens(userID int, refreshToken string, expiresAt time.Time, clientType string) (sql.Result, error) {
 
 	// hashing the token before inserting to a db
-	refreshToken = pkg.HashToken(refreshToken)
+	refreshToken = utils.HashToken(refreshToken)
 
 	query := `INSERT INTO refresh_tokens (user_id,token_text,expires_at,client_type) VALUES($1,$2,$3,$4)`
 
@@ -208,7 +208,7 @@ func (authRepo *AuthRepository) GetRefreshToken(refreshToken string) (*model.Ref
 	var refreshRecord model.RefreshToken
 
 	// hashing the token because stored tokens are hashed
-	hashedrefreshToken := pkg.HashToken(refreshToken)
+	hashedrefreshToken := utils.HashToken(refreshToken)
 
 	query := `SELECT * FROM refresh_tokens where token_text = $1;`
 

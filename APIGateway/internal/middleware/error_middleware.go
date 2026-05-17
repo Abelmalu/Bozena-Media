@@ -31,7 +31,6 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 			c.AbortWithStatusJSON(appErr.HTTPStatus(), gin.H{
 				"type":       appErr.Type,
 				"message":    appErr.Message,
-				"details":    appErr.Details,
 				"request_id": appErr.RequestID,
 				"timestamp":  time.Now().Unix(),
 			})

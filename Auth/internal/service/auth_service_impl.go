@@ -8,7 +8,7 @@ import (
 	"github.com/abelmalu/golang-posts/Auth/internal/core"
 	ierrors "github.com/abelmalu/golang-posts/Auth/internal/errors"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
-	"github.com/abelmalu/golang-posts/pkg"
+	"github.com/abelmalu/golang-posts/Auth/pkg/utils"
 	"github.com/abelmalu/golang-posts/platform"
 	"google.golang.org/grpc/metadata"
 )
@@ -155,7 +155,7 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 func (authSer *AuthService) Logout(ctx context.Context, refreshToken string) error {
 
 	// validate the token to check if it is tampered
-	_, err := pkg.ValidateRefreshToken(refreshToken)
+	_, err := utils.ValidateRefreshToken(refreshToken)
 
 	if err != nil {
 
@@ -164,7 +164,7 @@ func (authSer *AuthService) Logout(ctx context.Context, refreshToken string) err
 	}
 
 	// hash the token to check with DB token
-	hashedRefreshToken := pkg.HashToken(refreshToken)
+	hashedRefreshToken := utils.HashToken(refreshToken)
 	if err := authSer.repo.Logout(ctx, hashedRefreshToken); err != nil {
 
 		return err
@@ -193,7 +193,7 @@ func (authSer *AuthService) RefreshHandler(ctx context.Context, refreshToken str
 
 	}
 	// validate the token to check if it is tampered or expired
-	_, err = pkg.ValidateRefreshToken(refreshToken)
+	_, err = utils.ValidateRefreshToken(refreshToken)
 
 	if err != nil {
 
@@ -247,12 +247,12 @@ func (authSer *AuthService) RefreshHandler(ctx context.Context, refreshToken str
 
 func (authSer *AuthService) issueTokens(userID int, clientType model.ClientType, userRole string) (*model.TokenPair, error) {
 
-	accessToken, err := pkg.GenerateAcessToken(userID, userRole)
+	accessToken, err := utils.GenerateAcessToken(userID, userRole)
 	if err != nil {
 
 		return nil, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
 	}
-	refreshToken, err, expiresAt := pkg.GenerateRefreshToken(userID)
+	refreshToken, err, expiresAt := utils.GenerateRefreshToken(userID)
 	if err != nil {
 
 		return nil, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
