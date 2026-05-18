@@ -3,7 +3,7 @@ package utils
 import (
 	"errors"
 
-	ierrors "github.com/abelmalu/golang-posts/APIGateway/pkg/errors"
+	ierrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

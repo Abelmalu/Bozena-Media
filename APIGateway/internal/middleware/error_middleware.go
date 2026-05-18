@@ -9,7 +9,7 @@ import (
 func ErrorHandlerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
-		// Only handle if there are errors
+
 		if len(c.Errors) > 0 {
 			err := c.Errors.Last().Err
 			requestID := GetRequestID(c)
@@ -18,21 +18,18 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 			var ok bool
 
 			if appErr, ok = err.(*ierrors.AppError); !ok {
-				// Convert unknown error to internal error
 				appErr = ierrors.NewInternalError("An unexpected error occurred", err)
 			}
 
-			// Add RequestID to the error for response
 			appErr.RequestID = requestID
 
 			
 
-			// Final API response
 			c.AbortWithStatusJSON(appErr.HTTPStatus(), gin.H{
 				"type":       appErr.Type,
 				"message":    appErr.Message,
 				"request_id": appErr.RequestID,
-				"timestamp":  time.Now().Unix(),
+				"timestamp":  time.Now().In(time.FixedZone("EAT",3*60*60)),
 			})
 		}
 	}
