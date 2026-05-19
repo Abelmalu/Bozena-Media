@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"time"
 	"github.com/abelmalu/golang-posts/APIGateway/internal/errors"
+	"github.com/abelmalu/golang-posts/APIGateway/pkg/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,16 +21,9 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 				appErr = ierrors.NewInternalError("An unexpected error occurred", err)
 			}
 
-			appErr.RequestID = requestID
 
 			
-
-			c.AbortWithStatusJSON(appErr.HTTPStatus(), gin.H{
-				"type":       appErr.Type,
-				"message":    appErr.Message,
-				"request_id": appErr.RequestID,
-				"timestamp":  time.Now().In(time.FixedZone("EAT",3*60*60)),
-			})
+		utils.SendErrorResponse[error](c,appErr,requestID, appErr.HTTPStatus())
 		}
 	}
 }

@@ -25,7 +25,6 @@ type AppError struct {
 	Message   ErrorMessage           `json:"message"`
 	Cause     error                  `json:"-"`
 	Details   map[string]interface{} `json:"details,omitempty"`
-	RequestID string                 `json:"request_id,omitempty"`
 }
 
 func (e *AppError) Error() string {

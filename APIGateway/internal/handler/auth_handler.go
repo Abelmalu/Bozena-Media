@@ -84,7 +84,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		ah.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
-		c.Error(appErrors.NewValidationError("Invalid request body", nil, err))
+		c.Error(appErrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
 		return
 	}
 	// call getClienType to get the client type and inject it into the grpc metadata
