@@ -165,6 +165,8 @@ func (authSer *AuthService) Logout(ctx context.Context, refreshToken string) err
 
 	// hash the token to check with DB token
 	hashedRefreshToken := utils.HashToken(refreshToken)
+
+	
 	if err := authSer.repo.Logout(ctx, hashedRefreshToken); err != nil {
 
 		return err

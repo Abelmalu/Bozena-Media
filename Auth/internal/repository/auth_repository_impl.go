@@ -106,18 +106,22 @@ func (authRepo *AuthRepository) Logout(ctx context.Context, tokenID string) erro
 
 			return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 		}
+
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
+		}
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
 	}
-	if errors.Is(err, context.DeadlineExceeded) {
 
-		return ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
-
-	}
-	if errors.Is(err, context.Canceled) {
-
-		return ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
-	}
-
-	_, err = result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 
 		if errors.Is(err, sql.ErrNoRows) {
@@ -127,7 +131,14 @@ func (authRepo *AuthRepository) Logout(ctx context.Context, tokenID string) erro
 		}
 
 	}
-	return nil
+
+	if rowsAffected == 0 {
+
+		return ierrors.NewNotFoundError(ierrors.MSGNotFound, err)
+
+	}
+
+	return err
 }
 func (authRepo *AuthRepository) StoreRefreshTokens(userID int, refreshToken string, expiresAt time.Time, clientType string) (sql.Result, error) {
 
