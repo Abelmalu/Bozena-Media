@@ -3,6 +3,7 @@ package ierrors
 import (
 	"fmt"
 	"net/http"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -20,11 +21,11 @@ const (
 )
 
 type AppError struct {
-	Type      ErrorType              `json:"type"`
-	Code      string                 `json:"code,omitempty"`
-	Message   ErrorMessage           `json:"message"`
-	Cause     error                  `json:"-"`
-	Details   map[string]interface{} `json:"details,omitempty"`
+	Type    ErrorType              `json:"type"`
+	Code    string                 `json:"code,omitempty"`
+	Message ErrorMessage           `json:"message"`
+	Cause   error                  `json:"-"`
+	Details map[string]interface{} `json:"details,omitempty"`
 }
 
 func (e *AppError) Error() string {
@@ -52,7 +53,7 @@ func NewValidationError(message ErrorMessage, details map[string]interface{}, ca
 		Message: message,
 		Details: details,
 		Cause:   cause,
-		Code:"VALIDATION_ERROR",
+		Code:    "VALIDATION_ERROR",
 	}
 }
 
@@ -112,29 +113,23 @@ func FromGRPC(err error) *AppError {
 	switch st.Code() {
 	case codes.InvalidArgument:
 		errStr := st.Message()
-	    var MSGInvalidArgument ErrorMessage = ErrorMessage(errStr)
-		return NewValidationError(MSGInvalidArgument, nil, err)
+		return NewValidationError(ErrorMessage(errStr), nil, err)
 	case codes.NotFound:
 		errStr := st.Message()
-        var MSGNotFound ErrorMessage = ErrorMessage(errStr)
-		return NewNotFoundError(MSGNotFound, err)
+		return NewNotFoundError(ErrorMessage(errStr), err)
 	case codes.AlreadyExists:
 		errStr := st.Message()
-        var MSGAreadyExists ErrorMessage = ErrorMessage(errStr)
-	
-		return NewConflictError(MSGAreadyExists, err)
+
+		return NewConflictError(ErrorMessage(errStr), err)
 	case codes.Unauthenticated:
 		errStr := st.Message()
-        var MSGUnauthenticated ErrorMessage = ErrorMessage(errStr)
-		return NewAppError(TypeUnauthorized,MSGUnauthenticated , err)
+		return NewAppError(TypeUnauthorized, ErrorMessage(errStr), err)
 	case codes.PermissionDenied:
 		errStr := st.Message()
-        var MSGPermissionDenied ErrorMessage = ErrorMessage(errStr)
-		return NewAppError(TypeForbidden, MSGPermissionDenied, err)
+		return NewAppError(TypeForbidden, ErrorMessage(errStr), err)
 	case codes.DeadlineExceeded:
 		errStr := st.Message()
-        var MSGDeadlineExceeded ErrorMessage = ErrorMessage(errStr)
-		return NewAppError(TypeTimeout, MSGDeadlineExceeded, err)
+		return NewAppError(TypeTimeout, ErrorMessage(errStr), err)
 	default:
 		return NewInternalError(MSGSomethingWentWrong, err)
 	}

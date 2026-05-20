@@ -144,11 +144,11 @@ func (postHandler *PostHandler) ListPosts(ctx context.Context, req *pb.ListPosts
 
 		if errors.Is(err, context.Canceled) {
 
-			return nil, status.Error(codes.Canceled, string(appErr.Message))
+			return nil, status.Error(codes.Canceled, "Request Canceled")
 		}
 		if errors.Is(err, context.DeadlineExceeded) {
 
-			return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+			return nil, status.Error(codes.DeadlineExceeded, "Request timeout")
 
 		}
 	}
@@ -210,11 +210,11 @@ func (postHandler *PostHandler) UpdatePost(ctx context.Context, req *pb.UpdatePo
 
 		if errors.Is(err, context.Canceled) {
 
-			return nil, status.Error(codes.Canceled, string(appErr.Message))
+			return nil, status.Error(codes.Canceled, "Request Canceled")
 		}
 		if errors.Is(err, context.DeadlineExceeded) {
 
-			return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+			return nil, status.Error(codes.DeadlineExceeded, "Requset timeout")
 
 		}
 
@@ -272,11 +272,11 @@ func (postHandler *PostHandler) DeletePost(ctx context.Context, req *pb.DeletePo
 
 		if errors.Is(err, context.Canceled) {
 
-			return nil, status.Error(codes.Canceled, string(appErr.Message))
+			return nil, status.Error(codes.Canceled, "Request canceled")
 		}
 		if errors.Is(err, context.DeadlineExceeded) {
 
-			return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+			return nil, status.Error(codes.DeadlineExceeded, "Request timeout")
 
 		}
 

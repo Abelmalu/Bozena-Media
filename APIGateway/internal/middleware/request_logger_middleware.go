@@ -16,6 +16,7 @@ func RequestLoggerMiddleware(logger *platform.Logger) gin.HandlerFunc {
 		if err != nil{
 
 			c.Abort()
+			return
 		}
      
 
