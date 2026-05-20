@@ -1,17 +1,18 @@
 package middleware
 
 import (
-	"log"
-	"net/http"
 	"strings"
+    "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	"github.com/abelmalu/golang-posts/APIGateway/pkg/utils"
+	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(logger *platform.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var tokenStr string
-		// 1. Get the Authorization header for mobile clients
+		requestID, _ := utils.GetRequestID(c, logger)
 		authHeader := c.GetHeader("Authorization")
 
 		if strings.HasPrefix(authHeader, "Bearer ") {
@@ -21,19 +22,11 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		if tokenStr == "" {
 
-			cookieToken, err := c.Cookie("access_token")
-			if err != nil {
-				log.Printf("Getting cookie error %v", err)
+			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
 
-			}
-			tokenStr = cookieToken
+			logger.Error("token string not found in authorization header")
 
-		}
-		if tokenStr == "" {
-
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Unauthorized",
-			})
+			utils.SendErrorResponse[error](c, err, requestID, err.HTTPStatus())
 
 			c.Abort()
 			return
@@ -45,23 +38,34 @@ func AuthMiddleware() gin.HandlerFunc {
 		tokenClaims, err := utils.ValidateAccessToken(tokenStr)
 
 		if err != nil {
-			log.Printf("invalid token, %v", err)
-			c.JSON(http.StatusUnauthorized, gin.H{"status": "error","message":"Unauthorized"})
+			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
+
+			logger.Error("token string not found in authorization header")
+
+			utils.SendErrorResponse[error](c, err, requestID, err.HTTPStatus())
 			c.Abort()
 			return
 		}
 
 		uid, ok := tokenClaims["user_id"].(float64)
 		if !ok {
-			log.Printf("Invalid token claims")
-			c.AbortWithStatusJSON(http.StatusUnauthorized,gin.H{"status": "error","message":"Unauthorized"})
+			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
+
+			logger.Error("Invalid token claims:Failed while asserting user_id", zap.Error(err))
+
+			utils.SendErrorResponse[error](c, err, requestID, err.HTTPStatus())
+
 			return
 		}
 		c.Set("userID", int(uid))
 		userRole, ok := tokenClaims["userRole"].(string)
 		if !ok {
-			log.Printf("Invalid token claims")
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"status": "error","message":"Unauthorized"})
+			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
+
+			logger.Error("Invalid token claims:Failed while asserting userRole", zap.Error(err))
+
+			utils.SendErrorResponse[error](c, err, requestID, err.HTTPStatus())
+
 			return
 		}
 		c.Set("userRole", userRole)
@@ -71,16 +75,20 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-func AuthorizeRoles(allowedRoles ...string) gin.HandlerFunc {
+func AuthorizeRoles(logger *platform.Logger, allowedRoles ...string) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
+		requestID, _ := utils.GetRequestID(c, logger)
+
 
 		role, ok := c.Get("userRole")
 		if !ok {
-			log.Printf("Invalid token claims")
-			
+			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
 
-			c.JSON(http.StatusUnauthorized, gin.H{"status": "error","message":"Unauthorized"})
+			logger.Error("Invalid token claims:Failed while asserting userRole", zap.Error(err))
+
+			utils.SendErrorResponse[error](c, err, requestID, err.HTTPStatus())
+
 			c.Abort()
 			return
 		}
@@ -96,8 +104,13 @@ func AuthorizeRoles(allowedRoles ...string) gin.HandlerFunc {
 
 		}
 		if !hasAccess {
-			
-			c.JSON(http.StatusUnauthorized, gin.H{"status": "error","message":"You are not authorized"})
+
+			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
+
+			logger.Warn("Invalid token claims:Failed while asserting userRole", zap.Error(err))
+
+			utils.SendErrorResponse[error](c, err, requestID, err.HTTPStatus())
+
 			c.Abort()
 
 		}

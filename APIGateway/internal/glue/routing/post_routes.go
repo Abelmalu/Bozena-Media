@@ -4,11 +4,12 @@ import (
 	"net/http"
 
 	"github.com/abelmalu/golang-posts/APIGateway/internal/glue"
-    "github.com/abelmalu/golang-posts/APIGateway/internal/handler"
+	"github.com/abelmalu/golang-posts/APIGateway/internal/handler"
 	"github.com/abelmalu/golang-posts/APIGateway/internal/middleware"
+	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 )
-func InitPostRoute(router *gin.RouterGroup, handler *handler.PostHandler) {
+func InitPostRoute(router *gin.RouterGroup, handler *handler.PostHandler,logger *platform.Logger) {
 
 	routes := []glue.Route{
 		{
@@ -17,30 +18,30 @@ func InitPostRoute(router *gin.RouterGroup, handler *handler.PostHandler) {
 			Handler:     handler.CreatePost,
 			Middlewares: [
 				
-			]func() gin.HandlerFunc{middleware.AuthMiddleware},
+			]func(*platform.Logger) gin.HandlerFunc{middleware.AuthMiddleware},
 		},
 		{
 			Method:      http.MethodGet,
 			Path:        "/",
 			Handler:     handler.ListPosts,
-			Middlewares: []func() gin.HandlerFunc{},
+			Middlewares: []func(*platform.Logger) gin.HandlerFunc{},
 		},
 		{
 			Method:      http.MethodPut,
 			Path:        "/update/:id",
 			Handler:     handler.UpdatePost,
-			Middlewares: []func() gin.HandlerFunc{},
+			Middlewares: []func(*platform.Logger) gin.HandlerFunc{},
 		},
 		{
 			Method:  http.MethodDelete,
 			Path:    "/delete/:id",
 			Handler: handler.DeletePost,
-			Middlewares: []func() gin.HandlerFunc{
+			Middlewares: []func(*platform.Logger) gin.HandlerFunc{
 				middleware.AuthMiddleware,
 			},
 		},
 	}
 
-	glue.RegisterRoutes(router,routes)
+	glue.RegisterRoutes(router,routes,logger)
 
 }

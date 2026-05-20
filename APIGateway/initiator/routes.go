@@ -16,11 +16,11 @@ func InitRoute(router *gin.Engine, handler Handler,logger *platform.Logger) {
 	router.Use(middleware.RecoveryMiddleware(logger))
 
 	authRouter := router.Group("api/auth")
-	routing.InitAuthRoute(authRouter,&handler.authHandler)
+	routing.InitAuthRoute(authRouter,&handler.authHandler,logger)
 
 	//post routes initialization
 	postRouter := router.Group("api/posts")
-	routing.InitPostRoute(postRouter,&handler.postHandler)
+	routing.InitPostRoute(postRouter,&handler.postHandler,logger)
 
 
 
