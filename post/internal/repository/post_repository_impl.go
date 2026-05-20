@@ -38,7 +38,7 @@ func (PostRepository *PostRepository) CreatePost(ctx context.Context, post *mode
 		}
 		if errors.Is(err, context.Canceled) {
 
-			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
 		}
 		if errors.Is(err, context.DeadlineExceeded) {
 
@@ -69,7 +69,7 @@ func (pr *PostRepository) UpdatePost(ctx context.Context, ID int, title string, 
 		}
 		if errors.Is(err, context.Canceled) {
 
-			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
 		}
 		if errors.Is(err, context.DeadlineExceeded) {
 
@@ -97,7 +97,7 @@ func (pr *PostRepository) DeletePost(ctx context.Context, postID int) error {
 		}
 		if errors.Is(err, context.Canceled) {
 
-			return ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
+			return ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
 		}
 		if errors.Is(err, context.DeadlineExceeded) {
 
@@ -135,7 +135,7 @@ func (PostRepository *PostRepository) ListPosts(ctx context.Context) ([]models.P
 		}
 		if errors.Is(err, context.Canceled) {
 
-			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
 		}
 		if errors.Is(err, context.DeadlineExceeded) {
 

@@ -1,29 +1,30 @@
 package middleware
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 	"runtime/debug"
 	"time"
 
+	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 )
 
-func RecoveryMiddleware() gin.HandlerFunc {
+func RecoveryMiddleware(logger *platform.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
 				requestID := GetRequestID(c)
 				
-				// Log the panic with stack trace
-				log.Printf("[PANIC] request_id=%s time=%s error=%v\n%s", 
+				errStr :=fmt.Sprintf( "[PANIC] request_id=%s time=%s error=%v\n%s", 
 					requestID, 
 					time.Now().Format(time.RFC3339), 
 					err, 
-					debug.Stack(),
-				)
+					debug.Stack())
 
-				// Respond with generic error
+				logger.Error(errStr)
+
+			
 				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 					"type":       "INTERNAL",
 					"message":    "An unexpected error occurred",

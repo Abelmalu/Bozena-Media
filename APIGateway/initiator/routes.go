@@ -13,7 +13,7 @@ func InitRoute(router *gin.Engine, handler Handler,logger *platform.Logger) {
 	router.Use(middleware.RequestIDMiddleware())
 	router.Use(middleware.ErrorHandlerMiddleware())
 	router.Use(middleware.RequestLoggerMiddleware(logger))
-	router.Use(middleware.RecoveryMiddleware())
+	router.Use(middleware.RecoveryMiddleware(logger))
 
 	authRouter := router.Group("api/auth")
 	routing.InitAuthRoute(authRouter,&handler.authHandler)

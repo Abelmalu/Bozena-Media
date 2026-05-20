@@ -98,7 +98,7 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 		switch {
 		case errors.Is(err, context.Canceled):
 
-			return nil, nil, ierrors.NewCancelationError(ierrors.MSGRequestCancelled, err)
+			return nil, nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
 
 		case errors.Is(err, context.DeadlineExceeded):
 
@@ -166,7 +166,6 @@ func (authSer *AuthService) Logout(ctx context.Context, refreshToken string) err
 	// hash the token to check with DB token
 	hashedRefreshToken := utils.HashToken(refreshToken)
 
-	
 	if err := authSer.repo.Logout(ctx, hashedRefreshToken); err != nil {
 
 		return err
