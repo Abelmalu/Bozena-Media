@@ -159,7 +159,7 @@ func (authSer *AuthService) Logout(ctx context.Context, refreshToken string) err
 
 	if err != nil {
 
-		return ierrors.NewUnauthorizedError(ierrors.MSGUnauthorizedAccess, nil)
+		return ierrors.NewUnauthorizedError(ierrors.MSGFailedToValidateToken, nil)
 
 	}
 

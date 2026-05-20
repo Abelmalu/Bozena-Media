@@ -127,7 +127,7 @@ func (authRepo *AuthRepository) Logout(ctx context.Context, tokenID string) erro
 		}
 
 	}
-	return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+	return nil
 }
 func (authRepo *AuthRepository) StoreRefreshTokens(userID int, refreshToken string, expiresAt time.Time, clientType string) (sql.Result, error) {
 

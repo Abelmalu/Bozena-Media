@@ -26,15 +26,15 @@ type Like struct{
 }
 var validate = validator.New()
 
-func (user Post) Validate()string{
+func (post Post) Validate()string{
 	var errMSGs []string 
 
-	if err := validate.Struct(user); err != nil{
+	if err := validate.Struct(post); err != nil{
 		if validationErrors,ok := err.(validator.ValidationErrors);ok{
 
 			
 
-			for _,fieldErr := range validationErrors{
+			for _,fieldErr := range validationErrors {
 
 				switch fieldErr.Tag(){
 
@@ -46,7 +46,7 @@ func (user Post) Validate()string{
 				case "max":
 					errMSGs = append(errMSGs, fmt.Sprintf("%s must be below %s characters",fieldErr.Field(),fieldErr.Param()))
 				
-
+			
 
 				}
 

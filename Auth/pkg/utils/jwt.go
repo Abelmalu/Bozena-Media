@@ -32,16 +32,17 @@ func GenerateAcessToken(userID int,role string) (string, error) {
 
 // generates refresh tokens with refresh token secret keys
 func GenerateRefreshToken(userID int) (string, error, time.Time) {
-	expiresAt := time.Now().Add(RefreshTokenDuration)
+	exp := time.Now().Add(RefreshTokenDuration).Unix()
 
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"type":    "refresh",
-		"exp":     expiresAt,
+		"exp":     exp,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString(refreshSecret)
+	expiresAt := time.Unix(exp,0)
 
 	return signedToken, err, expiresAt
 

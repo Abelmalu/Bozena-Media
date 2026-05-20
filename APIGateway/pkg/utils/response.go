@@ -20,7 +20,7 @@ type APIResponse[T any] struct{
 
 
 
-func SendSuccessResponse[T any](c *gin.Context,data T,error *ierrors.AppError,requestID string,status int){
+func SendSuccessResponse[T any](c *gin.Context,data T,requestID string,status int){
 	
 apiResponse := APIResponse[T]{
 	Success: true,

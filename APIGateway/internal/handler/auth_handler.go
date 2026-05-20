@@ -5,10 +5,11 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/abelmalu/golang-posts/APIGateway/internal/dto"
 	appErrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	ierrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
-	"github.com/abelmalu/golang-posts/Auth/proto/pb"
 	"github.com/abelmalu/golang-posts/APIGateway/pkg/utils"
+	"github.com/abelmalu/golang-posts/Auth/proto/pb"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -51,23 +52,21 @@ func getClientType(c *gin.Context, requestID string) (context.Context, string) {
 // ExtractRefreshToken extracts refresh tokens from the request
 func ExtractRefreshToken(c *gin.Context) (string, error) {
 
-	//Extracting  refresh tokens from mobile app clients
 	var refreshToken string
+
+	//for mobile apps from request body
 	if err := c.ShouldBindJSON(&refreshToken); err == nil {
 		if refreshToken != "" {
 			return refreshToken, nil
 		}
 	}
 
-	// Extracting HttpOnly cookie for web clients
+	// for browsers
 	if token, err := c.Cookie("refresh_token"); err == nil && token != "" {
 		return token, nil
 	}
 
-	//Extracting from custom header fallback
-	if token := c.GetHeader("X-Refresh-Token"); token != "" {
-		return token, nil
-	}
+
 
 	return "", errors.New("Refresh Token not found")
 }
@@ -97,7 +96,8 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
-	response := gin.H{"message": "Registered successfully"}
+
+   var registerResponse dto.RegisterResponse
 
 	switch clientType {
 	case "web":
@@ -111,13 +111,14 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 			SameSite: http.SameSiteLaxMode,
 		})
 
-		response["access_token"] = resp.AccessToken
+		registerResponse.AccessToken = resp.AccessToken
 
 	case "mobile":
-		response["access_token"] = resp.AccessToken
-		response["refresh_token"] = resp.RefreshToken
+		registerResponse.AccessToken = resp.AccessToken
+		registerResponse.RefreshToken = resp.RefreshToken
 	}
-	c.JSON(http.StatusOK, response)
+
+	utils.SendSuccessResponse(c,registerResponse,requestID,http.StatusOK)
 
 }
 
@@ -142,7 +143,7 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
-	response := gin.H{"message": "Login successfull"}
+	var loginResponse dto.LoginResponse
 
 	switch clientType {
 	case "web":
@@ -156,14 +157,14 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 			SameSite: http.SameSiteLaxMode,
 		})
 
-		response["access_token"] = resp.AccessToken
+		loginResponse.AccessToken= resp.AccessToken
 
 	case "mobile":
-		response["access_token"] = resp.AccessToken
-		response["refresh_token"] = resp.RefreshToken
+		loginResponse.AccessToken = resp.AccessToken
+		loginResponse.RefreshToken = resp.RefreshToken
 	}
 
-	c.JSON(http.StatusOK, response)
+	utils.SendSuccessResponse(c,loginResponse,requestID,http.StatusOK)
 
 }
 
@@ -186,7 +187,7 @@ func (ah *AuthHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, resp)
+	utils.SendSuccessResponse(c,resp,requestID,http.StatusOK)
 }
 
 func (ah *AuthHandler) RefreshHandler(c *gin.Context) {

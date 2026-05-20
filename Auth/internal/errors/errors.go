@@ -114,6 +114,7 @@ func NewCancelationError(message ErrorMessage, cause error) *AppError {
 		Type:    TypeCancelled,
 		Message: message,
 		Cause:   cause,
+		
 	}
 
 }

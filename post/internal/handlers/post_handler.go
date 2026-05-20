@@ -36,6 +36,12 @@ func (postHandler *PostHandler) CreatePost(ctx context.Context, req *pb.CreatePo
 		Content: req.Content,
 		UserID:  int(req.UserId),
 	}
+	validationErrStr := post.Validate()
+
+	if validationErrStr != "" {
+
+		return nil, status.Error(codes.InvalidArgument, validationErrStr)
+	}
 	var appErr *ierrors.AppError
 	requestID, err := utils.GetRequestID(ctx)
 

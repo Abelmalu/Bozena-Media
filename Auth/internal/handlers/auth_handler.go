@@ -187,7 +187,7 @@ func (authHandler *AuthHandler) Logout(ctx context.Context, req *emptypb.Empty) 
 		return nil, status.Error(codes.Unauthenticated, "You are not authenticated")
 
 	}
-	requestIDValues := md.Get("requesID")
+	requestIDValues := md.Get("requestID")
 	if len(requestIDValues) > 0 {
 
 		requestID = requestIDValues[0]
@@ -211,7 +211,7 @@ func (authHandler *AuthHandler) Logout(ctx context.Context, req *emptypb.Empty) 
 			case ierrors.TypeConflict:
 				return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
 			case ierrors.TypeUnauthorized:
-				return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+				return nil, status.Error(codes.Unauthenticated, string(ierrors.MSGUnauthorizedAccess))
 			case ierrors.TypeNotFound:
 				return nil, status.Error(codes.NotFound, string(appErr.Message))
 			case ierrors.TypeTimeout:

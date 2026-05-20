@@ -32,7 +32,7 @@ func InitAuthRoute(router *gin.RouterGroup, handler *handler.AuthHandler) {
 		{
 			Method:  http.MethodPost,
 			Path:    "/logout",
-			Handler: handler.Register,
+			Handler: handler.Logout,
 			Middlewares: []func() gin.HandlerFunc{
 				middleware.AuthMiddleware,
 			},
