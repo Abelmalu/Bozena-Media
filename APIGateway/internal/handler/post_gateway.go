@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -41,18 +40,18 @@ func appendToOutgoingContext(c *gin.Context,requestID string) (context.Context, 
 
 	if !exists {
 
-		return nil, errors.New("user not found in the request")
+		return nil, ierrors.ErrUserIDNotFoundInContext
 	}
 	userID, ok := userIDValue.(int)
 
 	if !ok {
 
-		return nil, errors.New("assertion failed on userID")
+		return nil, ierrors.ErrTypeAssertionFailed
 	}
 	userIDStr := strconv.Itoa(userID)
 	md := metadata.Pairs(
 		"user-id", userIDStr,
-		"requestID", requestID,
+		"request-id", requestID,
 	
 	)
 

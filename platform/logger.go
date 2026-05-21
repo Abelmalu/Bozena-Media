@@ -21,17 +21,16 @@ func InitZapLogger() *Logger {
 
 	if env == "production" {
 
-		logger, err = zap.NewProduction()
+		logger, err = zap.NewProduction(zap.AddCallerSkip(1))
 
 	} else {
 
 		//logger, err = zap.NewDevelopment()
-		config := zap.NewDevelopmentConfig() 
+		config := zap.NewDevelopmentConfig()
 		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-		config.DisableStacktrace = true 
+		config.DisableStacktrace = true
 
-		logger, err = config.Build()
-		
+		logger, err = config.Build(zap.AddCallerSkip(1))
 
 	}
 

@@ -27,7 +27,10 @@ func InitPostRoute(router *gin.RouterGroup, handler *handler.PostHandler,logger 
 			Method:      http.MethodGet,
 			Path:        "/",
 			Handler:     handler.ListPosts,
-			Middlewares: []func(*platform.Logger) gin.HandlerFunc{},
+			Middlewares: []func(*platform.Logger) gin.HandlerFunc{
+
+				middleware.AuthMiddleware,
+			},
 		},
 		{
 			Method:      http.MethodPut,

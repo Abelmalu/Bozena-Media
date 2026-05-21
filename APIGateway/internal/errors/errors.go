@@ -1,6 +1,7 @@
 package ierrors
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -20,6 +21,11 @@ const (
 	TypeTimeout      ErrorType = "TIMEOUT"
 )
 
+var(
+
+	ErrUserIDNotFoundInContext error = errors.New("user id not found in context")
+	ErrTypeAssertionFailed error = errors.New("type assertion failed")
+)
 type AppError struct {
 	Type    ErrorType              `json:"type"`
 	Code    string                 `json:"code,omitempty"`
