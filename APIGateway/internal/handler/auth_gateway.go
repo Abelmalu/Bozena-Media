@@ -35,8 +35,8 @@ func NewAuthHandler(au AuthService, logger *platform.Logger) *AuthHandler {
 	}
 }
 
-// getClientType get client type header and inject into the contex metadata
-func getClientType(c *gin.Context, requestID string) (context.Context, string) {
+// addToOutgoingContext add data to the outgoing context
+func addToOutgoingContext(c *gin.Context, requestID string) (context.Context, string) {
 
 	clientType := c.GetHeader("X-Client-Type")
 	md := metadata.Pairs(
@@ -79,7 +79,11 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
-	requestID,_ := utils.GetRequestID(c, ah.logger)
+	requestID,err := utils.GetRequestID(c, ah.logger)
+	if err != nil {
+
+		return
+	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		ah.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
@@ -87,7 +91,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 	// call getClienType to get the client type and inject it into the grpc metadata
-	ctx, clientType := getClientType(c, requestID)
+	ctx, clientType := addToOutgoingContext(c, requestID)
 
 	resp, err := ah.client.Register(ctx, req.UserName, req.Name, req.Email, req.Password)
 	if err != nil {
@@ -134,7 +138,7 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 		c.Error(appErrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
 		return
 	}
-	ctx, clientType := getClientType(c, requestID)
+	ctx, clientType := addToOutgoingContext(c, requestID)
 
 	resp, err := ah.client.Login(ctx, req.UserName, req.Password)
 
@@ -177,6 +181,8 @@ func (ah *AuthHandler) Logout(c *gin.Context) {
 		c.Error(appErrors.NewAppError(appErrors.TypeUnauthorized, ierrors.MSGRefreshTokenNotFound, err))
 		return
 	}
+
+
 	md := metadata.Pairs("refreshToken", refreshToken, "requestID", requestID)
 	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
 	resp, err := ah.client.Logout(ctx)
@@ -202,7 +208,7 @@ func (ah *AuthHandler) RefreshHandler(c *gin.Context) {
 		return
 	}
 
-	ctx, clientType := getClientType(c, requestID)
+	ctx, clientType := addToOutgoingContext(c, requestID)
 
 	resp, err := ah.client.RefreshHandler(ctx, refreshToken)
 	if err != nil {

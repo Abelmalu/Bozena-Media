@@ -21,7 +21,8 @@ func NewPostClient(conn *grpc.ClientConn) *PostClient {
 
 func (pc *PostClient) CreatePost(ctx context.Context, userID int64, title, content string) (*pb.CreatePostResponse, error) {
 	
-
+ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
 	return pc.client.CreatePost(ctx, &pb.CreatePostRequest{
 		UserId:  userID,
 		Title:   title,

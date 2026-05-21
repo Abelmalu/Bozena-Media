@@ -35,7 +35,8 @@ func NewPostHandler(pc PostService, logger *platform.Logger) *PostHandler {
 	}
 }
 
-func addUserIDToContext(c *gin.Context) (context.Context, error) {
+// this appends data to the context so grpc services can get it
+func appendToOutgoingContext(c *gin.Context,requestID string) (context.Context, error) {
 	userIDValue, exists := c.Get("userID")
 
 	if !exists {
@@ -49,7 +50,11 @@ func addUserIDToContext(c *gin.Context) (context.Context, error) {
 		return nil, errors.New("assertion failed on userID")
 	}
 	userIDStr := strconv.Itoa(userID)
-	md := metadata.Pairs("user-id", userIDStr)
+	md := metadata.Pairs(
+		"user-id", userIDStr,
+		"requestID", requestID,
+	
+	)
 
 	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
 
@@ -83,12 +88,13 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 	}
 
 	userID := int64(userIDInt)
-	ctx, err := addUserIDToContext(c)
+	ctx, err := appendToOutgoingContext(c,requestID)
 	if err != nil {
 		postHandler.logger.Error("failed to get userID from context", zap.Error(err))
 		c.Error(appErrors.NewInternalError(ierrors.MSGUnauthorizedAccess, err))
 		return
 	}
+	 
 
 	resp, err := postHandler.postClient.CreatePost(ctx, userID, req.Title, req.Content)
 	if err != nil {
@@ -132,7 +138,7 @@ func (postHandler *PostHandler) UpdatePost(c *gin.Context) {
 		return
 	}
 
-	ctx, err := addUserIDToContext(c)
+	ctx, err := appendToOutgoingContext(c,requestID)
 	if err != nil {
 
 		postHandler.logger.Error("failed to get userID from context", zap.Error(err))
@@ -171,7 +177,7 @@ func (postHandler *PostHandler) DeletePost(c *gin.Context) {
 
 	}
 
-	ctx, err := addUserIDToContext(c)
+	ctx, err := appendToOutgoingContext(c,requestID)
 	if err != nil {
 
 		postHandler.logger.Error("failed to get userID from context", zap.Error(err))
@@ -199,10 +205,10 @@ func (postHandler *PostHandler) ListPosts(c *gin.Context) {
 		return
 	}
 
-	ctx, err := addUserIDToContext(c)
+	ctx, err := appendToOutgoingContext(c,requestID)
 	if err != nil {
 
-	postHandler.logger.Error("failed to get userID from context", zap.Error(err))
+		postHandler.logger.Error("Failed to prepare request context", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.NewInternalError(ierrors.MSGUnauthorizedAccess, err))
 		return
 	}

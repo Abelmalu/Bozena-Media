@@ -16,7 +16,7 @@ func GetRequestID(c context.Context) (string,error){
 	if !exists {
 		return "", ierrors.ErrMetaDataNotFound
 	}
-	values := md.Get("requestID")
+	values := md.Get("request-id")
 	if len(values) > 0 {
 		requestID = values[0]
 	} else {

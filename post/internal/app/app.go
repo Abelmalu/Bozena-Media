@@ -78,22 +78,20 @@ func initDB(config *config.Config) (*sql.DB, error) {
 	return DBConPool, nil
 }
 
-// Run starts the gRPC server on the provided port
 func (app *App) Run() {
+	logger := platform.InitZapLogger()
+
 
 	lis, _ := net.Listen("tcp", ":50051")
 	s := grpc.NewServer(
     grpc.ChainUnaryInterceptor(
-        interceptors.AuthInterceptor(),           // adds userID to context
-        interceptors.PostOwnershipInterceptor(app.DB), // checks if the user is post owner
+        interceptors.AuthInterceptor(logger),         
+        interceptors.PostOwnershipInterceptor(app.DB,logger), // checks if the user is post owner
     ),
 )
 
-	// Initialize logger for the post service 
-	logger := platform.InitZapLogger()
 
 	
-    // Dependency Injection for each layer one by one 
 	postRepo := repository.NewPostRepository(app.DB)
 	postService := service.NewPostService(postRepo)
 	postHandler := handlers.NewPostHandler(postService,logger)
