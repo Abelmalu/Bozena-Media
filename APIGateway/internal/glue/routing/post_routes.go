@@ -16,9 +16,12 @@ func InitPostRoute(router *gin.RouterGroup, handler *handler.PostHandler,logger 
 			Method:      http.MethodPost,
 			Path:        "/",
 			Handler:     handler.CreatePost,
-			Middlewares: [
-				
-			]func(*platform.Logger) gin.HandlerFunc{middleware.AuthMiddleware},
+			Middlewares: []func(*platform.Logger) gin.HandlerFunc{
+
+				middleware.AuthMiddleware,
+
+			
+			},
 		},
 		{
 			Method:      http.MethodGet,
@@ -30,7 +33,10 @@ func InitPostRoute(router *gin.RouterGroup, handler *handler.PostHandler,logger 
 			Method:      http.MethodPut,
 			Path:        "/update/:id",
 			Handler:     handler.UpdatePost,
-			Middlewares: []func(*platform.Logger) gin.HandlerFunc{},
+			Middlewares: []func(*platform.Logger) gin.HandlerFunc{
+				middleware.AuthMiddleware,
+
+			},
 		},
 		{
 			Method:  http.MethodDelete,

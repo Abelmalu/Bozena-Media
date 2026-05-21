@@ -77,7 +77,7 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		postHandler.logger.Error(string(ierrors.MSGInvalidRequestBody), zap.String("requestID", requestID))
+		postHandler.logger.Error("Error while unmarshaling json", zap.String("requestID", requestID))
 		c.Error(appErrors.NewValidationError(appErrors.MSGInvalidRequestBody, nil, err))
 		return
 	}
@@ -85,8 +85,8 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 	userID := int64(userIDInt)
 	ctx, err := addUserIDToContext(c)
 	if err != nil {
-		postHandler.logger.Error("", zap.Error(err))
-		c.Error(appErrors.NewInternalError("Failed to prepare request context", err))
+		postHandler.logger.Error("failed to get userID from context", zap.Error(err))
+		c.Error(appErrors.NewInternalError(ierrors.MSGUnauthorizedAccess, err))
 		return
 	}
 
@@ -97,7 +97,7 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	utils.SendSuccessResponse(c,resp,requestID,http.StatusOK)
 }
 
 func (postHandler *PostHandler) UpdatePost(c *gin.Context) {
@@ -135,9 +135,8 @@ func (postHandler *PostHandler) UpdatePost(c *gin.Context) {
 	ctx, err := addUserIDToContext(c)
 	if err != nil {
 
-		postHandler.logger.Error(string(ierrors.MSGInvalidRequestBody), zap.Error(err), zap.String("requestID", requestID))
-
-		c.Error(appErrors.NewInternalError("Failed to prepare request context", err))
+		postHandler.logger.Error("failed to get userID from context", zap.Error(err))
+		c.Error(appErrors.NewInternalError(ierrors.MSGUnauthorizedAccess, err))
 		return
 	}
 
@@ -149,7 +148,8 @@ func (postHandler *PostHandler) UpdatePost(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, resp)
+		utils.SendSuccessResponse(c,resp,requestID,http.StatusOK)
+
 }
 func (postHandler *PostHandler) DeletePost(c *gin.Context) {
 
@@ -174,9 +174,8 @@ func (postHandler *PostHandler) DeletePost(c *gin.Context) {
 	ctx, err := addUserIDToContext(c)
 	if err != nil {
 
-		postHandler.logger.Error(string(ierrors.MSGInvalidRequestBody), zap.Error(err), zap.String("requestID", requestID))
-
-		c.Error(appErrors.NewInternalError("Failed to prepare request context", err))
+		postHandler.logger.Error("failed to get userID from context", zap.Error(err))
+		c.Error(appErrors.NewInternalError(ierrors.MSGUnauthorizedAccess, err))
 		return
 	}
 
@@ -189,7 +188,8 @@ func (postHandler *PostHandler) DeletePost(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, resp)
+		utils.SendSuccessResponse(c,resp,requestID,http.StatusOK)
+
 }
 
 func (postHandler *PostHandler) ListPosts(c *gin.Context) {
@@ -202,8 +202,8 @@ func (postHandler *PostHandler) ListPosts(c *gin.Context) {
 	ctx, err := addUserIDToContext(c)
 	if err != nil {
 
-		postHandler.logger.Error(string(ierrors.MSGInvalidRequestBody), zap.Error(err), zap.String("requestID", requestID))
-		c.Error(appErrors.NewInternalError("Failed to prepare request context", err))
+	postHandler.logger.Error("failed to get userID from context", zap.Error(err))
+		c.Error(appErrors.NewInternalError(ierrors.MSGUnauthorizedAccess, err))
 		return
 	}
 
@@ -216,6 +216,7 @@ func (postHandler *PostHandler) ListPosts(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+			utils.SendSuccessResponse(c,resp,requestID,http.StatusOK)
+
 
 }

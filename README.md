@@ -43,7 +43,11 @@ Each service (`Auth`, `post`) is structured into the following layers within the
 - **Clean Architecture Implementation**: Strict separation of concerns for maintainability and testability.
 - **Microservices Architecture**: Decoupled services for better scalability and maintenance.
 - **gRPC Integration**: High-performance internal communication using Protocol Buffers.
-- **Secure Authentication**: JWT-based stateless authentication with token refresh and secure logout.
+- **Secure Authentication**: JWT-based stateless authentication with token refresh, secure logout, and cross-platform support (HttpOnly cookies for Web, JSON response for Mobile).
+- **Structured Error Handling**: Custom error mapper (`ierrors`) that safely translates internal gRPC errors into clean, user-friendly HTTP responses while preserving internal causes for debugging.
+- **Request Tracing**: Distributed tracing using `RequestID` propagation across the API Gateway and microservices for easier log correlation.
+- **Structured Logging**: High-performance, structured JSON logging implemented using **Uber's Zap** (`go.uber.org/zap`).
+- **Data Validation**: Strict incoming request validation utilizing **go-playground/validator** and Gin's built-in bindings.
 - **Granular Permissions**: Role-Based Access Control (RBAC) and ownership verification.
 - **Database Migrations**: Managed PostgreSQL schemas for each service.
 - **Containerization**: Docker support for simplified deployment.
