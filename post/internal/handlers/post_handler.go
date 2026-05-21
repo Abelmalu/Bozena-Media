@@ -6,6 +6,7 @@ import (
 
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/abelmalu/golang-posts/post/internal/core"
+	"github.com/abelmalu/golang-posts/post/internal/dto"
 	ierrors "github.com/abelmalu/golang-posts/post/internal/errors"
 	"github.com/abelmalu/golang-posts/post/internal/models"
 	"github.com/abelmalu/golang-posts/post/pkg/utils"
@@ -169,6 +170,17 @@ func (postHandler *PostHandler) ListPosts(ctx context.Context, req *pb.ListPosts
 }
 
 func (postHandler *PostHandler) UpdatePost(ctx context.Context, req *pb.UpdatePostRequest) (*pb.UpdatePostResponse, error) {
+	post := dto.UpdatePostRequest{
+		Title:   req.Title,
+		Content: req.Content,
+	
+	}
+	validationErrStr := post.Validate()
+
+	if validationErrStr != "" {
+
+		return nil, status.Error(codes.InvalidArgument, validationErrStr)
+	}
 	postID := int(req.PostId)
 	var appErr *ierrors.AppError
 	requestID, err := utils.GetRequestID(ctx)
@@ -184,7 +196,7 @@ func (postHandler *PostHandler) UpdatePost(ctx context.Context, req *pb.UpdatePo
 
 	}
 
-	_, err = postHandler.service.UpdatePost(ctx, postID, req.Title, req.Content)
+	_, err = postHandler.service.UpdatePost(ctx, postID, post.Title, post.Content)
 
 	if err != nil {
 		postHandler.logger.Error("Post service error", zap.Error(err), zap.String("requestID", requestID))
