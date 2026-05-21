@@ -246,7 +246,7 @@ func (postHandler *PostHandler) DeletePost(ctx context.Context, req *pb.DeletePo
 
 	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
 
-		return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
+		return nil, status.Error(codes.Internal, "something went wrong")
 
 	}
 	if errors.Is(err, ierrors.ErrRequestIDNotFound) {
