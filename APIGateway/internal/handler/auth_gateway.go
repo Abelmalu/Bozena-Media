@@ -129,6 +129,8 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 		UserName string `json:"username"`
 		Password string `json:"password"`
 	}
+
+	
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
@@ -148,7 +150,11 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 		}
 
 	}
-
+    if err := c.ShouldBindJSON(&req); err != nil {
+		ah.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
+		c.Error(appErrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
+		return
+	}
 	
 	ctx, clientType := utils.AddToOutgoingContext(c, requestID)
 

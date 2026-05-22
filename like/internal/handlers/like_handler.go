@@ -69,7 +69,7 @@ func (likeHandler *LikeHandler) ToggleLike(ctx context.Context, req *pb.LikeRequ
 	}
 
 	likeRequest := dto.ToggleLikeRequest{
-		State: req.State,
+		State: &req.State,
 	}
 	validationErrStr := likeRequest.Validate()
 

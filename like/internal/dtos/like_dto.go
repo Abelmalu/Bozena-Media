@@ -8,7 +8,7 @@ import (
 )
 
 type ToggleLikeRequest struct {
-	State bool `json:"state" validate:"required"`
+	State *bool `json:"state" validate:"required"`
 }
 
 type ToggleLikeResponse struct {

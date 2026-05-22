@@ -24,8 +24,8 @@ func (likeRespository *LikeRespository) ToggleLike(ctx context.Context, state bo
 
 	if state {
 		query := `
-			INSERT INTO likes (user_id, post_id, created_at) 
-			VALUES ($1, $2, NOW()) 
+			INSERT INTO likes (user_id, post_id) 
+			VALUES ($1, $2) 
 			ON CONFLICT (user_id, post_id) DO NOTHING; `
 
 		_, err := likeRespository.DB.ExecContext(ctx, query, userID, postID)
@@ -53,7 +53,7 @@ func (likeRespository *LikeRespository) ToggleLike(ctx context.Context, state bo
 
 		query := `DELETE FROM likes WHERE user_id = $1 AND post_id = $2;`
 
-		result, err := likeRespository.DB.ExecContext(ctx, query, postID)
+		result, err := likeRespository.DB.ExecContext(ctx, query,userID, postID)
 
 		var appErr *pgconn.PgError
 		if err != nil {

@@ -14,6 +14,8 @@ import (
 	"github.com/abelmalu/golang-posts/like/proto/pb"
 	"github.com/abelmalu/golang-posts/platform"
 	"google.golang.org/grpc"
+	_ "github.com/jackc/pgx/v5"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type App struct {
@@ -73,7 +75,7 @@ func initDB(config *config.Config) (*sql.DB, error) {
 
 func (app *App) Run() {
 
-		lis, _ := net.Listen("tcp", ":5003")
+		lis, _ := net.Listen("tcp", ":50053")
 	 s := grpc.NewServer()
 
 	logger := platform.InitZapLogger()
