@@ -24,7 +24,7 @@ func NewLikeClient(conn *grpc.ClientConn) *LikeClient {
 }
 
 
-func(likeClient *LikeClient) ToggleLike(ctx context.Context, state bool, opts ...grpc.CallOption) (*pb.LikeResponse, error){
+func(likeClient *LikeClient) ToggleLike(ctx context.Context, like bool, opts ...grpc.CallOption) (*pb.LikeResponse, error){
    
 	ctx,cancel := context.WithTimeout(ctx,time.Minute * 2)
     defer cancel()
@@ -32,7 +32,7 @@ func(likeClient *LikeClient) ToggleLike(ctx context.Context, state bool, opts ..
 	return  likeClient.client.ToggleLike(
 		ctx,
 		&pb.LikeRequest{
-			State: state,
+			State: like,
 		},
 	
 	)

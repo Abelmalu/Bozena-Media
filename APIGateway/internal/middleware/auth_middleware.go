@@ -29,17 +29,12 @@ func AuthMiddleware(logger *platform.Logger) gin.HandlerFunc {
 
 			logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
-
+			return 
 		}
 
 	
 
-		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
-
-		}
-		if errors.Is(err, ierrors.ErrUserIDNotFoundInContext) {
-
-		}
+		
 	}
 		authHeader := c.GetHeader("Authorization")
 
@@ -128,12 +123,6 @@ func AuthorizeRoles(logger *platform.Logger, allowedRoles ...string) gin.Handler
 
 	
 
-		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
-
-		}
-		if errors.Is(err, ierrors.ErrUserIDNotFoundInContext) {
-
-		}
 	}
 
 

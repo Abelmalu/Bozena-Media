@@ -251,7 +251,7 @@ func (postHandler *PostHandler) DeletePost(ctx context.Context, req *pb.DeletePo
 	}
 	if errors.Is(err, ierrors.ErrRequestIDNotFound) {
 
-		return nil, status.Error(codes.InvalidArgument, "missing request ID")
+		return nil, status.Error(codes.InvalidArgument, "something went wrong")
 
 	}
 

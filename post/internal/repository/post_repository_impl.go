@@ -60,10 +60,10 @@ func (pr *PostRepository) UpdatePost(ctx context.Context, ID int, title string, 
 	err := pr.DB.QueryRowContext(ctx, query, title, content, ID).
 		Scan(&post.ID, &post.Title, &post.Content)
 
-	var appErr *pgconn.PgError
+	var pgErr *pgconn.PgError
 	if err != nil {
 
-		if errors.As(err, &appErr) {
+		if errors.As(err, &pgErr) {
 
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 		}

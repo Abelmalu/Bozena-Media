@@ -22,7 +22,15 @@ func NewLikeRepository(likeRepo core.LikeRepository ) *LikeService{
 
 
 func (likeService *LikeService)	ToggleLike(ctx context.Context,state bool,userID,postID int)(dto.ToggleLikeResponse,error){
+	
+	err := likeService.likeRepo.ToggleLike(ctx,state,userID,postID)
 
+	 if err != nil {
 
-	return dto.ToggleLikeResponse{},nil
+		return  dto.ToggleLikeResponse{},err
+	 }
+
+	return dto.ToggleLikeResponse{
+		Message: "Successfully unliked a post",
+	},nil
 }

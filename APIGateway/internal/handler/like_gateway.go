@@ -64,7 +64,7 @@ func addToOutgoingContext(c *gin.Context,postID string,requestID string)(context
 func (likeHandler *LikeHandler) ToggleLike(c *gin.Context) {
 
 	var req struct {
-		State bool `json:"state"`
+		State bool `json:"like"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
