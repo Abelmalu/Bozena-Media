@@ -117,9 +117,10 @@ const file_like_proto_like_proto_rawDesc = "" +
 	"\vLikeRequest\x12\x14\n" +
 	"\x05state\x18\x01 \x01(\bR\x05state\"(\n" +
 	"\fLikeResponse\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2N\n" +
-	"\vLikeService\x12?\n" +
-	"\bLikePost\x12\x18.postservice.LikeRequest\x1a\x19.postservice.LikeResponseB\fZ\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2P\n" +
+	"\vLikeService\x12A\n" +
+	"\n" +
+	"ToggleLike\x12\x18.postservice.LikeRequest\x1a\x19.postservice.LikeResponseB\fZ\n" +
 	"./proto/pbb\x06proto3"
 
 var (
@@ -140,8 +141,8 @@ var file_like_proto_like_proto_goTypes = []any{
 	(*LikeResponse)(nil), // 1: postservice.LikeResponse
 }
 var file_like_proto_like_proto_depIdxs = []int32{
-	0, // 0: postservice.LikeService.LikePost:input_type -> postservice.LikeRequest
-	1, // 1: postservice.LikeService.LikePost:output_type -> postservice.LikeResponse
+	0, // 0: postservice.LikeService.ToggleLike:input_type -> postservice.LikeRequest
+	1, // 1: postservice.LikeService.ToggleLike:output_type -> postservice.LikeResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LikeService_LikePost_FullMethodName = "/postservice.LikeService/LikePost"
+	LikeService_ToggleLike_FullMethodName = "/postservice.LikeService/ToggleLike"
 )
 
 // LikeServiceClient is the client API for LikeService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LikeServiceClient interface {
-	LikePost(ctx context.Context, in *LikeRequest, opts ...grpc.CallOption) (*LikeResponse, error)
+	ToggleLike(ctx context.Context, in *LikeRequest, opts ...grpc.CallOption) (*LikeResponse, error)
 }
 
 type likeServiceClient struct {
@@ -37,10 +37,10 @@ func NewLikeServiceClient(cc grpc.ClientConnInterface) LikeServiceClient {
 	return &likeServiceClient{cc}
 }
 
-func (c *likeServiceClient) LikePost(ctx context.Context, in *LikeRequest, opts ...grpc.CallOption) (*LikeResponse, error) {
+func (c *likeServiceClient) ToggleLike(ctx context.Context, in *LikeRequest, opts ...grpc.CallOption) (*LikeResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LikeResponse)
-	err := c.cc.Invoke(ctx, LikeService_LikePost_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, LikeService_ToggleLike_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (c *likeServiceClient) LikePost(ctx context.Context, in *LikeRequest, opts 
 // All implementations must embed UnimplementedLikeServiceServer
 // for forward compatibility.
 type LikeServiceServer interface {
-	LikePost(context.Context, *LikeRequest) (*LikeResponse, error)
+	ToggleLike(context.Context, *LikeRequest) (*LikeResponse, error)
 	mustEmbedUnimplementedLikeServiceServer()
 }
 
@@ -62,8 +62,8 @@ type LikeServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedLikeServiceServer struct{}
 
-func (UnimplementedLikeServiceServer) LikePost(context.Context, *LikeRequest) (*LikeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method LikePost not implemented")
+func (UnimplementedLikeServiceServer) ToggleLike(context.Context, *LikeRequest) (*LikeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ToggleLike not implemented")
 }
 func (UnimplementedLikeServiceServer) mustEmbedUnimplementedLikeServiceServer() {}
 func (UnimplementedLikeServiceServer) testEmbeddedByValue()                     {}
@@ -86,20 +86,20 @@ func RegisterLikeServiceServer(s grpc.ServiceRegistrar, srv LikeServiceServer) {
 	s.RegisterService(&LikeService_ServiceDesc, srv)
 }
 
-func _LikeService_LikePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _LikeService_ToggleLike_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LikeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LikeServiceServer).LikePost(ctx, in)
+		return srv.(LikeServiceServer).ToggleLike(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LikeService_LikePost_FullMethodName,
+		FullMethod: LikeService_ToggleLike_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LikeServiceServer).LikePost(ctx, req.(*LikeRequest))
+		return srv.(LikeServiceServer).ToggleLike(ctx, req.(*LikeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -112,8 +112,8 @@ var LikeService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*LikeServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "LikePost",
-			Handler:    _LikeService_LikePost_Handler,
+			MethodName: "ToggleLike",
+			Handler:    _LikeService_ToggleLike_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -2,10 +2,18 @@ package application
 
 import (
 	"database/sql"
-	"log"
 	"fmt"
+	"log"
+	"net"
 	"time"
+
 	"github.com/abelmalu/golang-posts/like/config"
+	handler "github.com/abelmalu/golang-posts/like/internal/handlers"
+	"github.com/abelmalu/golang-posts/like/internal/repository"
+	"github.com/abelmalu/golang-posts/like/internal/service"
+	"github.com/abelmalu/golang-posts/like/proto/pb"
+	"github.com/abelmalu/golang-posts/platform"
+	"google.golang.org/grpc"
 )
 
 type App struct {
@@ -65,6 +73,18 @@ func initDB(config *config.Config) (*sql.DB, error) {
 
 func (app *App) Run() {
 
+		lis, _ := net.Listen("tcp", ":5003")
+	 s := grpc.NewServer()
+
+	logger := platform.InitZapLogger()
+	
+	likeRepository := repository.NewLikeRepository(app.DB)
+	likeService := service.NewLikeRepository(likeRepository)
+	likeHandler := handler.NewLikeHandler(likeService,logger)
+
+	
+	pb.RegisterLikeServiceServer(s, likeHandler)
+	s.Serve(lis)
 	
 
 }

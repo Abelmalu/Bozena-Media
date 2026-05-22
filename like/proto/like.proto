@@ -7,7 +7,7 @@ option go_package = "./proto/pb";
 
 
 service LikeService {
-    rpc LikePost(LikeRequest) returns (LikeResponse);
+    rpc ToggleLike(LikeRequest) returns (LikeResponse);
 }
 
 
