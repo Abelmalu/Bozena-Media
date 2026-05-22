@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -66,13 +67,26 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 		Title   string `json:"title"`
 		Content string `json:"content"`
 	}
-	requestID, err := utils.GetRequestID(c, postHandler.logger)
-
+	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
-		return
-	}
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
+			postHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			postHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+		}
+
+	
+	}
 	//get userID from the context
 	userIDInt, err := utils.GetUserID(c, postHandler.logger)
 	if err != nil {
@@ -111,10 +125,25 @@ func (postHandler *PostHandler) UpdatePost(c *gin.Context) {
 		Title   string `json:"title" db:"title"`
 		Content string `json:"content" db:"content"`
 	}
-	requestID, err := utils.GetRequestID(c, postHandler.logger)
+	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
-		return
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+
+			postHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			postHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+
+		}
+
 	}
 
 	postIDStr := c.Param("id")
@@ -158,10 +187,25 @@ func (postHandler *PostHandler) UpdatePost(c *gin.Context) {
 }
 func (postHandler *PostHandler) DeletePost(c *gin.Context) {
 
-	requestID, err := utils.GetRequestID(c, postHandler.logger)
+		requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
-		return
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+
+			postHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			postHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+
+		}
+
 	}
 	postIDStr := c.Param("id")
 	postID, err := strconv.Atoi(postIDStr)
@@ -198,10 +242,32 @@ func (postHandler *PostHandler) DeletePost(c *gin.Context) {
 }
 
 func (postHandler *PostHandler) ListPosts(c *gin.Context) {
-	requestID, err := utils.GetRequestID(c, postHandler.logger)
+		requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
-		return
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+
+			postHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			postHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+		}
+
+	
+
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+		}
+		if errors.Is(err, ierrors.ErrUserIDNotFoundInContext) {
+
+		}
 	}
 
 	ctx, err := appendToOutgoingContext(c,requestID)

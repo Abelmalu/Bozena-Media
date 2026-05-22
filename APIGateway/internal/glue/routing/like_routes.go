@@ -2,7 +2,6 @@ package routing
 
 import (
 	"net/http"
-
 	"github.com/abelmalu/golang-posts/APIGateway/internal/glue"
 	"github.com/abelmalu/golang-posts/APIGateway/internal/handler"
 	"github.com/abelmalu/golang-posts/platform"

@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	"errors"
 	"strings"
-    "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
+
+	"github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	"github.com/abelmalu/golang-posts/APIGateway/pkg/utils"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
@@ -12,7 +14,33 @@ import (
 func AuthMiddleware(logger *platform.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var tokenStr string
-		requestID, _ := utils.GetRequestID(c, logger)
+			requestID, err := utils.GetRequestID(c)
+	if err != nil {
+
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+
+		logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+		}
+
+	
+
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+		}
+		if errors.Is(err, ierrors.ErrUserIDNotFoundInContext) {
+
+		}
+	}
 		authHeader := c.GetHeader("Authorization")
 
 		if strings.HasPrefix(authHeader, "Bearer ") {
@@ -78,7 +106,35 @@ func AuthMiddleware(logger *platform.Logger) gin.HandlerFunc {
 func AuthorizeRoles(logger *platform.Logger, allowedRoles ...string) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
-		requestID, _ := utils.GetRequestID(c, logger)
+			requestID, err := utils.GetRequestID(c)
+	if err != nil {
+
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+
+			logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			c.Abort()
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			c.Abort()
+			return
+
+		}
+
+	
+
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+		}
+		if errors.Is(err, ierrors.ErrUserIDNotFoundInContext) {
+
+		}
+	}
 
 
 		role, ok := c.Get("userRole")

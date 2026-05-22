@@ -35,20 +35,6 @@ func NewAuthHandler(au AuthService, logger *platform.Logger) *AuthHandler {
 	}
 }
 
-// addToOutgoingContext add data to the outgoing context
-func addToOutgoingContext(c *gin.Context, requestID string) (context.Context, string) {
-
-	clientType := c.GetHeader("X-Client-Type")
-	md := metadata.Pairs(
-		"x-client-type", clientType,
-		"requestID", requestID,
-	)
-	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
-
-	return ctx, clientType
-
-}
-
 // ExtractRefreshToken extracts refresh tokens from the request
 func ExtractRefreshToken(c *gin.Context) (string, error) {
 
@@ -66,8 +52,6 @@ func ExtractRefreshToken(c *gin.Context) (string, error) {
 		return token, nil
 	}
 
-
-
 	return "", errors.New("Refresh Token not found")
 }
 
@@ -79,10 +63,24 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
-	requestID,err := utils.GetRequestID(c, ah.logger)
+	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
-		return
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+
+			ah.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+		}
+
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -91,7 +89,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 	// call getClienType to get the client type and inject it into the grpc metadata
-	ctx, clientType := addToOutgoingContext(c, requestID)
+	ctx, clientType := utils.AddToOutgoingContext(c, requestID)
 
 	resp, err := ah.client.Register(ctx, req.UserName, req.Name, req.Email, req.Password)
 	if err != nil {
@@ -101,7 +99,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-   var registerResponse dto.RegisterResponse
+	var registerResponse dto.RegisterResponse
 
 	switch clientType {
 	case "web":
@@ -122,7 +120,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		registerResponse.RefreshToken = resp.RefreshToken
 	}
 
-	utils.SendSuccessResponse(c,registerResponse,requestID,http.StatusOK)
+	utils.SendSuccessResponse(c, registerResponse, requestID, http.StatusOK)
 
 }
 
@@ -131,14 +129,28 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 		UserName string `json:"username"`
 		Password string `json:"password"`
 	}
-	requestID,_ := utils.GetRequestID(c, ah.logger)
+	requestID, err := utils.GetRequestID(c)
+	if err != nil {
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		ah.logger.Error("Error Unmarshaling request", zap.Error(err), zap.String("requestID", requestID))
-		c.Error(appErrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
-		return
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+
+			ah.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+		}
+
 	}
-	ctx, clientType := addToOutgoingContext(c, requestID)
+
+	
+	ctx, clientType := utils.AddToOutgoingContext(c, requestID)
 
 	resp, err := ah.client.Login(ctx, req.UserName, req.Password)
 
@@ -161,19 +173,38 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 			SameSite: http.SameSiteLaxMode,
 		})
 
-		loginResponse.AccessToken= resp.AccessToken
+		loginResponse.AccessToken = resp.AccessToken
 
 	case "mobile":
 		loginResponse.AccessToken = resp.AccessToken
 		loginResponse.RefreshToken = resp.RefreshToken
 	}
 
-	utils.SendSuccessResponse(c,loginResponse,requestID,http.StatusOK)
+	utils.SendSuccessResponse(c, loginResponse, requestID, http.StatusOK)
 
 }
 
 func (ah *AuthHandler) Logout(c *gin.Context) {
-	requestID,_ := utils.GetRequestID(c, ah.logger)
+	requestID, err := utils.GetRequestID(c)
+	if err != nil {
+
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+
+			ah.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+		}
+	}
+
+	
 
 	refreshToken, err := ExtractRefreshToken(c)
 	if err != nil {
@@ -181,7 +212,6 @@ func (ah *AuthHandler) Logout(c *gin.Context) {
 		c.Error(appErrors.NewAppError(appErrors.TypeUnauthorized, ierrors.MSGRefreshTokenNotFound, err))
 		return
 	}
-
 
 	md := metadata.Pairs("refreshToken", refreshToken, "requestID", requestID)
 	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
@@ -193,12 +223,31 @@ func (ah *AuthHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	utils.SendSuccessResponse(c,resp,requestID,http.StatusOK)
+	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
 }
 
 func (ah *AuthHandler) RefreshHandler(c *gin.Context) {
 
-	requestID,_ := utils.GetRequestID(c, ah.logger)
+	requestID, err := utils.GetRequestID(c)
+	if err != nil {
+
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+
+			ah.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+		}
+
+
+	}
 
 	// extracting the refresh token from the request for both mobile and web clients
 	refreshToken, err := ExtractRefreshToken(c)
@@ -208,7 +257,7 @@ func (ah *AuthHandler) RefreshHandler(c *gin.Context) {
 		return
 	}
 
-	ctx, clientType := addToOutgoingContext(c, requestID)
+	ctx, clientType := utils.AddToOutgoingContext(c, requestID)
 
 	resp, err := ah.client.RefreshHandler(ctx, refreshToken)
 	if err != nil {
