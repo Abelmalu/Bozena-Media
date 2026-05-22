@@ -5,5 +5,6 @@ CREATE TABLE likes(
     post_id INT NOT NULL,
     user_id INT NOT NULL,
     CONSTRAINT fk_posts FOREIGN KEY(post_id) REFERENCES posts(id),
-    CONSTRAINT fk_users FOREIGN KEY(user_id) REFERENCES users(id)
+    CONSTRAINT fk_users FOREIGN KEY(user_id) REFERENCES users(id),
+    CONSTRAINT  unique_user_post_like UNIQUE (user_id,post_id)
 )
