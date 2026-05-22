@@ -22,6 +22,10 @@ func InitRoute(router *gin.Engine, handler Handler,logger *platform.Logger) {
 	postRouter := router.Group("api/posts")
 	routing.InitPostRoute(postRouter,&handler.postHandler,logger)
 
+	//like route initialization
+	likeRouter := router.Group("api/likes")
+
+    routing.InitLikeRoute(likeRouter,&handler.likeHandler,logger)
 
 
 

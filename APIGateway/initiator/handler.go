@@ -10,7 +10,7 @@ type Handler struct{
 
 	authHandler handler.AuthHandler 
 	postHandler handler.PostHandler
-
+	likeHandler handler.LikeHandler
 
 }
 
@@ -20,6 +20,7 @@ func InitHandler(client Client,logger *platform.Logger ) *Handler{
 	return &Handler{
 		authHandler: *handler.NewAuthHandler(&client.authClient,logger),
 		postHandler: *handler.NewPostHandler(&client.postClient,logger),
+		likeHandler: *handler.NewLikeHandler(&client.likeClient,logger),
 	}
 
 
