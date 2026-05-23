@@ -91,7 +91,24 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 	userIDInt, err := utils.GetUserID(c, postHandler.logger)
 	if err != nil {
 
-		return
+		if errors.Is(err,ierrors.ErrUserIDNotFoundInContext){
+
+			postHandler.logger.Error("couldn't couldn't find userID in the context", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return 
+
+
+		}
+		if errors.Is(err,ierrors.ErrTypeAssertionFailed){
+
+			postHandler.logger.Error("couldn't assert the user ID to string", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return 
+
+
+		}
+
+		
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {

@@ -20,7 +20,7 @@ func NewLikeRepository(db *sql.DB) *LikeRespository {
 	}
 }
 
-func (likeRespository *LikeRespository) ToggleLike(ctx context.Context, state bool, userID, postID int) error {
+func (likeRespository *LikeRespository) ToggleLike(ctx context.Context, state bool, userID, postID int) (string,error) {
 
 	if state {
 		query := `
@@ -35,20 +35,23 @@ func (likeRespository *LikeRespository) ToggleLike(ctx context.Context, state bo
 
 			if errors.As(err, &pgErr) {
 
-				return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+				return "", ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 			}
 			if errors.Is(err, context.Canceled) {
 
-				return ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+				return "",ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
 			}
 			if errors.Is(err, context.DeadlineExceeded) {
 
-				return ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+				return "", ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
 			}
 
-			return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			return "", ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 		}
+
+
+		return "post liked successfully",nil
 	} else {
 
 		query := `DELETE FROM likes WHERE user_id = $1 AND post_id = $2;`
@@ -60,33 +63,36 @@ func (likeRespository *LikeRespository) ToggleLike(ctx context.Context, state bo
 
 			if errors.As(err, &appErr) {
 
-				return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+				return "", ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 			}
 			if errors.Is(err, context.Canceled) {
 
-				return ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+				return "",ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
 			}
 			if errors.Is(err, context.DeadlineExceeded) {
 
-				return ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+				return "",ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
 			}
 
-			return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			return "",ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 		}
 		rowsAffected, err := result.RowsAffected()
 
 		if err != nil {
-			return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			return "",ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 		}
 
 		if rowsAffected == 0 {
-			return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			return "", ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 		}
 
+		return "post unliked successfully",nil
+
+
 	}
 
-	return nil
+
 }

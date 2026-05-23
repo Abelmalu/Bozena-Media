@@ -27,7 +27,7 @@ Each service (`Auth`, `post`) is structured into the following layers within the
 1.  **API Gateway**: The entry point for all client requests. It handles routing and authenticates requests using the **Auth Service** before forwarding them to the internal services.
 2.  **Auth Service**: Manages user registration, login, JWT issuance, and session management.
 3.  **Post Service**: Handles all post-related operations (CRUD).
-4.  **Likes Service** *(Coming Soon 🚀)*: Will manage post reactions and likes.
+4.  **Likes Service**: Manages post reactions and likes.
 5.  **Feeds Service** *(Coming Soon 🚀)*: Will generate user-specific timelines and feeds.
 
 ### 🔌 Communication Map
@@ -60,6 +60,7 @@ Each service (`Auth`, `post`) is structured into the following layers within the
 ├── APIGateway/           # Entry point (Gin + gRPC Clients)
 ├── Auth/                 # Authentication service (gRPC Server)
 ├── post/                 # Post management service (gRPC Server)
+├── like/                 # Like management service (gRPC Server)
 ├── pkg/                  # Shared utilities (JWT, etc.)
 ├── migrations/           # Database migration files
 └── proto/                # Shared Protocol Buffer definitions (if applicable)
@@ -100,6 +101,12 @@ Each service (`Auth`, `post`) is structured into the following layers within the
    go run cmd/main.go
    ```
 
+   **Like Service (Port 50053):**
+   ```bash
+   cd like
+   go run cmd/main.go
+   ```
+
    **API Gateway (Port 8080):**
    ```bash
    cd APIGateway
@@ -128,11 +135,17 @@ Each service (`Auth`, `post`) is structured into the following layers within the
 | `PUT`    | `/api/posts/:id`   | Update a specific post | **Owner Only**       |
 | `DELETE` | `/api/posts/:id`   | Delete a specific post | **Owner Only**       |
 
+### Likes
+
+| Method   | Endpoint              | Description                  | Permissions          |
+| :------- | :-------------------- | :--------------------------- | :------------------- |
+| `POST`   | `/api/posts/like/:id` | Toggle like/unlike on a post | Authenticated User   |
+
 ---
 
 ## 📅 Roadmap
 
-- [ ] **Likes Service**: Allow users to like and react to posts.
+- [x] **Likes Service**: Allow users to like and react to posts.
 - [ ] **Feeds Service**: Optimized algorithm for displaying posts.
 - [ ] **Docker Compose**: Single command to spin up the entire ecosystem.
 - [ ] **Service Discovery**: Implement Consul or Etcd.
