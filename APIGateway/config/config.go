@@ -8,6 +8,10 @@ import (
 type Config struct {
 	PostServiceADD string
 	AuthServiceADD string
+	LikeServiceADD string
+	RedisADD string
+	RedisPassword string
+	RedisDB int
 	Port           string
 }
 
@@ -22,11 +26,22 @@ func LoadConfig() (*Config, error) {
 
 		return nil,fmt.Errorf("Post_Service_ADD is required")
 	}
+
 	config.AuthServiceADD = os.Getenv("Auth_Service_ADD")
 	if config.AuthServiceADD == ""{
 
 		return nil,fmt.Errorf("Auth_Service_ADD is required")
 	}
+
+	config.RedisADD = os.Getenv("REDIS_ADD")
+	if config.RedisADD == ""{
+
+		return nil,fmt.Errorf("Auth_Service_ADD is required")
+	}
+
+
+
+
 	config.Port = os.Getenv("PORT")
 	if config.Port == ""{
 

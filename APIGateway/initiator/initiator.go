@@ -12,6 +12,11 @@ func Initialize() {
 	//initializing loggers 
 	logger := InitLogger()
 
+	// Initializing redis client
+	// redisClient := InitRedis("127.0.0.1","",0,logger)
+
+
+
 	// initializing clients
 	clients := NewClient(logger)
 

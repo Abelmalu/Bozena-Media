@@ -46,7 +46,7 @@ func (e *AppError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Type, e.Message)
 }
 
-func (e *AppError) UnWrap() error {
+func (e *AppError) Unwrap() error {
 
 	return e.Cause
 
