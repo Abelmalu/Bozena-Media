@@ -88,7 +88,7 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 	
 	}
 	//get userID from the context
-	userIDInt, err := utils.GetUserID(c, postHandler.logger)
+	userIDInt, err := utils.GetUserID(c)
 	if err != nil {
 
 		if errors.Is(err,ierrors.ErrUserIDNotFoundInContext){

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	ierrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
-	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/metadata"
 )
@@ -28,7 +27,7 @@ func GetRequestID(c *gin.Context) (string, error) {
 }
 
 // GetUserID get the userID from the context
-func GetUserID(c *gin.Context, logger *platform.Logger) (int, error) {
+func GetUserID(c *gin.Context) (int, error) {
 
 	var userID interface{}
 	var ok bool

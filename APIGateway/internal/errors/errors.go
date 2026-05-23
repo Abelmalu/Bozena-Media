@@ -26,7 +26,11 @@ var(
 	ErrUserIDNotFoundInContext error = errors.New("user id not found in context")
 	ErrTypeAssertionFailed error = errors.New("type assertion failed")
 	ErrRequestIDNotFoundInContext error = errors.New("request id not found in context")
+	ErrMetaDataNotFound = errors.New("meta data not found")
+	
 )
+
+
 type AppError struct {
 	Type    ErrorType              `json:"type"`
 	Code    string                 `json:"code,omitempty"`
