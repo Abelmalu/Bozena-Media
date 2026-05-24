@@ -8,17 +8,18 @@ import (
 	"github.com/abelmalu/golang-posts/APIGateway/internal/middleware"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
-func InitPostRoute(router *gin.RouterGroup, handler *handler.PostHandler,logger *platform.Logger) {
+func InitPostRoute(router *gin.RouterGroup, handler *handler.PostHandler,logger *platform.Logger,redisClient *redis.Client) {
 
 	routes := []glue.Route{
 		{
 			Method:      http.MethodPost,
 			Path:        "/",
 			Handler:     handler.CreatePost,
-			Middlewares: []func(*platform.Logger) gin.HandlerFunc{
+			Middlewares: [] gin.HandlerFunc{
 
-				middleware.AuthMiddleware,
+				middleware.AuthMiddleware(logger,redisClient),
 
 			
 			},
@@ -27,17 +28,17 @@ func InitPostRoute(router *gin.RouterGroup, handler *handler.PostHandler,logger 
 			Method:      http.MethodGet,
 			Path:        "/",
 			Handler:     handler.ListPosts,
-			Middlewares: []func(*platform.Logger) gin.HandlerFunc{
+			Middlewares: [] gin.HandlerFunc{
 
-				middleware.AuthMiddleware,
+				middleware.AuthMiddleware(logger,redisClient),
 			},
 		},
 		{
 			Method:      http.MethodPut,
 			Path:        "/update/:id",
 			Handler:     handler.UpdatePost,
-			Middlewares: []func(*platform.Logger) gin.HandlerFunc{
-				middleware.AuthMiddleware,
+			Middlewares: []gin.HandlerFunc{
+				middleware.AuthMiddleware(logger,redisClient),
 
 			},
 		},
@@ -45,12 +46,12 @@ func InitPostRoute(router *gin.RouterGroup, handler *handler.PostHandler,logger 
 			Method:  http.MethodDelete,
 			Path:    "/delete/:id",
 			Handler: handler.DeletePost,
-			Middlewares: []func(*platform.Logger) gin.HandlerFunc{
-				middleware.AuthMiddleware,
+			Middlewares: [] gin.HandlerFunc{
+				middleware.AuthMiddleware(logger,redisClient),
 			},
 		},
 	}
 
-	glue.RegisterRoutes(router,routes,logger)
+	glue.RegisterRoutes(router,routes)
 
 }

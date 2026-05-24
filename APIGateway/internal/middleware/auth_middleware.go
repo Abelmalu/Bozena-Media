@@ -8,10 +8,11 @@ import (
 	"github.com/abelmalu/golang-posts/APIGateway/pkg/utils"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
-func AuthMiddleware(logger *platform.Logger) gin.HandlerFunc {
+func AuthMiddleware(logger *platform.Logger,redisclient *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var tokenStr string
 			requestID, err := utils.GetRequestID(c)
@@ -97,6 +98,8 @@ func AuthMiddleware(logger *platform.Logger) gin.HandlerFunc {
 		c.Next() // Token is valid, proceed to the next handler!
 	}
 }
+
+
 
 func AuthorizeRoles(logger *platform.Logger, allowedRoles ...string) gin.HandlerFunc {
 

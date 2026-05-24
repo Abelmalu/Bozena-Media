@@ -8,6 +8,7 @@ import (
 	"github.com/abelmalu/golang-posts/APIGateway/internal/middleware"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 
@@ -16,7 +17,7 @@ import (
 
 
 
-func InitLikeRoute(router *gin.RouterGroup, handler *handler.LikeHandler,logger *platform.Logger){
+func InitLikeRoute(router *gin.RouterGroup, handler *handler.LikeHandler,logger *platform.Logger,redisClient *redis.Client){
 
 	routes := []glue.Route{
 
@@ -24,9 +25,9 @@ func InitLikeRoute(router *gin.RouterGroup, handler *handler.LikeHandler,logger 
 			Method: http.MethodPost,
 			Path:"/like/:id",
 			Handler: handler.ToggleLike,
-			Middlewares: []func(*platform.Logger) gin.HandlerFunc{
+			Middlewares: [] gin.HandlerFunc{
 
-				middleware.AuthMiddleware,
+				middleware.AuthMiddleware(logger,redisClient),
 			},
 
 
@@ -34,5 +35,5 @@ func InitLikeRoute(router *gin.RouterGroup, handler *handler.LikeHandler,logger 
 
 
 	}
-	glue.RegisterRoutes(router,routes,logger)
+	glue.RegisterRoutes(router,routes)
 }

@@ -12,8 +12,8 @@ func Initialize() {
 	//initializing loggers 
 	logger := InitLogger()
 
-	// Initializing redis client
-	// redisClient := InitRedis("127.0.0.1","",0,logger)
+	//Initializing redis client
+	redisClient := InitRedis("127.0.0.1","",0,logger)
 
 
 
@@ -24,7 +24,7 @@ func Initialize() {
 	handlers := InitHandler(*clients,logger)
 
 	//initializing routes
-	InitRoute(router, *handlers,logger)
+	InitRoute(router, *handlers,logger,redisClient)
 
 	//start the gin server 
 	server.StartServer(router)

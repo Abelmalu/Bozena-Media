@@ -8,8 +8,9 @@ import (
 	"github.com/abelmalu/golang-posts/APIGateway/internal/middleware"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
-func InitAuthRoute(router *gin.RouterGroup, handler *handler.AuthHandler,logger *platform.Logger) {
+func InitAuthRoute(router *gin.RouterGroup, handler *handler.AuthHandler,logger *platform.Logger,redisClient *redis.Client) {
 
 
 	routes := []glue.Route{
@@ -17,30 +18,30 @@ func InitAuthRoute(router *gin.RouterGroup, handler *handler.AuthHandler,logger 
 			Method:      http.MethodPost,
 			Path:        "/register",
 			Handler:     handler.Register,
-			Middlewares: []func(logger *platform.Logger) gin.HandlerFunc{},
+			Middlewares: []gin.HandlerFunc{},
 		},
 		{
 			Method:      http.MethodPost,
 			Path:        "/login",
 			Handler:     handler.Login,
-			Middlewares: []func(logger *platform.Logger) gin.HandlerFunc{},
+			Middlewares: [] gin.HandlerFunc{},
 		},
 		{
 			Method:      http.MethodPost,
 			Path:        "/refresh",
 			Handler:     handler.RefreshHandler,
-			Middlewares: []func(logger *platform.Logger) gin.HandlerFunc{},
+			Middlewares: [] gin.HandlerFunc{},
 		},
 		{
 			Method:  http.MethodPost,
 			Path:    "/logout",
 			Handler: handler.Logout,
-			Middlewares: []func(logger *platform.Logger) gin.HandlerFunc{
-				middleware.AuthMiddleware,
+			Middlewares: [] gin.HandlerFunc{
+				middleware.AuthMiddleware(logger,redisClient),
 			},
 		},
 	}
 
-	glue.RegisterRoutes(router,routes,logger)
+	glue.RegisterRoutes(router,routes)
 
 }
