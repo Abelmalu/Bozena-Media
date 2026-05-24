@@ -10,17 +10,23 @@ import (
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 	"github.com/abelmalu/golang-posts/Auth/pkg/utils"
 	"github.com/abelmalu/golang-posts/platform"
+	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc/metadata"
 )
 
 type AuthService struct {
 	repo   core.AuthRepository
 	logger *platform.Logger
+	redis *redis.Client
 }
 
-func NewAuthService(authRepo core.AuthRepository) *AuthService {
+func NewAuthService(authRepo core.AuthRepository,redisCient *redis.Client) *AuthService {
 
-	return &AuthService{repo: authRepo}
+	return &AuthService{
+		repo: authRepo,
+		redis: redisCient,
+	
+	}
 }
 func (authSer *AuthService) Register(ctx context.Context, user *model.User) (*model.User, *model.TokenPair, error) {
 	var clientMetadata string

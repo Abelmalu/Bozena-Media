@@ -1,12 +1,15 @@
 package utils
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -17,13 +20,22 @@ var (
 
 const RefreshTokenDuration = 24 * 30 * time.Hour
 
-func GenerateAcessToken(userID int,role string) (string, error) {
+
+// Helper function to generate a secure random string for the JTI
+func generateRandomJTI() string {
+	b := make([]byte, 16)
+	_, _ = rand.Read(b) 
+	fmt.Println(b)
+	bStr := hex.EncodeToString(b)
+	return bStr
+} 
+func GenerateAcessToken(userID int, role string) (string, error) {
 
 	claims := jwt.MapClaims{
-		"user_id": userID,
-		"type":    "access",
-		"userRole":role,
-		"exp":     time.Now().Add(time.Minute * 15).Unix(),
+		"user_id":  userID,
+		"type":     "access",
+		"userRole": role,
+		"exp":      time.Now().Add(time.Minute * 15).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -53,7 +65,7 @@ func ValidateAccessToken(tokenStr string) (jwt.MapClaims, error) {
 }
 
 func ValidateRefreshToken(tokenStr string) (jwt.MapClaims, error) {
-	
+
 	return ValidateToken(tokenStr, refreshSecret, "refresh")
 }
 
@@ -97,5 +109,23 @@ func HashToken(token string) string {
 	hasher := sha256.New()
 	hasher.Write([]byte(token))
 	return hex.EncodeToString(hasher.Sum(nil))
+
+}
+
+func ExtractAccessToken(c *gin.Context) string {
+
+	authHeader := c.GetHeader("Authorization")
+
+	var accessToken string
+
+	if strings.HasPrefix(authHeader, "Bearer ") {
+
+		accessToken = strings.TrimPrefix(authHeader, "Bearer ")
+
+	} else {
+		return ""
+	}
+
+	return accessToken
 
 }
