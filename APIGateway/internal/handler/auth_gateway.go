@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/abelmalu/golang-posts/APIGateway/internal/dto"
 	appErrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
@@ -209,8 +210,59 @@ func (ah *AuthHandler) Logout(c *gin.Context) {
 			return
 		}
 	}
+    
 
-	
+	JTI,err :=utils.GetJTI(c)
+
+	if err != nil {
+
+
+		if errors.Is(err, ierrors.ErrJTINotFoundInContext) {
+
+			ah.logger.Error("couldn't get JTI from context", zap.Error(errors.New("couldn't find JTI")))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+		}
+
+
+
+
+	}
+
+	expTime,err := utils.GetJWTEXPTime(c)
+	if err != nil {
+
+
+		if errors.Is(err, ierrors.ErrJTINotFoundInContext) {
+
+			ah.logger.Error("couldn't get JTI from context", zap.Error(errors.New("couldn't find JTI")))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+		}
+
+
+
+
+	}
+	expTimeStr := strconv.Itoa(int(expTime))
 
 	refreshToken, err := ExtractRefreshToken(c)
 	if err != nil {
@@ -219,7 +271,14 @@ func (ah *AuthHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	md := metadata.Pairs("refreshToken", refreshToken, "requestID", requestID)
+	md := metadata.Pairs(
+		"refreshToken", refreshToken, 
+		 "requestID",requestID,
+		 "JTI",JTI,
+		 "expTime",expTimeStr,
+
+		
+		)
 	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
 	resp, err := ah.client.Logout(ctx)
 	if err != nil {

@@ -168,6 +168,14 @@ func (authSer *AuthService) Logout(ctx context.Context, refreshToken string) err
 		return ierrors.NewUnauthorizedError(ierrors.MSGFailedToValidateToken, nil)
 
 	}
+	JTI,err := utils.GetJTI(ctx)
+	if err != nil {
+
+		return err
+	}
+	expTime,err := utils.GetJWTEXPTime(ctx)
+	
+	authSer.redis.Set(ctx,"jti",JTI,)
 
 	// hash the token to check with DB token
 	hashedRefreshToken := utils.HashToken(refreshToken)

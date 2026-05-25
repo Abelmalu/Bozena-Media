@@ -32,6 +32,7 @@ func generateRandomJTI() string {
 func GenerateAcessToken(userID int, role string) (string, error) {
 
 	claims := jwt.MapClaims{
+		"jti":generateRandomJTI(),
 		"user_id":  userID,
 		"type":     "access",
 		"userRole": role,

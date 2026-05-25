@@ -25,6 +25,7 @@ var(
 
 	ErrUserIDNotFoundInContext error = errors.New("user id not found in context")
 	ErrTypeAssertionFailed error = errors.New("type assertion failed")
+	ErrJTINotFoundInContext error = errors.New("JTI not found in context")
 	ErrRequestIDNotFoundInContext error = errors.New("request id not found in context")
 	ErrMetaDataNotFound = errors.New("meta data not found")
 	

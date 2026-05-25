@@ -93,7 +93,34 @@ func AuthMiddleware(logger *platform.Logger,redisclient *redis.Client) gin.Handl
 			return
 		}
 		c.Set("userRole", userRole)
-		// convert once here
+		
+		JTI,ok := tokenClaims["jti"].(string)
+		if !ok {
+			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
+
+			logger.Error("Invalid token claims:Failed while asserting JTI", zap.Error(err))
+
+			utils.SendErrorResponse[error](c, err, requestID, err.HTTPStatus())
+
+			return
+		}
+
+		c.Set("JTI",JTI)
+
+		expTime,ok := tokenClaims["exp"].(float64)
+		if !ok {
+			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
+
+			logger.Error("Invalid token claims:Failed while asserting expTime", zap.Error(err))
+
+			utils.SendErrorResponse[error](c, err, requestID, err.HTTPStatus())
+
+			return
+		}
+
+		c.Set("expTime",expTime)
+
+
 
 		c.Next() // Token is valid, proceed to the next handler!
 	}

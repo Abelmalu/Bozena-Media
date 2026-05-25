@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -17,9 +18,20 @@ var (
 
 const RefreshTokenDuration = 24 * 30 * time.Hour
 
+func generateRandomJTI() string{
+
+	jti := make([]byte,16)
+
+	_,_ =rand.Read(jti)
+
+	return hex.EncodeToString(jti)
+
+}
+
 func GenerateAcessToken(userID int,role string) (string, error) {
 
 	claims := jwt.MapClaims{
+		"jti":generateRandomJTI(),
 		"user_id": userID,
 		"type":    "access",
 		"userRole":role,

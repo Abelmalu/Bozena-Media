@@ -52,6 +52,63 @@ func GetUserID(c *gin.Context) (int, error) {
 
 }
 
+//get the jwt JTi from context 
+func GetJTI(c *gin.Context) (string,error) {
+
+	var JTI interface{}
+	var ok bool
+
+	if JTI, ok = c.Get("userID"); ok {
+
+		if JTIStr, ok := JTI.(string); ok {
+
+			return JTIStr, nil
+
+		} else {
+
+			return "", ierrors.ErrTypeAssertionFailed
+
+		}
+
+	} else {
+
+		return "", ierrors.ErrJTINotFoundInContext
+
+	}
+
+
+
+}
+
+
+func GetJWTEXPTime(c *gin.Context) (float64,error) {
+
+	var expTime interface{}
+	var ok bool
+
+	if expTime, ok = c.Get("userID"); ok {
+
+		if expTimeStr, ok := expTime.(float64); ok {
+
+			return expTimeStr, nil
+
+		} else {
+
+			return 0, ierrors.ErrTypeAssertionFailed
+
+		}
+
+	} else {
+
+		return 0, ierrors.ErrJTINotFoundInContext
+
+	}
+
+
+
+}
+
+
 // addToOutgoingContext add data to the outgoing context
 func AddToOutgoingContext(c *gin.Context, requestID string) (context.Context, string) {
 

@@ -50,7 +50,7 @@ func NewApp() (*App, error) {
 
 	}
 
-	redisClient := initRedis("127.0.0.1","",0,logger)
+	redisClient := initRedis("127.0.0.1:6379","",0,logger)
 
 	app := App{
 		config: config,

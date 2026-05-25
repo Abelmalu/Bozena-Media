@@ -13,7 +13,7 @@ func Initialize() {
 	logger := InitLogger()
 
 	//Initializing redis client
-	redisClient := InitRedis("127.0.0.1","",0,logger)
+	redisClient := InitRedis("127.0.0.1:6379","",0,logger)
 
 
 
