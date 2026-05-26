@@ -58,7 +58,7 @@ func GetJWTEXPTime(c context.Context) (string, error) {
 	if !exists {
 		return "", ierrors.ErrMetaDataNotFound
 	}
-	values := md.Get("exp")
+	values := md.Get("expTime")
 	if len(values) > 0 {
 		expTime = values[0]
 	} else {

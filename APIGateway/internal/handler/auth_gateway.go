@@ -228,7 +228,7 @@ func (ah *AuthHandler) Logout(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			ah.logger.Error("couldn't assert the JTI to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
@@ -242,9 +242,9 @@ func (ah *AuthHandler) Logout(c *gin.Context) {
 	if err != nil {
 
 
-		if errors.Is(err, ierrors.ErrJTINotFoundInContext) {
+		if errors.Is(err, ierrors.ErrExpTimeNotFoundInContext) {
 
-			ah.logger.Error("couldn't get JTI from context", zap.Error(errors.New("couldn't find JTI")))
+			ah.logger.Error("couldn't get expirtaion time from context", zap.Error(errors.New("couldn't find expiration time")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return

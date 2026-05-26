@@ -58,7 +58,7 @@ func GetJTI(c *gin.Context) (string,error) {
 	var JTI interface{}
 	var ok bool
 
-	if JTI, ok = c.Get("userID"); ok {
+	if JTI, ok = c.Get("JTI"); ok {
 
 		if JTIStr, ok := JTI.(string); ok {
 
@@ -86,7 +86,7 @@ func GetJWTEXPTime(c *gin.Context) (float64,error) {
 	var expTime interface{}
 	var ok bool
 
-	if expTime, ok = c.Get("userID"); ok {
+	if expTime, ok = c.Get("expTime"); ok {
 
 		if expTimeStr, ok := expTime.(float64); ok {
 
@@ -100,7 +100,7 @@ func GetJWTEXPTime(c *gin.Context) (float64,error) {
 
 	} else {
 
-		return 0, ierrors.ErrJTINotFoundInContext
+		return 0, ierrors.ErrExpTimeNotFoundInContext
 
 	}
 

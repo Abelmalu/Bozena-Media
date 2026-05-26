@@ -1,49 +1,17 @@
 package main
 
 import (
-	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"time"
 )
+var person map[string]string = map[string]string{
+
+	"name":"abel",
+}
 func main() {
-    // 1. Define your data (bits/bytes)
-    data := []byte("hello world")
-	
-    var name string = "abel"
-   // 2. Encode to Base64 string
-	fmt.Println(string(data))
-    encoded := base64.StdEncoding.EncodeToString(data)
-
-    fmt.Println(encoded) // Output: aGVsbG8gd29ybGQ=
-
-	sentences := "don't get frustrAtedሀ"
-
-	
-	var age rune = 2 
-
-	fmt.Println(name,string(age))
-	
-
-	for _,sentence := range sentences {
-
-		if sentence == 65 {
-
-			fmt.Println(string(sentence))
-			
-
-		}
-
-		if sentence == 4608{
-
-			fmt.Println(string(sentence))
-
-			
-
-
-		}
-
-		
-	}
-
-
-
+	// Convert seconds into a human-readable time object
+	t := time.Unix(1700000000, 0)
+   json.Unmarshal(person,t)
+	fmt.Println(t) // Output: 2023-11-14 22:13:20 +0000 UTC (depending on your local timezone)
 }

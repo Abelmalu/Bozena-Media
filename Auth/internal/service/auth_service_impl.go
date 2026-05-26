@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/abelmalu/golang-posts/Auth/internal/core"
@@ -17,15 +18,14 @@ import (
 type AuthService struct {
 	repo   core.AuthRepository
 	logger *platform.Logger
-	redis *redis.Client
+	redis  *redis.Client
 }
 
-func NewAuthService(authRepo core.AuthRepository,redisCient *redis.Client) *AuthService {
+func NewAuthService(authRepo core.AuthRepository, redisCient *redis.Client) *AuthService {
 
 	return &AuthService{
-		repo: authRepo,
+		repo:  authRepo,
 		redis: redisCient,
-	
 	}
 }
 func (authSer *AuthService) Register(ctx context.Context, user *model.User) (*model.User, *model.TokenPair, error) {
@@ -168,14 +168,26 @@ func (authSer *AuthService) Logout(ctx context.Context, refreshToken string) err
 		return ierrors.NewUnauthorizedError(ierrors.MSGFailedToValidateToken, nil)
 
 	}
-	JTI,err := utils.GetJTI(ctx)
+	JTI, err := utils.GetJTI(ctx)
 	if err != nil {
 
 		return err
 	}
-	expTime,err := utils.GetJWTEXPTime(ctx)
-	
-	authSer.redis.Set(ctx,"jti",JTI,)
+	expTime, err := utils.GetJWTEXPTime(ctx)
+	if err != nil {
+
+		return err
+	}
+	expUnix, err := strconv.Atoi(expTime)
+	if err != nil {
+
+		return err
+	}
+
+	expirationTime := time.Unix(int64(expUnix), 0)
+
+	expDuration := time.Until(expirationTime)
+	authSer.redis.Set(ctx, "jti", JTI, expDuration)
 
 	// hash the token to check with DB token
 	hashedRefreshToken := utils.HashToken(refreshToken)
