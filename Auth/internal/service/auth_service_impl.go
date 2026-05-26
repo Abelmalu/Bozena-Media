@@ -187,7 +187,7 @@ func (authSer *AuthService) Logout(ctx context.Context, refreshToken string) err
 	expirationTime := time.Unix(int64(expUnix), 0)
 
 	expDuration := time.Until(expirationTime)
-	authSer.redis.Set(ctx, "jti", JTI, expDuration)
+	authSer.redis.Set(ctx, JTI,1, expDuration)
 
 	// hash the token to check with DB token
 	hashedRefreshToken := utils.HashToken(refreshToken)

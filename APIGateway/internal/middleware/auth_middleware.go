@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/abelmalu/golang-posts/APIGateway/internal/errors"
+	ierrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	"github.com/abelmalu/golang-posts/APIGateway/pkg/utils"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
@@ -12,31 +12,28 @@ import (
 	"go.uber.org/zap"
 )
 
-func AuthMiddleware(logger *platform.Logger,redisclient *redis.Client) gin.HandlerFunc {
+func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var tokenStr string
-			requestID, err := utils.GetRequestID(c)
-	if err != nil {
+		requestID, err := utils.GetRequestID(c)
+		if err != nil {
 
-		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+			if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-		logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
-			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+				logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+				c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
-			return
+				return
+
+			}
+			if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+				logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+				c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+				return
+			}
 
 		}
-		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
-
-			logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
-			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
-			return 
-		}
-
-	
-
-		
-	}
 		authHeader := c.GetHeader("Authorization")
 
 		if strings.HasPrefix(authHeader, "Bearer ") {
@@ -93,8 +90,8 @@ func AuthMiddleware(logger *platform.Logger,redisclient *redis.Client) gin.Handl
 			return
 		}
 		c.Set("userRole", userRole)
-		
-		JTI,ok := tokenClaims["jti"].(string)
+
+		JTI, ok := tokenClaims["jti"].(string)
 		if !ok {
 			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
 
@@ -104,10 +101,20 @@ func AuthMiddleware(logger *platform.Logger,redisclient *redis.Client) gin.Handl
 
 			return
 		}
+		blackListedtoken, err := redisclient.Get(c.Request.Context(), JTI).Result()
 
-		c.Set("JTI",JTI)
+		if err == nil {
+			internalErr := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
+			logger.Warn("logged out token reuse",zap.String("JTI",blackListedtoken))
+			c.Error(internalErr)
+			c.Abort()
+			return
 
-		expTime,ok := tokenClaims["exp"].(float64)
+		}
+
+		c.Set("JTI", JTI)
+
+		expTime, ok := tokenClaims["exp"].(float64)
 		if !ok {
 			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
 
@@ -118,43 +125,36 @@ func AuthMiddleware(logger *platform.Logger,redisclient *redis.Client) gin.Handl
 			return
 		}
 
-		c.Set("expTime",expTime)
-
-
+		c.Set("expTime", expTime)
 
 		c.Next() // Token is valid, proceed to the next handler!
 	}
 }
 
-
-
 func AuthorizeRoles(logger *platform.Logger, allowedRoles ...string) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
-			requestID, err := utils.GetRequestID(c)
-	if err != nil {
+		requestID, err := utils.GetRequestID(c)
+		if err != nil {
 
-		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+			if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
-			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
-			c.Abort()
-			return
+				logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+				c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+				c.Abort()
+				return
+
+			}
+			if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+				logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+				c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+				c.Abort()
+				return
+
+			}
 
 		}
-		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
-
-			logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
-			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
-			c.Abort()
-			return
-
-		}
-
-	
-
-	}
-
 
 		role, ok := c.Get("userRole")
 		if !ok {
