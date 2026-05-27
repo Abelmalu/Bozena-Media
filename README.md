@@ -4,6 +4,7 @@
 ![gRPC](https://img.shields.io/badge/gRPC-Framework-4285F4?style=for-the-badge&logo=grpc)
 ![Gin](https://img.shields.io/badge/Gin-Framework-00ADD8?style=for-the-badge&logo=go)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-v15+-336791?style=for-the-badge&logo=postgresql)
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 
 A modern, scalable social network backend built using **Microservices Architecture**. This project leverages **gRPC** for efficient internal communication between services and **Gin** as the entry point via an API Gateway.
 
@@ -14,7 +15,7 @@ A modern, scalable social network backend built using **Microservices Architectu
 The project is built using **Clean Architecture** principles in each service to ensure scalability, testability, and a clear separation of concerns.
 
 ### 🏛️ Clean Architecture Layers
-Each service (`Auth`, `post`) is structured into the following layers within the `internal/` directory:
+Each service (`Auth`, `post`,`like`) is structured into the following layers within the `internal/` directory:
 
 - **`internal/handlers/`**: The **Delivery/Transport Layer**. It implements the gRPC server interfaces and handles incoming requests and outgoing responses.
 - **`internal/service/`**: The **Business Logic/Use Case Layer**. This contains the core logic of the application and is independent of external frameworks.
@@ -43,7 +44,8 @@ Each service (`Auth`, `post`) is structured into the following layers within the
 - **Clean Architecture Implementation**: Strict separation of concerns for maintainability and testability.
 - **Microservices Architecture**: Decoupled services for better scalability and maintenance.
 - **gRPC Integration**: High-performance internal communication using Protocol Buffers.
-- **Secure Authentication**: JWT-based stateless authentication with token refresh, secure logout, and cross-platform support (HttpOnly cookies for Web, JSON response for Mobile).
+- **Secure Authentication**: JWT-based stateless authentication with token refresh, secure logout using **Redis** for token blacklisting, and cross-platform support (HttpOnly cookies for Web, JSON response for Mobile).
+- **Distributed Rate Limiting**: Token bucket rate limiting applied to routes, leveraging **Redis** for distributed state management and **Lua scripts** to guarantee atomicity and prevent race conditions.
 - **Structured Error Handling**: Custom error mapper (`ierrors`) that safely translates internal gRPC errors into clean, user-friendly HTTP responses while preserving internal causes for debugging.
 - **Request Tracing**: Distributed tracing using `RequestID` propagation across the API Gateway and microservices for easier log correlation.
 - **Structured Logging**: High-performance, structured JSON logging implemented using **Uber's Zap** (`go.uber.org/zap`).
@@ -74,6 +76,7 @@ Each service (`Auth`, `post`) is structured into the following layers within the
 
 - [Go](https://golang.org/dl/) (version 1.25+)
 - [PostgreSQL](https://www.postgresql.org/download/)
+- [Redis](https://redis.io/download/) (for distributed rate limiting and token blacklisting)
 - [Protoc](https://grpc.io/docs/protoc-installation/) (for generating gRPC code)
 
 ### Installation & Running

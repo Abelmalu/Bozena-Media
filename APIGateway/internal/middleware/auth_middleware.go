@@ -45,13 +45,11 @@ func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.Hand
 
 			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
 
-			logger.Error("token string not found in authorization header")
+			logger.Error("token string not found in authorization header",zap.String("requestID",requestID))
 
-			utils.SendErrorResponse[error](c, err, requestID, err.HTTPStatus())
-
+			c.Error(err)
 			c.Abort()
 			return
-
 		}
 
 		// Validate the token
@@ -63,7 +61,7 @@ func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.Hand
 
 			logger.Error("token string not found in authorization header")
 
-			utils.SendErrorResponse[error](c, err, requestID, err.HTTPStatus())
+			c.Error(err)
 			c.Abort()
 			return
 		}
@@ -74,8 +72,8 @@ func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.Hand
 
 			logger.Error("Invalid token claims:Failed while asserting user_id", zap.Error(err))
 
-			utils.SendErrorResponse[error](c, err, requestID, err.HTTPStatus())
-
+			c.Error(err)
+			c.Abort()
 			return
 		}
 		c.Set("userID", int(uid))
@@ -85,8 +83,8 @@ func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.Hand
 
 			logger.Error("Invalid token claims:Failed while asserting userRole", zap.Error(err))
 
-			utils.SendErrorResponse[error](c, err, requestID, err.HTTPStatus())
-
+			c.Error(err)
+			c.Abort()
 			return
 		}
 		c.Set("userRole", userRole)
@@ -97,8 +95,8 @@ func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.Hand
 
 			logger.Error("Invalid token claims:Failed while asserting JTI", zap.Error(err))
 
-			utils.SendErrorResponse[error](c, err, requestID, err.HTTPStatus())
-
+			c.Error(err)
+			c.Abort()
 			return
 		}
 		blackListedtoken, err := redisclient.Get(c.Request.Context(), JTI).Result()
@@ -120,8 +118,8 @@ func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.Hand
 
 			logger.Error("Invalid token claims:Failed while asserting expTime", zap.Error(err))
 
-			utils.SendErrorResponse[error](c, err, requestID, err.HTTPStatus())
-
+			c.Error(err)
+			c.Abort()
 			return
 		}
 
