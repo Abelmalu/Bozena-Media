@@ -113,7 +113,7 @@ func (app *App) Run() {
 
 	followRepo := repository.NewFollowRepository(app.DB)
 	followService := service.NewFollowService(followRepo)
-	followHandler := handler.NewFollowHandler(followService)
+	followHandler := handler.NewFollowHandler(followService,logger)
 
 	pb.RegisterFollowServiceServer(s, followHandler)
 	s.Serve(lis)

@@ -2,7 +2,6 @@ package routing
 
 import (
 	"net/http"
-
 	"github.com/abelmalu/golang-posts/APIGateway/internal/glue"
 	"github.com/abelmalu/golang-posts/APIGateway/internal/handler"
 	"github.com/abelmalu/golang-posts/APIGateway/internal/middleware"
@@ -19,7 +18,7 @@ func InitFollowRoute(router *gin.RouterGroup, handler *handler.FollowHandler,log
 
 		{
 			Method: http.MethodPost,
-			Path:"/like/:id",
+			Path:"/:id",
 			Handler: handler.ToggleFollow,
 			Middlewares: [] gin.HandlerFunc{
 

@@ -15,7 +15,7 @@ A modern, scalable social network backend built using **Microservices Architectu
 The project is built using **Clean Architecture** principles in each service to ensure scalability, testability, and a clear separation of concerns.
 
 ### 🏛️ Clean Architecture Layers
-Each service (`Auth`, `post`,`like`) is structured into the following layers within the `internal/` directory:
+Each service (`Auth`, `post`, `like`, `follow`) is structured into the following layers within the `internal/` directory:
 
 - **`internal/handlers/`**: The **Delivery/Transport Layer**. It implements the gRPC server interfaces and handles incoming requests and outgoing responses.
 - **`internal/service/`**: The **Business Logic/Use Case Layer**. This contains the core logic of the application and is independent of external frameworks.
@@ -29,7 +29,8 @@ Each service (`Auth`, `post`,`like`) is structured into the following layers wit
 2.  **Auth Service**: Manages user registration, login, JWT issuance, and session management.
 3.  **Post Service**: Handles all post-related operations (CRUD).
 4.  **Likes Service**: Manages post reactions and likes.
-5.  **Feeds Service** *(Coming Soon 🚀)*: Will generate user-specific timelines and feeds.
+5.  **Follow Service**: Manages follow and unfollow relationships between users.
+6.  **Feeds Service** *(Coming Soon 🚀)*: Will generate user-specific timelines and feeds.
 
 ### 🔌 Communication Map
 
@@ -63,6 +64,7 @@ Each service (`Auth`, `post`,`like`) is structured into the following layers wit
 ├── Auth/                 # Authentication service (gRPC Server)
 ├── post/                 # Post management service (gRPC Server)
 ├── like/                 # Like management service (gRPC Server)
+├── follow/               # Follow management service (gRPC Server)
 ├── pkg/                  # Shared utilities (JWT, etc.)
 ├── migrations/           # Database migration files
 └── proto/                # Shared Protocol Buffer definitions (if applicable)
@@ -110,6 +112,12 @@ Each service (`Auth`, `post`,`like`) is structured into the following layers wit
    go run cmd/main.go
    ```
 
+   **Follow Service (Port 50054):**
+   ```bash
+   cd follow
+   go run cmd/main.go
+   ```
+
    **API Gateway (Port 8080):**
    ```bash
    cd APIGateway
@@ -144,11 +152,18 @@ Each service (`Auth`, `post`,`like`) is structured into the following layers wit
 | :------- | :-------------------- | :--------------------------- | :------------------- |
 | `POST`   | `/api/posts/like/:id` | Toggle like/unlike on a post | Authenticated User   |
 
+### Follows
+
+| Method   | Endpoint              | Description                  | Permissions          |
+| :------- | :-------------------- | :--------------------------- | :------------------- |
+| `POST`   | `/api/follow/:id`     | Toggle follow/unfollow user  | Authenticated User   |
+
 ---
 
 ## 📅 Roadmap
 
 - [x] **Likes Service**: Allow users to like and react to posts.
+- [x] **Follows Service**: Allow users to follow and unfollow other users.
 - [ ] **Feeds Service**: Optimized algorithm for displaying posts.
 - [ ] **Docker Compose**: Single command to spin up the entire ecosystem.
 - [ ] **Service Discovery**: Implement Consul or Etcd.

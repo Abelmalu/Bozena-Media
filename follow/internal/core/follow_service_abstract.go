@@ -10,6 +10,6 @@ import (
 
 type FollowService interface {
 
-		ToggleLike(ctx context.Context,state bool,userID,postID int)(*dto.FollowRequest,error)
+		ToggleFollow(ctx context.Context,state bool,followerID,followingID int)(*dto.FollowResponse,error)
 
 }

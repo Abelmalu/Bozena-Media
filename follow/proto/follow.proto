@@ -11,6 +11,8 @@ service FollowService {
 message FollowRequest {
 
     bool follow = 1;
+    int64 follower_id = 2;
+    int64 following_id = 3;
 }
 
 message FollowResponse {

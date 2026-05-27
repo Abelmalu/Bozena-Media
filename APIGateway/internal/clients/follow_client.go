@@ -20,13 +20,15 @@ func NewFollowClient(conn *grpc.ClientConn) *FollowClient{
 	}
 }
 
-func (followClient *FollowClient) ToggleFollow(ctx context.Context, follow bool, opts ...grpc.CallOption) (*pb.FollowResponse, error){
+func (followClient *FollowClient) ToggleFollow(ctx context.Context, follow bool, followerID,followingID int) (*pb.FollowResponse, error){
 
 	return followClient.client.ToggleFollow(
 
 		ctx,
 		&pb.FollowRequest{
 			Follow: follow,
+			FollowerId: int64(followerID),
+			FollowingId: int64(followingID),
 		},
 	
 

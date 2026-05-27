@@ -8,6 +8,6 @@ import (
 
 type FollowRepository interface{
 
-	ToggleLike(ctx context.Context,state bool,userID,postID int)(string,error)
+	ToggleFollow(ctx context.Context,state bool,followerID,followingID int)(string,error)
 
 }

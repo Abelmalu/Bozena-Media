@@ -24,6 +24,8 @@ const (
 type FollowRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Follow        bool                   `protobuf:"varint,1,opt,name=follow,proto3" json:"follow,omitempty"`
+	FollowerId    int64                  `protobuf:"varint,2,opt,name=follower_id,json=followerId,proto3" json:"follower_id,omitempty"`
+	FollowingId   int64                  `protobuf:"varint,3,opt,name=following_id,json=followingId,proto3" json:"following_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -63,6 +65,20 @@ func (x *FollowRequest) GetFollow() bool {
 		return x.Follow
 	}
 	return false
+}
+
+func (x *FollowRequest) GetFollowerId() int64 {
+	if x != nil {
+		return x.FollowerId
+	}
+	return 0
+}
+
+func (x *FollowRequest) GetFollowingId() int64 {
+	if x != nil {
+		return x.FollowingId
+	}
+	return 0
 }
 
 type FollowResponse struct {
@@ -113,9 +129,12 @@ var File_proto_follow_proto protoreflect.FileDescriptor
 
 const file_proto_follow_proto_rawDesc = "" +
 	"\n" +
-	"\x12proto/follow.proto\x12\rfollowservice\"'\n" +
+	"\x12proto/follow.proto\x12\rfollowservice\"k\n" +
 	"\rFollowRequest\x12\x16\n" +
-	"\x06follow\x18\x01 \x01(\bR\x06follow\"*\n" +
+	"\x06follow\x18\x01 \x01(\bR\x06follow\x12\x1f\n" +
+	"\vfollower_id\x18\x02 \x01(\x03R\n" +
+	"followerId\x12!\n" +
+	"\ffollowing_id\x18\x03 \x01(\x03R\vfollowingId\"*\n" +
 	"\x0eFollowResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage2\\\n" +
 	"\rFollowService\x12K\n" +

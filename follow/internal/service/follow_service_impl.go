@@ -24,10 +24,18 @@ func NewFollowService(followRepo core.FollowRepository)  *FollowService {
 	}
 }
 
-func (followService *FollowService) ToggleLike(ctx context.Context,state bool,userID,postID int)(*dto.FollowRequest,error){
+func (followService *FollowService) ToggleFollow(ctx context.Context,follow bool,followerID,followingID int)(*dto.FollowResponse,error){
+
+ resp,err := followService.followRepo.ToggleFollow(ctx,follow,followerID,followingID)
+ if  err != nil {
 
 
-	return &dto.FollowRequest{},nil
+		return &dto.FollowResponse{},err
+	}
+
+	return &dto.FollowResponse{
+		Message: resp,
+	},nil
 
 
 
