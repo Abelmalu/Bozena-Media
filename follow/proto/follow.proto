@@ -1,0 +1,21 @@
+syntax = "proto3";
+package followservice;
+
+option go_package = "./proto/pb";
+
+service FollowService {
+
+    rpc ToggleFollow(FollowRequest) returns (FollowResponse);
+}
+
+message FollowRequest {
+
+    bool follow = 1;
+}
+
+message FollowResponse {
+    
+    string message = 1;
+
+
+}
