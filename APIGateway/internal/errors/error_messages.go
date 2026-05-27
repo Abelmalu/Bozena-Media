@@ -8,6 +8,7 @@ MSGUnauthorizedAccess ErrorMessage = "Unauthorized"
 MSGSomethingWentWrong ErrorMessage = "Something Went Wrong"
 MSGRefreshTokenNotFound ErrorMessage = "Refresh token not found"
 MSGUsernameIsRequired ErrorMessage = "Username is Required"
+MSGTooManyRequests ErrorMessage = "too many requests"
 
 
 

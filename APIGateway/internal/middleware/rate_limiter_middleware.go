@@ -4,8 +4,11 @@ import (
 	_ "embed"
 	"time"
 
+	ierrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
+	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 )
 
 //go:embed rate_limiter.lua
@@ -14,7 +17,7 @@ var luaScriptString string
 // Initialize the script with the embedded string
 var luaScript = redis.NewScript(luaScriptString)
 
-func RateLimitMiddleware(redisClient *redis.Client) gin.HandlerFunc {
+func RateLimitMiddleware(redisClient *redis.Client,logger *platform.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		key := "bucket:" + c.ClientIP()
 		now := float64(time.Now().UnixNano()) / 1e9
@@ -30,7 +33,10 @@ func RateLimitMiddleware(redisClient *redis.Client) gin.HandlerFunc {
 		).Result()
 
 		if err != nil {
-			c.JSON(500, gin.H{"error": "rate limiter failed"})
+
+			logger.Error("rate limiter failed",zap.Error(err))
+			internalErr := ierrors.NewInternalError(ierrors.MSGSomethingWentWrong,err)
+			c.Error(internalErr)
 			c.Abort()
 			return
 		}
@@ -39,7 +45,9 @@ func RateLimitMiddleware(redisClient *redis.Client) gin.HandlerFunc {
 		allowed := values[0].(int64)
 
 		if allowed == 0 {
-			c.JSON(429, gin.H{"error": "rate limit exceeded"})
+			internalErr := ierrors.NewTooManyRequestsError(ierrors.MSGTooManyRequests,nil,nil)
+			logger.Warn("too many requests",zap.Error(internalErr))
+			c.Error(internalErr)
 			c.Abort()
 			return
 		}

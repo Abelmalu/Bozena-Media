@@ -19,6 +19,7 @@ const (
 	TypeForbidden    ErrorType = "FORBIDDEN"
 	TypeInternal     ErrorType = "INTERNAL"
 	TypeTimeout      ErrorType = "TIMEOUT"
+	TypeTooManyRequests ErrorType = "TOO_MANY_REQUESTS"
 )
 
 var(
@@ -86,6 +87,16 @@ func NewConflictError(message ErrorMessage, cause error) *AppError {
 	}
 }
 
+func NewTooManyRequestsError(message ErrorMessage, details map[string]interface{}, cause error) *AppError {
+	return &AppError{
+		Type:    TypeTooManyRequests,
+		Message: message,
+		Details: details,
+		Cause:   cause,
+		Code:    "TOO_MANY_REQUESTS",
+	}
+}
+
 func NewInternalError(message ErrorMessage, cause error) *AppError {
 	return &AppError{
 		Type:    TypeInternal,
@@ -108,6 +119,9 @@ func (e *AppError) HTTPStatus() int {
 		return http.StatusForbidden
 	case TypeTimeout:
 		return http.StatusGatewayTimeout
+	case TypeTooManyRequests:
+		return http.StatusTooManyRequests
+		
 	default:
 		return http.StatusInternalServerError
 	}
