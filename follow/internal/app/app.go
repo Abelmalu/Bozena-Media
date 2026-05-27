@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -8,11 +9,15 @@ import (
 	"time"
 
 	"github.com/abelmalu/golang-posts/follow/config"
-	"github.com/abelmalu/golang-posts/follow/internal/handlers"
+	handler "github.com/abelmalu/golang-posts/follow/internal/handlers"
 	"github.com/abelmalu/golang-posts/follow/internal/repository"
 	"github.com/abelmalu/golang-posts/follow/internal/service"
 	"github.com/abelmalu/golang-posts/follow/proto/pb"
+	"github.com/abelmalu/golang-posts/platform"
+	_ "github.com/jackc/pgx/v5"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -21,6 +26,8 @@ type App struct {
 	Config      *config.Config
 	RedisClient *redis.Client
 }
+
+var logger = platform.InitZapLogger()
 
 func NewApp() *App {
 
@@ -32,9 +39,17 @@ func NewApp() *App {
 	}
 
 	DBConnPool, err := initDB(config)
+	if err != nil {
+
+		log.Fatalf("error while connectiong DB %v", err)
+	}
+
+	redisClient := initRedis("127.0.0.1:6379", "", 0, logger)
 
 	return &App{
-		DB: DBConnPool,
+		DB:          DBConnPool,
+		Config:      config,
+		RedisClient: redisClient,
 	}
 }
 
@@ -42,7 +57,7 @@ func initDB(config *config.Config) (*sql.DB, error) {
 
 	DBUrl := config.DBURL
 
-	DBConnPool, err := sql.Open(DBUrl, "pgx")
+	DBConnPool, err := sql.Open("pgx", DBUrl)
 
 	if err != nil {
 
@@ -57,22 +72,50 @@ func initDB(config *config.Config) (*sql.DB, error) {
 		return nil, fmt.Errorf("pinging %s database: %w", "pgx", err)
 
 	}
+	logger.Info("Database connected successfully!")
 
 	return DBConnPool, nil
 
 }
 
+// initRedis initializes redis client for the application
+func initRedis(address, password string, db int, logger *platform.Logger) *redis.Client {
+	ctx := context.Background()
+
+	redisClient := redis.NewClient(
+		&redis.Options{
+			Addr:     address,
+			Password: password,
+			DB:       db,
+		},
+	)
+
+	pong, err := redisClient.Ping(ctx).Result()
+	if err != nil {
+		log.Fatalf("Could not connect to Redis: %v", err)
+	}
+
+	logger.Info("Redis connected successfully!", zap.String("Response", pong))
+
+	return redisClient
+
+}
+
 func (app *App) Run() {
+
 	port := app.Config.GRPCPORT
-	lis, _ := net.Listen("tcp", fmt.Sprintf(":%v",port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", port))
+	if err != nil {
+
+		log.Fatalf("error while tcp connection %v", err)
+	}
 	s := grpc.NewServer()
 
 	followRepo := repository.NewFollowRepository(app.DB)
 	followService := service.NewFollowService(followRepo)
 	followHandler := handler.NewFollowHandler(followService)
 
-	pb.RegisterFollowServiceServer(s,followHandler)
+	pb.RegisterFollowServiceServer(s, followHandler)
 	s.Serve(lis)
-
 
 }

@@ -30,5 +30,12 @@ func InitRoute(router *gin.Engine, handler Handler,logger *platform.Logger,redis
     routing.InitLikeRoute(likeRouter,handler.likeHandler,logger,redisClient)
 
 
+	//follow route initialization
+
+	followRouter := router.Group("api/follow")
+
+	routing.InitFollowRoute(followRouter,handler.followHandler,logger,redisClient)
+
+
 
 }
