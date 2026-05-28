@@ -116,7 +116,6 @@ func (postHandler *PostHandler) ListPosts(ctx context.Context, req *pb.ListPosts
 		return nil, status.Error(codes.InvalidArgument, "missing request ID")
 
 	}
-
 	posts, err := postHandler.service.ListPosts(ctx)
 
 	if err != nil {
@@ -253,7 +252,7 @@ func (postHandler *PostHandler) GetUserPosts(ctx context.Context, req *pb.GetUse
 		return nil, status.Error(codes.InvalidArgument, "something went wrong")
 
 	}
-    posts,err := postHandler.service.GetUserPosts(ctx,req.UserId)
+    posts,err := postHandler.service.GetUserPosts(ctx,req.UserId,req.Limit)
 
 	var appErr *ierrors.AppError
 	if err != nil {

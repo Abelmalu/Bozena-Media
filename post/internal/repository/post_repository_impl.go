@@ -14,6 +14,12 @@ type PostRepository struct {
 	DB *sql.DB
 }
 
+type PaginatedResponse struct {
+	Posts    *[]models.Post
+	Cursor   int
+	HasNext bool
+}
+
 func NewPostRepository(DB *sql.DB) *PostRepository {
 
 	return &PostRepository{
@@ -164,14 +170,22 @@ func (PostRepository *PostRepository) ListPosts(ctx context.Context) ([]models.P
 	return posts, nil
 }
 
-
-func (postRepo *PostRepository) GetUserPosts(ctx context.Context,UserID int64)([]models.Post, error){
+func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, limit int64) (*PaginatedResponse, error) {
 
 	var posts []models.Post
+	var hasNext bool
+	var cursor int
 
-	query :=`SELECT * FROM posts WHERE id=$1`
+	query := `
+    SELECT id, body, created_at 
+    FROM posts 
+    WHERE user_id = $1 
+    ORDER BY id DESC 
+    LIMIT $2`
 
-	rows,err := postRepo.DB.QueryContext(ctx,query,UserID)
+	rows, err := postRepo.DB.QueryContext(ctx, query, UserID, int(limit+1))
+
+
 	var pgErr *pgconn.PgError
 	if err != nil {
 
@@ -191,17 +205,31 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context,UserID int64)([
 		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 	}
+	defer rows.Close()
 
-	for rows.Next(){
+	for rows.Next() {
 		var post models.Post
 		rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID)
-		posts = append(posts,post)
 
-	} 
+		if len(posts) == int(limit) {
+
+			hasNext = true
+			cursor = post.ID
+
+			break
+
+		}
+		posts = append(posts, post)
+
+	}
 	if err = rows.Err(); err != nil {
 		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 	}
-	defer rows.Close()
-	return nil,nil
+
+	return &PaginatedResponse{
+		Posts: &posts,
+		HasNext: hasNext,
+		Cursor: (cursor),
+	}, nil
 }

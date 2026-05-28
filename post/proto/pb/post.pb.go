@@ -500,6 +500,7 @@ func (x *ListPostsResponse) GetPosts() []*Post {
 type GetUserPostRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Limit         int64                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -541,9 +542,18 @@ func (x *GetUserPostRequest) GetUserId() int64 {
 	return 0
 }
 
+func (x *GetUserPostRequest) GetLimit() int64 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
 type GetUserPostResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Posts         []*Post                `protobuf:"bytes,1,rep,name=posts,proto3" json:"posts,omitempty"`
+	Cursor        string                 `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	HasNext       bool                   `protobuf:"varint,3,opt,name=has_next,json=hasNext,proto3" json:"has_next,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -585,6 +595,20 @@ func (x *GetUserPostResponse) GetPosts() []*Post {
 	return nil
 }
 
+func (x *GetUserPostResponse) GetCursor() string {
+	if x != nil {
+		return x.Cursor
+	}
+	return ""
+}
+
+func (x *GetUserPostResponse) GetHasNext() bool {
+	if x != nil {
+		return x.HasNext
+	}
+	return false
+}
+
 var File_proto_post_proto protoreflect.FileDescriptor
 
 const file_proto_post_proto_rawDesc = "" +
@@ -617,11 +641,14 @@ const file_proto_post_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"\x12\n" +
 	"\x10ListPostsRequest\"<\n" +
 	"\x11ListPostsResponse\x12'\n" +
-	"\x05posts\x18\x01 \x03(\v2\x11.postservice.PostR\x05posts\"-\n" +
+	"\x05posts\x18\x01 \x03(\v2\x11.postservice.PostR\x05posts\"C\n" +
 	"\x12GetUserPostRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\">\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x03R\x05limit\"q\n" +
 	"\x13GetUserPostResponse\x12'\n" +
-	"\x05posts\x18\x01 \x03(\v2\x11.postservice.PostR\x05posts2\x99\x03\n" +
+	"\x05posts\x18\x01 \x03(\v2\x11.postservice.PostR\x05posts\x12\x16\n" +
+	"\x06cursor\x18\x02 \x01(\tR\x06cursor\x12\x19\n" +
+	"\bhas_next\x18\x03 \x01(\bR\ahasNext2\x99\x03\n" +
 	"\vPostService\x12M\n" +
 	"\n" +
 	"CreatePost\x12\x1e.postservice.CreatePostRequest\x1a\x1f.postservice.CreatePostResponse\x12M\n" +

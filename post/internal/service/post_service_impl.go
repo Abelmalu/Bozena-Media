@@ -81,7 +81,7 @@ func (postService *PostService) ListPosts(ctx context.Context) ([]models.Post, e
 }
 
 
-func (postService *PostService) GetUserPosts(ctx context.Context,UserID int64)([]models.Post, error){
+func (postService *PostService) GetUserPosts(ctx context.Context,UserID,limit int64)([]models.Post, error){
 
 
 
