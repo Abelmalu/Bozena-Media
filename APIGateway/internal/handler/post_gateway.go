@@ -21,7 +21,7 @@ type PostService interface {
 	ListPosts(ctx context.Context) (*pb.ListPostsResponse, error)
 	UpdatePost(ctx context.Context, postID int64, title string, content string) (*pb.UpdatePostResponse, error)
 	DeletePost(ctx context.Context, postID int64) (*pb.DeletePostResponse, error)
-	GetUserPosts(ctx context.Context, userID int64) (*pb.GetUserPostResponse, error)
+	GetUserPosts(ctx context.Context, userID,limit int64) (*pb.GetUserPostResponse, error)
 }
 
 type PostHandler struct {
@@ -254,16 +254,6 @@ func (postHandler *PostHandler) DeletePost(c *gin.Context) {
 }
 
 func (postHandler *PostHandler) GetUserPosts(c *gin.Context) {
-
-	userID, err := strconv.Atoi(c.Param("id"))
-
-	if err != nil {
-
-		postHandler.logger.Error("Error while strConv id param", zap.Error(err))
-		c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
-		return
-	}
-
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
@@ -285,9 +275,29 @@ func (postHandler *PostHandler) GetUserPosts(c *gin.Context) {
 
 	}
 
+	userID, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+
+		postHandler.logger.Error("Error while strConv id param", zap.Error(err))
+		c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+		return
+	}
+
+	limit, err := strconv.Atoi(c.Query("limit"))
+
+	if err != nil {
+
+		postHandler.logger.Error("Error while strConv limit query param", zap.Error(err),zap.String("requestID",requestID))
+		c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+		return
+	}
+
+	
+
 	ctx,_ := utils.AddToOutgoingContext(c,requestID)
 
-	resp, err := postHandler.postClient.GetUserPosts(ctx, int64(userID))
+	resp, err := postHandler.postClient.GetUserPosts(ctx, int64(userID),int64(limit))
 	if err != nil {
 
 		postHandler.logger.Error("GRPC Error", zap.Error(err))
