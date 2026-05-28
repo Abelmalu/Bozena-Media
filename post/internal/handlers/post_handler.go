@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"strconv"
 
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/abelmalu/golang-posts/post/internal/core"
@@ -252,7 +253,7 @@ func (postHandler *PostHandler) GetUserPosts(ctx context.Context, req *pb.GetUse
 		return nil, status.Error(codes.InvalidArgument, "something went wrong")
 
 	}
-    posts,err := postHandler.service.GetUserPosts(ctx,req.UserId,req.Limit)
+    resp,err := postHandler.service.GetUserPosts(ctx,req.UserId,req.Limit)
 
 	var appErr *ierrors.AppError
 	if err != nil {
@@ -290,10 +291,10 @@ func (postHandler *PostHandler) GetUserPosts(ctx context.Context, req *pb.GetUse
 
 	}
 	
-	pbPosts := make([]*pb.Post,len(posts))
+	pbPosts := make([]*pb.Post,len(*resp.Posts))
 
 
-	for _,p := range posts {
+	for _,p := range *resp.Posts {
 		pbPost := &pb.Post{
 
 			Title:   p.Title,
@@ -309,6 +310,8 @@ func (postHandler *PostHandler) GetUserPosts(ctx context.Context, req *pb.GetUse
 	
 	return &pb.GetUserPostResponse{
 		Posts:pbPosts,
+		Cursor:  strconv.FormatInt(int64(resp.Cursor),16),
+		HasNext: resp.HasNext,
 	}, nil
 }
 

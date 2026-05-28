@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/abelmalu/golang-posts/post/internal/dto"
 	ierrors "github.com/abelmalu/golang-posts/post/internal/errors"
 	"github.com/abelmalu/golang-posts/post/internal/models"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -14,11 +15,7 @@ type PostRepository struct {
 	DB *sql.DB
 }
 
-type PaginatedResponse struct {
-	Posts    *[]models.Post
-	Cursor   int
-	HasNext bool
-}
+
 
 func NewPostRepository(DB *sql.DB) *PostRepository {
 
@@ -128,7 +125,10 @@ func (pr *PostRepository) DeletePost(ctx context.Context, postID int) error {
 func (PostRepository *PostRepository) ListPosts(ctx context.Context) ([]models.Post, error) {
 
 	var posts []models.Post
-	query := `SELECT * FROM posts`
+	query := `
+SELECT id, title, content, user_id
+FROM posts
+`
 
 	rows, err := PostRepository.DB.Query(query)
 
@@ -166,25 +166,25 @@ func (PostRepository *PostRepository) ListPosts(ctx context.Context) ([]models.P
 		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 	}
+	defer rows.Close()
 
 	return posts, nil
 }
 
-func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, limit int64) (*PaginatedResponse, error) {
+func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, limit int64) (*dto.PaginatedResponse, error) {
 
 	var posts []models.Post
 	var hasNext bool
 	var cursor int
 
 	query := `
-    SELECT id, body, created_at 
+    SELECT id, title, content, user_id 
     FROM posts 
     WHERE user_id = $1 
     ORDER BY id DESC 
     LIMIT $2`
 
-	rows, err := postRepo.DB.QueryContext(ctx, query, UserID, int(limit+1))
-
+	rows, err := postRepo.DB.QueryContext(ctx, query, int(UserID), int(limit+1))
 
 	var pgErr *pgconn.PgError
 	if err != nil {
@@ -227,9 +227,9 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 
 	}
 
-	return &PaginatedResponse{
-		Posts: &posts,
+	return &dto.PaginatedResponse{
+		Posts:   &posts,
 		HasNext: hasNext,
-		Cursor: (cursor),
+		Cursor:  (cursor),
 	}, nil
 }

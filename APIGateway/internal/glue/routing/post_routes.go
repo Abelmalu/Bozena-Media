@@ -34,6 +34,15 @@ func InitPostRoute(router *gin.RouterGroup, handler *handler.PostHandler,logger 
 			},
 		},
 		{
+			Method:      http.MethodGet,
+			Path:        "/user/:id",
+			Handler:     handler.GetUserPosts,
+			Middlewares: [] gin.HandlerFunc{
+
+				middleware.AuthMiddleware(logger,redisClient),
+			},
+		},
+		{
 			Method:      http.MethodPut,
 			Path:        "/update/:id",
 			Handler:     handler.UpdatePost,

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/abelmalu/golang-posts/post/internal/core"
+	"github.com/abelmalu/golang-posts/post/internal/dto"
 	"github.com/abelmalu/golang-posts/post/internal/errors"
 	"github.com/abelmalu/golang-posts/post/internal/models"
 )
@@ -81,9 +82,15 @@ func (postService *PostService) ListPosts(ctx context.Context) ([]models.Post, e
 }
 
 
-func (postService *PostService) GetUserPosts(ctx context.Context,UserID,limit int64)([]models.Post, error){
+func (postService *PostService) GetUserPosts(ctx context.Context,UserID,limit int64)(*dto.PaginatedResponse, error){
 
+resp,err := postService.repo.GetUserPosts(ctx,UserID,limit)
 
+if err != nil {
 
-	return nil,nil
+	return nil,err
+
+}
+
+	return resp,nil
 }

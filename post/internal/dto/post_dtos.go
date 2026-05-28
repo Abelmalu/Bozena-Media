@@ -3,6 +3,8 @@ package dto
 import (
 	"fmt"
 	"strings"
+
+	"github.com/abelmalu/golang-posts/post/internal/models"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -10,6 +12,12 @@ import (
 type UpdatePostRequest struct{
 	Title   string `json:"title"  db:"title" validate:"min=3,max=30,required"`
 	Content string `json:"content" db:"content" validate:"min=5,required"`
+}
+
+type PaginatedResponse struct {
+	Posts   *[]models.Post
+	Cursor  int
+	HasNext bool
 }
 
 

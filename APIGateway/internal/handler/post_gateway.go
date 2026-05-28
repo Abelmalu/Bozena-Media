@@ -295,7 +295,7 @@ func (postHandler *PostHandler) GetUserPosts(c *gin.Context) {
 
 	
 
-	ctx,_ := utils.AddToOutgoingContext(c,requestID)
+	ctx,_ := addToOutgoingContext(c,"",requestID)
 
 	resp, err := postHandler.postClient.GetUserPosts(ctx, int64(userID),int64(limit))
 	if err != nil {
