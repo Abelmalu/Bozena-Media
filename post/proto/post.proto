@@ -10,6 +10,7 @@ service PostService{
     rpc UpdatePost(UpdatePostRequest) returns (UpdatePostResponse);
     rpc DeletePost(DeletePostRequest) returns (DeletePostResponse);
     rpc ListPosts(ListPostsRequest) returns (ListPostsResponse);
+    rpc GetUserPosts(GetUserPostRequest) returns (GetUserPostResponse);
 }
 
 message Post{
@@ -65,5 +66,18 @@ message ListPostsRequest{
 }
 message ListPostsResponse {
   repeated Post posts = 1;
+
+}
+
+
+message GetUserPostRequest {
+
+    int64 user_id = 1;
+}
+
+message GetUserPostResponse {
+
+  repeated Post posts = 1;
+
 
 }

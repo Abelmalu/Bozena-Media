@@ -79,3 +79,11 @@ func (postService *PostService) ListPosts(ctx context.Context) ([]models.Post, e
 	return posts, nil
 
 }
+
+
+func (postService *PostService) GetUserPosts(ctx context.Context,UserID int64)([]models.Post, error){
+
+
+
+	return nil,nil
+}

@@ -163,3 +163,45 @@ func (PostRepository *PostRepository) ListPosts(ctx context.Context) ([]models.P
 
 	return posts, nil
 }
+
+
+func (postRepo *PostRepository) GetUserPosts(ctx context.Context,UserID int64)([]models.Post, error){
+
+	var posts []models.Post
+
+	query :=`SELECT * FROM posts WHERE id=$1`
+
+	rows,err := postRepo.DB.QueryContext(ctx,query,UserID)
+	var pgErr *pgconn.PgError
+	if err != nil {
+
+		if errors.As(err, &pgErr) {
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+	}
+
+	for rows.Next(){
+		var post models.Post
+		rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID)
+		posts = append(posts,post)
+
+	} 
+	if err = rows.Err(); err != nil {
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+	}
+	defer rows.Close()
+	return nil,nil
+}

@@ -239,6 +239,80 @@ func (postHandler *PostHandler) UpdatePost(ctx context.Context, req *pb.UpdatePo
 
 }
 
+func (postHandler *PostHandler) GetUserPosts(ctx context.Context, req *pb.GetUserPostRequest) (*pb.GetUserPostResponse, error) {
+	requestID, err := utils.GetRequestID(ctx)
+
+	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
+		postHandler.logger.Error("meta data not found",zap.Error(err))
+		return nil, status.Error(codes.Internal, "something went wrong")
+
+	}
+	if errors.Is(err, ierrors.ErrRequestIDNotFound) {
+		postHandler.logger.Error("requestID not found",zap.Error(err))
+
+		return nil, status.Error(codes.InvalidArgument, "something went wrong")
+
+	}
+    posts,err := postHandler.service.GetUserPosts(ctx,req.UserId)
+
+	var appErr *ierrors.AppError
+	if err != nil {
+		postHandler.logger.Error("Post service error", zap.Error(err), zap.String("requestID", requestID))
+
+		if errors.As(err, &appErr) {
+			switch appErr.Type {
+			case ierrors.TypeValidation:
+				return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+			case ierrors.TypeConflict:
+				return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+			case ierrors.TypeUnauthorized:
+				return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+			case ierrors.TypeNotFound:
+				return nil, status.Error(codes.NotFound, string(appErr.Message))
+			case ierrors.TypeTimeout:
+				return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+			case ierrors.TypeCancelled:
+				return nil, status.Error(codes.Canceled, string(appErr.Message))
+
+			default:
+				return nil, status.Error(codes.Internal, "internal error")
+			}
+		}
+
+		if errors.Is(err, context.Canceled) {
+
+			return nil, status.Error(codes.Canceled, "Request Canceled")
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, status.Error(codes.DeadlineExceeded, "Requset timeout")
+
+		}
+
+	}
+	
+	pbPosts := make([]*pb.Post,len(posts))
+
+
+	for _,p := range posts {
+		pbPost := &pb.Post{
+
+			Title:   p.Title,
+			Content: p.Content,
+			Id:      int64(p.ID),
+			UserId:  int64(p.UserID),
+
+		}
+		pbPosts = append(pbPosts,pbPost)
+
+	}
+	
+	
+	return &pb.GetUserPostResponse{
+		Posts:pbPosts,
+	}, nil
+}
+
 func (postHandler *PostHandler) DeletePost(ctx context.Context, req *pb.DeletePostRequest) (*pb.DeletePostResponse, error) {
 	var appErr *ierrors.AppError
 

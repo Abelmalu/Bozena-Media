@@ -60,3 +60,14 @@ func (pc *PostClient) DeletePost(ctx context.Context,postID int64) (*pb.DeletePo
 	)
 
 }
+func (pc *PostClient) GetUserPosts(ctx context.Context,userID int64)(*pb.GetUserPostResponse,error){
+	
+   
+
+	return pc.client.GetUserPosts(
+		ctx,
+		&pb.GetUserPostRequest{
+			UserId:userID,
+		},
+	)
+}
