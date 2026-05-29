@@ -100,3 +100,90 @@ func (followHandler *FollowHandler) ToggleFollow(ctx context.Context, req *pb.Fo
 		Message: resp.Message,
 	}, nil
 }
+
+
+func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *pb.GetUserFollowersRequest)(*pb.GetUserFollowersResponse,error){
+
+   requestID, err := utils.GetRequestID(ctx)
+
+	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
+		followHandler.logger.Error("meta data not found",zap.Error(err),zap.String("requestID",requestID))
+		return nil, status.Error(codes.Internal, "something went wrong")
+
+	}
+	if errors.Is(err, ierrors.ErrRequestIDNotFound) {
+		followHandler.logger.Error("requestID not found",zap.Error(err),zap.String("requestID",requestID))
+
+		return nil, status.Error(codes.InvalidArgument, "something went wrong")
+
+	}
+
+
+	resp,err := followHandler.followService.GetUserFollowers(ctx,int(req.FollowingId))
+
+	if err != nil {
+		var appErr *ierrors.AppError
+
+		if errors.As(err,&appErr){
+
+			switch appErr.Type {
+			case ierrors.TypeValidation:
+				return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+			case ierrors.TypeConflict:
+				return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+			case ierrors.TypeUnauthorized:
+				return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+			case ierrors.TypeNotFound:
+				return nil, status.Error(codes.NotFound, string(appErr.Message))
+			case ierrors.TypeTimeout:
+				return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+			case ierrors.TypeCancelled:
+				return nil, status.Error(codes.Canceled, string(appErr.Message))
+
+			default:
+				return nil, status.Error(codes.Internal, "internal error")
+			
+		}
+
+		}
+
+		if errors.Is(err, context.Canceled) {
+
+			return nil, status.Error(codes.Canceled, "Request canceled")
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, status.Error(codes.DeadlineExceeded, "Request timeout")
+
+		
+
+		}
+
+	}
+
+
+	pbFollowers := make([]*pb.Follow,len(resp.Followers))
+
+
+	for _,follower := range resp.Followers {
+
+		pbFollower := &pb.Follow{
+			Id:int64(follower.ID),
+			FollowerId: int64(follower.FollowerID),
+			FollowingId: int64(follower.FollowingID),
+
+
+		}
+
+		pbFollowers = append(pbFollowers, pbFollower)
+
+
+
+	}
+
+
+	
+
+	return &pb.GetUserFollowersResponse{},nil
+
+	}

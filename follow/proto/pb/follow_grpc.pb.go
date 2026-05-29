@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FollowService_ToggleFollow_FullMethodName = "/followservice.FollowService/ToggleFollow"
+	FollowService_ToggleFollow_FullMethodName     = "/followservice.FollowService/ToggleFollow"
+	FollowService_GetUserFollowers_FullMethodName = "/followservice.FollowService/GetUserFollowers"
 )
 
 // FollowServiceClient is the client API for FollowService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FollowServiceClient interface {
 	ToggleFollow(ctx context.Context, in *FollowRequest, opts ...grpc.CallOption) (*FollowResponse, error)
+	GetUserFollowers(ctx context.Context, in *GetUserFollowersRequest, opts ...grpc.CallOption) (*GetUserFollowersResponse, error)
 }
 
 type followServiceClient struct {
@@ -47,11 +49,22 @@ func (c *followServiceClient) ToggleFollow(ctx context.Context, in *FollowReques
 	return out, nil
 }
 
+func (c *followServiceClient) GetUserFollowers(ctx context.Context, in *GetUserFollowersRequest, opts ...grpc.CallOption) (*GetUserFollowersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserFollowersResponse)
+	err := c.cc.Invoke(ctx, FollowService_GetUserFollowers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FollowServiceServer is the server API for FollowService service.
 // All implementations must embed UnimplementedFollowServiceServer
 // for forward compatibility.
 type FollowServiceServer interface {
 	ToggleFollow(context.Context, *FollowRequest) (*FollowResponse, error)
+	GetUserFollowers(context.Context, *GetUserFollowersRequest) (*GetUserFollowersResponse, error)
 	mustEmbedUnimplementedFollowServiceServer()
 }
 
@@ -64,6 +77,9 @@ type UnimplementedFollowServiceServer struct{}
 
 func (UnimplementedFollowServiceServer) ToggleFollow(context.Context, *FollowRequest) (*FollowResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ToggleFollow not implemented")
+}
+func (UnimplementedFollowServiceServer) GetUserFollowers(context.Context, *GetUserFollowersRequest) (*GetUserFollowersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUserFollowers not implemented")
 }
 func (UnimplementedFollowServiceServer) mustEmbedUnimplementedFollowServiceServer() {}
 func (UnimplementedFollowServiceServer) testEmbeddedByValue()                       {}
@@ -104,6 +120,24 @@ func _FollowService_ToggleFollow_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FollowService_GetUserFollowers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserFollowersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FollowServiceServer).GetUserFollowers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FollowService_GetUserFollowers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FollowServiceServer).GetUserFollowers(ctx, req.(*GetUserFollowersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FollowService_ServiceDesc is the grpc.ServiceDesc for FollowService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +148,10 @@ var FollowService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ToggleFollow",
 			Handler:    _FollowService_ToggleFollow_Handler,
+		},
+		{
+			MethodName: "GetUserFollowers",
+			Handler:    _FollowService_GetUserFollowers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -41,3 +41,11 @@ func (followService *FollowService) ToggleFollow(ctx context.Context,follow bool
 
 	
 }
+
+
+func (followService *FollowService)	GetUserFollowers(ctx context.Context,followingID int)(*dto.PaginatedResponse,error){
+
+
+
+	return nil, nil
+}

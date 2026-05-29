@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
+	dto "github.com/abelmalu/golang-posts/follow/internal/dtos"
 	ierrors "github.com/abelmalu/golang-posts/follow/internal/errors"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -101,3 +102,12 @@ func (followRepository *FollowRepository) ToggleFollow(ctx context.Context,follo
 
 	
 }
+
+
+func (followRepository *FollowRepository)	GetUserFollowers(ctx context.Context,followingID int)(*dto.PaginatedResponse,error){
+
+
+
+	return nil, nil
+}
+

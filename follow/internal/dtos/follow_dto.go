@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/abelmalu/golang-posts/follow/internal/models"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -21,6 +22,14 @@ type FollowResponse struct {
 	Message string 
 
 
+}
+
+
+type PaginatedResponse struct {
+
+	Followers []*models.Follow
+	Cursor int 
+	HasNext bool
 }
 
 var validate = validator.New()
