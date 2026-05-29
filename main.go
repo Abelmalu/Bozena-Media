@@ -1,17 +1,19 @@
 package main
 
 import (
-	"encoding/json"
+	"encoding/base64"
 	"fmt"
-	"time"
+	"strconv"
 )
-var person map[string]string = map[string]string{
 
-	"name":"abel",
-}
 func main() {
-	// Convert seconds into a human-readable time object
-	t := time.Unix(1700000000, 0)
-   json.Unmarshal(person,t)
-	fmt.Println(t) // Output: 2023-11-14 22:13:20 +0000 UTC (depending on your local timezone)
+	num := 123
+
+	// 1. Convert the integer to its string format ("123")
+	numStr := strconv.Itoa(num)
+
+	// 2. Encode the string bytes to Base64
+	encoded := base64.StdEncoding.EncodeToString([]byte(numStr))
+
+	fmt.Println(encoded) // Output: MTIz
 }

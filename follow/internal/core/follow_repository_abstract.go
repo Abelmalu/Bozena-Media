@@ -10,6 +10,6 @@ import (
 type FollowRepository interface{
 
 	ToggleFollow(ctx context.Context,state bool,followerID,followingID int)(string,error)
-	GetUserFollowers(ctx context.Context,followingID int)(*dto.PaginatedResponse,error)
+	GetUserFollowers(ctx context.Context,followingID,limit int,cursor string)(*dto.PaginatedResponse,error)
 
 }

@@ -35,6 +35,9 @@ message Follow {
 message GetUserFollowersRequest {
 
     int64 following_id  = 1;
+    int64 limit = 2;
+    string cursor = 3;
+
 
 
     
@@ -45,7 +48,8 @@ message GetUserFollowersResponse {
 
     repeated Follow followers  = 1;
     bool has_next  = 2;
-    int64 cursor  = 3;
+    int64 limit = 3;
+    string cursor  = 4;
 
 
     

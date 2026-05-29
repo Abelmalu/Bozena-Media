@@ -28,7 +28,7 @@ type FollowResponse struct {
 type PaginatedResponse struct {
 
 	Followers []*models.Follow
-	Cursor int 
+	Cursor string 
 	HasNext bool
 }
 

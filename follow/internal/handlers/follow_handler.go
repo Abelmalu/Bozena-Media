@@ -119,7 +119,7 @@ func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *p
 	}
 
 
-	resp,err := followHandler.followService.GetUserFollowers(ctx,int(req.FollowingId))
+	resp,err := followHandler.followService.GetUserFollowers(ctx,int(req.FollowingId),int(req.Limit),req.Cursor)
 
 	if err != nil {
 		var appErr *ierrors.AppError

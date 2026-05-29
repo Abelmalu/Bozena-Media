@@ -188,6 +188,8 @@ func (x *Follow) GetId() int64 {
 type GetUserFollowersRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FollowingId   int64                  `protobuf:"varint,1,opt,name=following_id,json=followingId,proto3" json:"following_id,omitempty"`
+	Limit         int64                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Cursor        string                 `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -229,11 +231,26 @@ func (x *GetUserFollowersRequest) GetFollowingId() int64 {
 	return 0
 }
 
+func (x *GetUserFollowersRequest) GetLimit() int64 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *GetUserFollowersRequest) GetCursor() string {
+	if x != nil {
+		return x.Cursor
+	}
+	return ""
+}
+
 type GetUserFollowersResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Followers     []*Follow              `protobuf:"bytes,1,rep,name=followers,proto3" json:"followers,omitempty"`
 	HasNext       bool                   `protobuf:"varint,2,opt,name=has_next,json=hasNext,proto3" json:"has_next,omitempty"`
-	Cursor        int64                  `protobuf:"varint,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	Limit         int64                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	Cursor        string                 `protobuf:"bytes,4,opt,name=cursor,proto3" json:"cursor,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -282,11 +299,18 @@ func (x *GetUserFollowersResponse) GetHasNext() bool {
 	return false
 }
 
-func (x *GetUserFollowersResponse) GetCursor() int64 {
+func (x *GetUserFollowersResponse) GetLimit() int64 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *GetUserFollowersResponse) GetCursor() string {
 	if x != nil {
 		return x.Cursor
 	}
-	return 0
+	return ""
 }
 
 var File_proto_follow_proto protoreflect.FileDescriptor
@@ -305,13 +329,16 @@ const file_proto_follow_proto_rawDesc = "" +
 	"\vfollower_id\x18\x01 \x01(\x03R\n" +
 	"followerId\x12!\n" +
 	"\ffollowing_id\x18\x02 \x01(\x03R\vfollowingId\x12\x0e\n" +
-	"\x02id\x18\x03 \x01(\x03R\x02id\"<\n" +
+	"\x02id\x18\x03 \x01(\x03R\x02id\"j\n" +
 	"\x17GetUserFollowersRequest\x12!\n" +
-	"\ffollowing_id\x18\x01 \x01(\x03R\vfollowingId\"\x82\x01\n" +
+	"\ffollowing_id\x18\x01 \x01(\x03R\vfollowingId\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x03R\x05limit\x12\x16\n" +
+	"\x06cursor\x18\x03 \x01(\tR\x06cursor\"\x98\x01\n" +
 	"\x18GetUserFollowersResponse\x123\n" +
 	"\tfollowers\x18\x01 \x03(\v2\x15.followservice.FollowR\tfollowers\x12\x19\n" +
-	"\bhas_next\x18\x02 \x01(\bR\ahasNext\x12\x16\n" +
-	"\x06cursor\x18\x03 \x01(\x03R\x06cursor2\xc1\x01\n" +
+	"\bhas_next\x18\x02 \x01(\bR\ahasNext\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x03R\x05limit\x12\x16\n" +
+	"\x06cursor\x18\x04 \x01(\tR\x06cursor2\xc1\x01\n" +
 	"\rFollowService\x12K\n" +
 	"\fToggleFollow\x12\x1c.followservice.FollowRequest\x1a\x1d.followservice.FollowResponse\x12c\n" +
 	"\x10GetUserFollowers\x12&.followservice.GetUserFollowersRequest\x1a'.followservice.GetUserFollowersResponseB\fZ\n" +
