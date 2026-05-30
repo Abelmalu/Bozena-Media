@@ -124,6 +124,26 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 		query := `SELECT id,follower_id,following_id FROM follows WHERE following_id = $1 AND id < $2 ORDER BY id DESC LIMIT $3`
 
 		rows, err := followRepository.DB.QueryContext(ctx, query,followingID,cursorInt, (limit + 1))
+		
+		if err != nil {
+			var pgErr *pgconn.PgError
+
+			if errors.As(err, &pgErr) {
+
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			}
+			if errors.Is(err, context.Canceled) {
+
+				return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+			}
+			if errors.Is(err, context.DeadlineExceeded) {
+
+				return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+			}
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+		}
 
 		for rows.Next() {
 			var follows models.Follow
@@ -157,7 +177,7 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 
 	} else {
 
-		query := ` SELECT id,follower_id,following_id FROM follows WHERE following_id=$1 LIMIT $2`
+		query := ` SELECT id,follower_id,following_id FROM follows WHERE following_id=$1 ORDER BY id DESC LIMIT $2`
 
 		rows, err := followRepository.DB.QueryContext(ctx, query, followingID, (limit + 1))
 		var pgErr *pgconn.PgError

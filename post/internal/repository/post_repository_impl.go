@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"errors"
+	"strconv"
 
 	"github.com/abelmalu/golang-posts/post/internal/dto"
 	ierrors "github.com/abelmalu/golang-posts/post/internal/errors"
@@ -175,61 +177,118 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 
 	var posts []models.Post
 	var hasNext bool
-	var after int
+	var after string
 
-	query := `
-    SELECT id, title, content, user_id 
-    FROM posts 
-    WHERE user_id = $1 
-    ORDER BY id DESC 
-    LIMIT $2`
+	if cursor != "" {
 
-	rows, err := postRepo.DB.QueryContext(ctx, query, int(UserID), int(limit+1))
-
-	var pgErr *pgconn.PgError
-	if err != nil {
-
-		if errors.As(err, &pgErr) {
+		cursorByte,err := base64.StdEncoding.DecodeString(cursor)
+		if err != nil {
 
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 		}
-		if errors.Is(err, context.Canceled) {
 
-			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+		cursorStr := string(cursorByte)
+		cursorInt, err := strconv.Atoi(cursorStr)
+
+		if err != nil {
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 		}
-		if errors.Is(err, context.DeadlineExceeded) {
 
-			return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		query := `SELECT id,title,content,user_id FROM posts WHERE user_id=$1 AND id < $2 ORDER BY id DESC LIMIT=$3`
+
+		rows,err := postRepo.DB.QueryContext(ctx,query,UserID,cursorInt,(limit + 1))
+
+
+		for rows.Next() {
+			var post models.Post
+
+			if err := rows.Scan(&post.ID,&post.Title,&post.Content,&post.UserID); err != nil {
+
+
+				return nil,ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+
+			}
+
+			if len(posts) == int(limit) {
+
+				hasNext = true
+				
+				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(post.ID)))
+				break
+
+
+			}
+
+			posts = append(posts, post)
 		}
 
-		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		if err := rows.Err(); err != nil {
 
-	}
-	defer rows.Close()
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+	}else {
 
-	for rows.Next() {
-		var post models.Post
-		rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID)
 
-		if len(posts) == int(limit) {
+		query := `SELECT id,title,content,user_id FROM posts WHERE user_id=$1 ORDER BY id DESC LIMIT $2`
 
-			hasNext = true
-			after = post.ID
+		rows,err := postRepo.DB.QueryContext(ctx,query,UserID,(limit + 1))
 
-			break
+		if err != nil {
+			var pgErr *pgconn.PgError
+
+			if errors.As(err, &pgErr) {
+
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			}
+			if errors.Is(err, context.Canceled) {
+
+				return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+			}
+			if errors.Is(err, context.DeadlineExceeded) {
+
+				return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+			}
+
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 		}
-		posts = append(posts, post)
+		 
+		for rows.Next() {
+			var post models.Post
 
-	}
-	if err = rows.Err(); err != nil {
-		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			if err := rows.Scan(&post.ID,&post.Title,&post.Content,&post.UserID); err != nil {
+
+
+				return nil,ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+
+			}
+
+			if len(posts) == int(limit) {
+
+				hasNext = true
+				
+				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(post.ID)))
+				break
+
+
+			}
+
+			posts = append(posts, post)
+		}
+
+		if err := rows.Err(); err != nil {
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+
 
 	}
 
 	return &dto.PaginatedResponse{
 		Posts:   &posts,
 		HasNext: hasNext,
-		Cursor:  (after),
+		Cursor:  after,
 	}, nil
 }
