@@ -36,3 +36,22 @@ func (followClient *FollowClient) ToggleFollow(ctx context.Context, follow bool,
 	)
 }
 
+
+func (pc *FollowClient) GetUserFollowers(ctx context.Context,followingID int,limit int,cursor string)(*pb.GetUserFollowersResponse,error){
+
+
+
+
+	return pc.client.GetUserFollowers(
+		ctx,
+		&pb.GetUserFollowersRequest{
+			FollowingId: int64(followingID),
+			Limit: int64(limit),
+			Cursor: cursor,
+		},
+	
+	)
+
+	
+}
+

@@ -82,9 +82,9 @@ func (postService *PostService) ListPosts(ctx context.Context) ([]models.Post, e
 }
 
 
-func (postService *PostService) GetUserPosts(ctx context.Context,UserID,limit int64)(*dto.PaginatedResponse, error){
+func (postService *PostService) GetUserPosts(ctx context.Context,UserID,limit int64,cursor string)(*dto.PaginatedResponse, error){
 
-resp,err := postService.repo.GetUserPosts(ctx,UserID,limit)
+resp,err := postService.repo.GetUserPosts(ctx,UserID,limit,cursor)
 
 if err != nil {
 

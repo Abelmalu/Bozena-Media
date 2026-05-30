@@ -12,6 +12,6 @@ type PostService interface {
 	UpdatePost(ctx context.Context,postID int,title,content string) (*models.Post, error)
 	DeletePost(ctx context.Context,postID int) error
 	ListPosts(ctx context.Context) ([]models.Post, error)
-	GetUserPosts(ctx context.Context,UserID,limit int64)(*dto.PaginatedResponse, error)
+	GetUserPosts(ctx context.Context,UserID,limit int64,cursor string)(*dto.PaginatedResponse, error)
 	
 }

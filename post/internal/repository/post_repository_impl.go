@@ -171,11 +171,11 @@ FROM posts
 	return posts, nil
 }
 
-func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, limit int64) (*dto.PaginatedResponse, error) {
+func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, limit int64,cursor string) (*dto.PaginatedResponse, error) {
 
 	var posts []models.Post
 	var hasNext bool
-	var cursor int
+	var after int
 
 	query := `
     SELECT id, title, content, user_id 
@@ -214,7 +214,7 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 		if len(posts) == int(limit) {
 
 			hasNext = true
-			cursor = post.ID
+			after = post.ID
 
 			break
 
@@ -230,6 +230,6 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 	return &dto.PaginatedResponse{
 		Posts:   &posts,
 		HasNext: hasNext,
-		Cursor:  (cursor),
+		Cursor:  (after),
 	}, nil
 }

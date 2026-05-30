@@ -60,7 +60,7 @@ func (pc *PostClient) DeletePost(ctx context.Context,postID int64) (*pb.DeletePo
 	)
 
 }
-func (pc *PostClient) GetUserPosts(ctx context.Context,userID,limit int64)(*pb.GetUserPostResponse,error){
+func (pc *PostClient) GetUserPosts(ctx context.Context,userID,limit int64,cursor string)(*pb.GetUserPostResponse,error){
 	
    
 
@@ -69,6 +69,11 @@ func (pc *PostClient) GetUserPosts(ctx context.Context,userID,limit int64)(*pb.G
 		&pb.GetUserPostRequest{
 			UserId:userID,
 			Limit: limit,
+			Cursor:cursor,
 		},
 	)
 }
+
+
+
+ 

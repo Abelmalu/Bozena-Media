@@ -21,7 +21,7 @@ type PostService interface {
 	ListPosts(ctx context.Context) (*pb.ListPostsResponse, error)
 	UpdatePost(ctx context.Context, postID int64, title string, content string) (*pb.UpdatePostResponse, error)
 	DeletePost(ctx context.Context, postID int64) (*pb.DeletePostResponse, error)
-	GetUserPosts(ctx context.Context, userID,limit int64) (*pb.GetUserPostResponse, error)
+	GetUserPosts(ctx context.Context, userID,limit int64,cursor string) (*pb.GetUserPostResponse, error)
 }
 
 type PostHandler struct {
@@ -293,11 +293,13 @@ func (postHandler *PostHandler) GetUserPosts(c *gin.Context) {
 		return
 	}
 
+	cursor := c.Query("cursor")
+
 	
 
 	ctx,_ := addToOutgoingContext(c,"",requestID)
 
-	resp, err := postHandler.postClient.GetUserPosts(ctx, int64(userID),int64(limit))
+	resp, err := postHandler.postClient.GetUserPosts(ctx, int64(userID),int64(limit),cursor)
 	if err != nil {
 
 		postHandler.logger.Error("GRPC Error", zap.Error(err))

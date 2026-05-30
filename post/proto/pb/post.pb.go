@@ -501,6 +501,7 @@ type GetUserPostRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Limit         int64                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Cursor        string                 `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -547,6 +548,13 @@ func (x *GetUserPostRequest) GetLimit() int64 {
 		return x.Limit
 	}
 	return 0
+}
+
+func (x *GetUserPostRequest) GetCursor() string {
+	if x != nil {
+		return x.Cursor
+	}
+	return ""
 }
 
 type GetUserPostResponse struct {
@@ -641,10 +649,11 @@ const file_proto_post_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"\x12\n" +
 	"\x10ListPostsRequest\"<\n" +
 	"\x11ListPostsResponse\x12'\n" +
-	"\x05posts\x18\x01 \x03(\v2\x11.postservice.PostR\x05posts\"C\n" +
+	"\x05posts\x18\x01 \x03(\v2\x11.postservice.PostR\x05posts\"[\n" +
 	"\x12GetUserPostRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x03R\x05limit\"q\n" +
+	"\x05limit\x18\x02 \x01(\x03R\x05limit\x12\x16\n" +
+	"\x06cursor\x18\x03 \x01(\tR\x06cursor\"q\n" +
 	"\x13GetUserPostResponse\x12'\n" +
 	"\x05posts\x18\x01 \x03(\v2\x11.postservice.PostR\x05posts\x12\x16\n" +
 	"\x06cursor\x18\x02 \x01(\tR\x06cursor\x12\x19\n" +
