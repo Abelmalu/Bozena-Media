@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-
 	ierrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	"github.com/abelmalu/golang-posts/APIGateway/pkg/utils"
 	"github.com/abelmalu/golang-posts/follow/proto/pb"

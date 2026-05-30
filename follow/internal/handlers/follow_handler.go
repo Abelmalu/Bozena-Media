@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/abelmalu/golang-posts/follow/internal/core"
 	dto "github.com/abelmalu/golang-posts/follow/internal/dtos"
@@ -162,7 +163,7 @@ func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *p
 	}
 
 
-	pbFollowers := make([]*pb.Follow,len(resp.Followers))
+	pbFollowers := make([]*pb.Follow,0,len(resp.Followers))
 
 
 	for _,follower := range resp.Followers {
@@ -182,8 +183,16 @@ func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *p
 	}
 
 
+	log.Println(pbFollowers)
+
 	
 
-	return &pb.GetUserFollowersResponse{},nil
+	return &pb.GetUserFollowersResponse{
+		Followers: pbFollowers,
+		Cursor:resp.Cursor,
+		HasNext: resp.HasNext,
+
+
+	},nil
 
 	}
