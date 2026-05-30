@@ -291,9 +291,9 @@ func (postHandler *PostHandler) GetUserPosts(ctx context.Context, req *pb.GetUse
 
 	}
 	
-	pbPosts := make([]*pb.Post,len(*resp.Posts))
+	pbPosts := make([]*pb.Post,0,len(resp.Posts))
 
-	for _,p := range *resp.Posts {
+	for _,p := range resp.Posts {
 		pbPost := &pb.Post{
 
 			Title:   p.Title,

@@ -15,7 +15,7 @@ type UpdatePostRequest struct{
 }
 
 type PaginatedResponse struct {
-	Posts   *[]models.Post
+	Posts   [] *models.Post
 	Cursor  string
 	HasNext bool
 }

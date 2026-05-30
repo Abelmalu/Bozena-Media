@@ -175,7 +175,7 @@ FROM posts
 
 func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, limit int64,cursor string) (*dto.PaginatedResponse, error) {
 
-	var posts []models.Post
+	var posts [] *models.Post
 	var hasNext bool
 	var after string
 
@@ -195,7 +195,7 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 		}
 
-		query := `SELECT id,title,content,user_id FROM posts WHERE user_id=$1 AND id < $2 ORDER BY id DESC LIMIT=$3`
+		query := `SELECT id,title,content,user_id FROM posts WHERE user_id=$1 AND id < $2 ORDER BY id DESC LIMIT $3`
 
 		rows,err := postRepo.DB.QueryContext(ctx,query,UserID,cursorInt,(limit + 1))
 
@@ -220,7 +220,7 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 
 			}
 
-			posts = append(posts, post)
+			posts = append(posts, &post)
 		}
 
 		if err := rows.Err(); err != nil {
@@ -275,7 +275,7 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 
 			}
 
-			posts = append(posts, post)
+			posts = append(posts, &post)
 		}
 
 		if err := rows.Err(); err != nil {
@@ -287,7 +287,7 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 	}
 
 	return &dto.PaginatedResponse{
-		Posts:   &posts,
+		Posts:   posts,
 		HasNext: hasNext,
 		Cursor:  after,
 	}, nil

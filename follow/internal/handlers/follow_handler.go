@@ -3,8 +3,6 @@ package handler
 import (
 	"context"
 	"errors"
-	"log"
-
 	"github.com/abelmalu/golang-posts/follow/internal/core"
 	dto "github.com/abelmalu/golang-posts/follow/internal/dtos"
 	ierrors "github.com/abelmalu/golang-posts/follow/internal/errors"
@@ -181,10 +179,6 @@ func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *p
 
 
 	}
-
-
-	log.Println(pbFollowers)
-
 	
 
 	return &pb.GetUserFollowersResponse{
