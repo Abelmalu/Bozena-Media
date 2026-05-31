@@ -198,6 +198,29 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 		query := `SELECT id,title,content,user_id FROM posts WHERE user_id=$1 AND id < $2 ORDER BY id DESC LIMIT $3`
 
 		rows,err := postRepo.DB.QueryContext(ctx,query,UserID,cursorInt,(limit + 1))
+		
+
+		if err != nil {
+			var pgErr *pgconn.PgError
+
+			if errors.As(err, &pgErr) {
+
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			}
+			if errors.Is(err, context.Canceled) {
+
+				return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+			}
+			if errors.Is(err, context.DeadlineExceeded) {
+
+				return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+			}
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+		}
+		defer rows.Close()
+
 
 
 		for rows.Next() {
@@ -234,6 +257,8 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 
 		rows,err := postRepo.DB.QueryContext(ctx,query,UserID,(limit + 1))
 
+
+
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -254,6 +279,8 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 		}
+		defer rows.Close()
+
 		 
 		for rows.Next() {
 			var post models.Post

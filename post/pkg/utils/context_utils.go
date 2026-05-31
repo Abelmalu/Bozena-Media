@@ -6,6 +6,10 @@ import (
 	ierrors "github.com/abelmalu/golang-posts/post/internal/errors"
 	"google.golang.org/grpc/metadata"
 )
+const (
+	MaxLimit     = 100
+	DefaultLimit = 20
+)
 
 
 func GetRequestID(c context.Context) (string,error){
@@ -27,4 +31,21 @@ func GetRequestID(c context.Context) (string,error){
 	return requestID,nil
 
 
+}
+
+
+func ValidatePaginationLimit(limit int) int {
+
+	if limit <= 0 {
+
+		return DefaultLimit
+
+	}
+
+	if limit > 100 {
+
+		return MaxLimit
+	}
+
+	return limit
 }

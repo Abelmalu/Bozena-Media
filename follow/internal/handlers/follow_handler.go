@@ -117,8 +117,8 @@ func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *p
 
 	}
 
-
-	resp,err := followHandler.followService.GetUserFollowers(ctx,int(req.FollowingId),int(req.Limit),req.Cursor)
+	limit := utils.ValidatePaginationLimit(int(req.Limit))
+	resp,err := followHandler.followService.GetUserFollowers(ctx,int(req.FollowingId),limit,req.Cursor)
 
 	if err != nil {
 		var appErr *ierrors.AppError

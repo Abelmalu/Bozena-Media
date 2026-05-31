@@ -253,7 +253,10 @@ func (postHandler *PostHandler) GetUserPosts(ctx context.Context, req *pb.GetUse
 		return nil, status.Error(codes.InvalidArgument, "something went wrong")
 
 	}
-    resp,err := postHandler.service.GetUserPosts(ctx,req.UserId,req.Limit,req.Cursor)
+
+	limit := utils.ValidatePaginationLimit(int(req.Limit))
+
+    resp,err := postHandler.service.GetUserPosts(ctx,req.UserId,int64(limit),req.Cursor)
 
 	var appErr *ierrors.AppError
 	if err != nil {

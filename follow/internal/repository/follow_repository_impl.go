@@ -123,8 +123,8 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 
 		query := `SELECT id,follower_id,following_id FROM follows WHERE following_id = $1 AND id < $2 ORDER BY id DESC LIMIT $3`
 
-		rows, err := followRepository.DB.QueryContext(ctx, query,followingID,cursorInt, (limit + 1))
-		
+		rows, err := followRepository.DB.QueryContext(ctx, query, followingID, cursorInt, (limit + 1))
+
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -145,6 +145,7 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 
 		}
 
+		defer rows.Close()
 		for rows.Next() {
 			var follows models.Follow
 
@@ -180,8 +181,10 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 		query := ` SELECT id,follower_id,following_id FROM follows WHERE following_id=$1 ORDER BY id DESC LIMIT $2`
 
 		rows, err := followRepository.DB.QueryContext(ctx, query, followingID, (limit + 1))
-		var pgErr *pgconn.PgError
+
 		if err != nil {
+
+			var pgErr *pgconn.PgError
 
 			if errors.As(err, &pgErr) {
 
@@ -199,6 +202,8 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 		}
+
+		defer rows.Close()
 
 		for rows.Next() {
 

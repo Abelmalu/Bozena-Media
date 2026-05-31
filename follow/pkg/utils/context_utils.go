@@ -8,6 +8,11 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+const (
+	MaxLimit     = 100
+	DefaultLimit = 20
+)
+
 func GetRequestID(c context.Context) (string, error) {
 	var requestID string
 
@@ -71,7 +76,7 @@ func GetPostID(c context.Context) (int, error) {
 
 	}
 
-	postID,err := strconv.Atoi(postIDStr)
+	postID, err := strconv.Atoi(postIDStr)
 	if err != nil {
 
 		return 0, ierrors.ErrPostIDNotFound
@@ -79,4 +84,20 @@ func GetPostID(c context.Context) (int, error) {
 	}
 	return postID, nil
 
+}
+
+func ValidatePaginationLimit(limit int) int {
+
+	if limit <= 0 {
+
+		return DefaultLimit
+
+	}
+
+	if limit > 100 {
+
+		return MaxLimit
+	}
+
+	return limit
 }
