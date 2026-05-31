@@ -22,6 +22,7 @@ type AuthService interface {
 	Login(ctx context.Context, userName, password string) (*pb.LoginResponse, error)
 	Logout(ctx context.Context) (*pb.LogoutResponse, error)
 	RefreshHandler(context.Context, string) (*pb.RefreshResponse, error)
+	SearchUser(ctx context.Context,username,cursor string,limit int)(*pb.SearchUserResponse,error)
 }
 type AuthHandler struct {
 	client AuthService
@@ -56,7 +57,7 @@ func ExtractRefreshToken(c *gin.Context) (string, error) {
 	return "", errors.New("Refresh Token not found")
 }
 
-func (ah *AuthHandler) Register(c *gin.Context) {
+func (authHandler *AuthHandler) Register(c *gin.Context) {
 
 	var req struct {
 		Name     string `json:"name"`
@@ -69,7 +70,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			ah.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			authHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -77,7 +78,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
@@ -85,17 +86,17 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		ah.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
+		authHandler.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
 		return
 	}
 	// call getClienType to get the client type and inject it into the grpc metadata
 	ctx, clientType := utils.AddToOutgoingContext(c, requestID)
 
-	resp, err := ah.client.Register(ctx, req.UserName, req.Name, req.Email, req.Password)
+	resp, err := authHandler.client.Register(ctx, req.UserName, req.Name, req.Email, req.Password)
 	if err != nil {
 
-		ah.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
+		authHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
@@ -125,19 +126,18 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 
 }
 
-func (ah *AuthHandler) Login(c *gin.Context) {
+func (authHandler *AuthHandler) Login(c *gin.Context) {
 	var req struct {
 		UserName string `json:"username"`
 		Password string `json:"password"`
 	}
 
-	
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			ah.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			authHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -145,24 +145,24 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
 
 	}
-    if err := c.ShouldBindJSON(&req); err != nil {
-		ah.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
+	if err := c.ShouldBindJSON(&req); err != nil {
+		authHandler.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
 		return
 	}
-	
+
 	ctx, clientType := utils.AddToOutgoingContext(c, requestID)
 
-	resp, err := ah.client.Login(ctx, req.UserName, req.Password)
+	resp, err := authHandler.client.Login(ctx, req.UserName, req.Password)
 
 	if err != nil {
-		ah.logger.Error("GRPC Error", zap.Error(err), zap.String("request ID", requestID))
+		authHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("request ID", requestID))
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
@@ -191,13 +191,13 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 
 }
 
-func (ah *AuthHandler) Logout(c *gin.Context) {
+func (authHandler *AuthHandler) Logout(c *gin.Context) {
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			ah.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			authHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -205,21 +205,19 @@ func (ah *AuthHandler) Logout(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
 	}
-    
 
-	JTI,err :=utils.GetJTI(c)
+	JTI, err := utils.GetJTI(c)
 
 	if err != nil {
-
 
 		if errors.Is(err, ierrors.ErrJTINotFoundInContext) {
 
-			ah.logger.Error("couldn't get JTI from context", zap.Error(errors.New("couldn't find JTI")))
+			authHandler.logger.Error("couldn't get JTI from context", zap.Error(errors.New("couldn't find JTI")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -228,23 +226,19 @@ func (ah *AuthHandler) Logout(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			ah.logger.Error("couldn't assert the JTI to string", zap.String("type", "something went wrong"))
+			authHandler.logger.Error("couldn't assert the JTI to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
-
-
-
 
 	}
 
-	expTime,err := utils.GetJWTEXPTime(c)
+	expTime, err := utils.GetJWTEXPTime(c)
 	if err != nil {
-
 
 		if errors.Is(err, ierrors.ErrExpTimeNotFoundInContext) {
 
-			ah.logger.Error("couldn't get expirtaion time from context", zap.Error(errors.New("couldn't find expiration time")))
+			authHandler.logger.Error("couldn't get expirtaion time from context", zap.Error(errors.New("couldn't find expiration time")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -253,37 +247,32 @@ func (ah *AuthHandler) Logout(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
-
-
-
 
 	}
 	expTimeStr := strconv.Itoa(int(expTime))
 
 	refreshToken, err := ExtractRefreshToken(c)
 	if err != nil {
-		ah.logger.Error("refresh token extracting error", zap.Error(err), zap.String("request ID", requestID))
+		authHandler.logger.Error("refresh token extracting error", zap.Error(err), zap.String("request ID", requestID))
 		c.Error(appErrors.NewAppError(appErrors.TypeUnauthorized, ierrors.MSGRefreshTokenNotFound, err))
 		return
 	}
 
 	md := metadata.Pairs(
-		"refreshToken", refreshToken, 
-		 "requestID",requestID,
-		 "JTI",JTI,
-		 "expTime",expTimeStr,
-
-		
-		)
+		"refreshToken", refreshToken,
+		"requestID", requestID,
+		"JTI", JTI,
+		"expTime", expTimeStr,
+	)
 	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
-	resp, err := ah.client.Logout(ctx)
+	resp, err := authHandler.client.Logout(ctx)
 	if err != nil {
 
-		ah.logger.Error("GRPC Error", zap.Error(err))
+		authHandler.logger.Error("GRPC Error", zap.Error(err))
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
@@ -291,14 +280,14 @@ func (ah *AuthHandler) Logout(c *gin.Context) {
 	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
 }
 
-func (ah *AuthHandler) RefreshHandler(c *gin.Context) {
+func (authHandler *AuthHandler) RefreshHandler(c *gin.Context) {
 
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			ah.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			authHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -306,27 +295,26 @@ func (ah *AuthHandler) RefreshHandler(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
-
 
 	}
 
 	// extracting the refresh token from the request for both mobile and web clients
 	refreshToken, err := ExtractRefreshToken(c)
 	if err != nil {
-		ah.logger.Error("refresh token extracting error ", zap.Error(err), zap.String("requestID", requestID))
+		authHandler.logger.Error("refresh token extracting error ", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.NewAppError(appErrors.TypeUnauthorized, "Refresh token not found", err))
 		return
 	}
 
 	ctx, clientType := utils.AddToOutgoingContext(c, requestID)
 
-	resp, err := ah.client.RefreshHandler(ctx, refreshToken)
+	resp, err := authHandler.client.RefreshHandler(ctx, refreshToken)
 	if err != nil {
-		ah.logger.Error("GRPC Error ", zap.Error(err), zap.String("requestID", requestID))
+		authHandler.logger.Error("GRPC Error ", zap.Error(err), zap.String("requestID", requestID))
 
 		c.Error(appErrors.FromGRPC(err))
 		return
@@ -355,4 +343,61 @@ func (ah *AuthHandler) RefreshHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 
+}
+
+func (authHandler *AuthHandler) SearchUser(c *gin.Context) {
+	requestID, err := utils.GetRequestID(c)
+	if err != nil {
+
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+
+			authHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")), zap.String("requestID", requestID))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+		}
+
+	}
+
+	search := c.Query("search")
+
+	limitStr := c.Query("limit")
+
+
+
+	limit, err := strconv.Atoi(limitStr)
+
+	if err != nil {
+
+		authHandler.logger.Error("couldn't change limit to string", zap.Error(err), zap.String("requestID", requestID))
+		c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+		return
+
+	}
+
+
+	cursor := c.Query("cursor")
+
+	ctx, _ := utils.AddToOutgoingContext(c, requestID)
+
+
+	resp,err := authHandler.client.SearchUser(ctx,search,cursor,limit)
+
+	if err != nil {
+
+		authHandler.logger.Error("GRPC Error",zap.Error(err),zap.String("requestId",requestID))
+
+		c.Error(ierrors.FromGRPC(err))
+		return
+	}
+
+
+	utils.SendSuccessResponse(c,resp,requestID,http.StatusOK)
 }

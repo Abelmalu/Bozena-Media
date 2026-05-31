@@ -40,6 +40,14 @@ func InitAuthRoute(router *gin.RouterGroup, handler *handler.AuthHandler,logger 
 				middleware.AuthMiddleware(logger,redisClient),
 			},
 		},
+			{
+			Method:  http.MethodGet,
+			Path:    "/search",
+			Handler: handler.SearchUser,
+			Middlewares: [] gin.HandlerFunc{
+				middleware.AuthMiddleware(logger,redisClient),
+			},
+		},
 	}
 
 	glue.RegisterRoutes(router,routes)

@@ -62,3 +62,20 @@ func (ac *AuthClient) RefreshHandler(ctx context.Context,refreshToken string)(*p
 		RefreshToken: refreshToken,
 	})
 }
+
+
+func (ac *AuthClient) SearchUser(ctx context.Context,username,cursor string,limit int)(*pb.SearchUserResponse,error){
+
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	return ac.client.SearchUser(
+		ctx,
+		&pb.SearchUserRequest{
+			Username: username,
+			Cursor: cursor,
+			Limit: int64(limit),
+		},
+
+	)
+}
