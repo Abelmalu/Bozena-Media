@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 
+	"github.com/abelmalu/golang-posts/Auth/internal/dto"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 )
 
@@ -11,4 +12,5 @@ type AuthService interface {
 	Login(ctx context.Context, userName, password string) (*model.User, *model.TokenPair, error)
 	Logout(ctx context.Context, refreshToken string) (error)
 	RefreshHandler(ctx context.Context,refreshToken string)(*model.TokenPair,error)
+	SearchUser(ctx context.Context,username,cursor string,limit int)(*dto.PaginatedResponse,error)
 }

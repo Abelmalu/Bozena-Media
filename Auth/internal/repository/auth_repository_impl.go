@@ -3,9 +3,12 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"errors"
+	"strconv"
 	"time"
 
+	"github.com/abelmalu/golang-posts/Auth/internal/dto"
 	ierrors "github.com/abelmalu/golang-posts/Auth/internal/errors"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 	"github.com/abelmalu/golang-posts/Auth/pkg/utils"
@@ -271,4 +274,144 @@ func (authRepo *AuthRepository) GetUserByID(ID int) (*model.User, error) {
 		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 	}
 	return &user, nil
+}
+
+
+func (authRepo *AuthRepository) SearchUser(ctx context.Context,username,cursor string,limit int) (*dto.PaginatedResponse,error){
+	 
+	var users []*model.User
+	var after string 
+	var hasNext bool
+
+	if cursor != "" {
+
+		cursorByte := base64.StdEncoding.EncodeToString([]byte(cursor))
+		cursorStr := string(cursorByte)
+		cursorInt,err := strconv.Atoi(cursorStr)
+		username = "% "
+		if err != nil {
+
+			return nil,ierrors.NewValidationError(ierrors.MSGBadRequest,nil,err)
+		}
+
+		query := ` SELECT id,name,username FROM users WHERE username ILIKE $1 AND id < $2 ORDER BY id DESC LIMIT $3 `
+
+		rows,err := authRepo.DB.QueryContext(ctx,query,username,cursorInt,(limit + 1))
+
+		if err != nil {
+			var pgErr *pgconn.PgError
+
+			if errors.As(err, &pgErr) {
+
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			}
+			if errors.Is(err, context.Canceled) {
+
+				return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+			}
+			if errors.Is(err, context.DeadlineExceeded) {
+
+				return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+			}
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+		}
+
+		defer rows.Close()
+
+		for rows.Next() {
+			var user model.User
+
+			if err := rows.Scan(&user.ID,&user.Name,&user.Username); err != nil {
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+			}
+
+
+			if len(users) == limit {
+
+				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(user.ID)))
+				hasNext = true 
+
+				break
+				
+
+			}
+
+			users = append(users, &user)
+
+
+		}
+
+
+
+	}else {
+
+		query := ` SELECT id,name,username FROM users WHERE username ILIKE $1 ORDER BY id DESC LIMIT $2`
+
+		rows, err := authRepo.DB.QueryContext(ctx, query, username, (limit + 1))
+
+		if err != nil {
+
+			var pgErr *pgconn.PgError
+
+			if errors.As(err, &pgErr) {
+
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			}
+			if errors.Is(err, context.Canceled) {
+
+				return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+			}
+			if errors.Is(err, context.DeadlineExceeded) {
+
+				return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+			}
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+		}
+
+		defer rows.Close()
+
+		for rows.Next() {
+
+			var user model.User
+
+			if err = rows.Scan(&user.ID,&user.Name, &user.Username); err != nil {
+
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+			}
+
+			if len(users) == limit {
+
+				hasNext = true
+
+				//changing the id of the follows table to string
+				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(user.ID)))
+				break
+
+			}
+
+			users = append(users, &user)
+
+		}
+
+		if err := rows.Err(); err != nil {
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+
+	}
+
+
+
+	return &dto.PaginatedResponse{
+		Users: users,
+		Cursor: after,
+		HasNext: hasNext,
+	},nil
 }

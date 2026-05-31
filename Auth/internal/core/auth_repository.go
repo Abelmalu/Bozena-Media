@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/abelmalu/golang-posts/Auth/internal/dto"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 )
 
@@ -16,4 +17,5 @@ type AuthRepository interface {
 	RevokeRefreshToken(refreshToken string) error
 	GetRefreshToken(refreshToken string) (*model.RefreshToken, error)
 	GetUserByID(ID int) (*model.User, error)
+	SearchUser(ctx context.Context,username,cursor string,limit int)(*dto.PaginatedResponse,error)
 }

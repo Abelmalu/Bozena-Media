@@ -303,3 +303,81 @@ func (authHandler *AuthHandler) RefreshHandler(ctx context.Context, req *pb.Refr
 	}, nil
 
 }
+
+func (authHandler *AuthHandler) SearchUser(ctx context.Context, req *pb.SearchUserRequest) (*pb.SearchUserResponse, error) {
+
+	requestID, err := utils.GetRequestID(ctx)
+
+	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
+
+		return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
+
+	}
+	if errors.Is(err, ierrors.ErrRequestIDNotFound) {
+
+		return nil, status.Error(codes.InvalidArgument, "missing request ID")
+
+	}
+
+	resp, err := authHandler.service.SearchUser(ctx, req.Username, req.Cursor, int(req.Limit))
+
+	if err != nil {
+
+		authHandler.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
+
+		var appErr *ierrors.AppError
+		if errors.As(err, &appErr) {
+			switch appErr.Type {
+			case ierrors.TypeValidation:
+				return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+			case ierrors.TypeConflict:
+				return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+			case ierrors.TypeUnauthorized:
+				return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+			case ierrors.TypeNotFound:
+				return nil, status.Error(codes.NotFound, string(appErr.Message))
+			case ierrors.TypeTimeout:
+				return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+			case ierrors.TypeCancelled:
+				return nil, status.Error(codes.Canceled, string(appErr.Message))
+			default:
+				return nil, status.Error(codes.Internal, "internal error")
+			}
+
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return nil, status.Error(codes.Canceled, "Request canceled")
+		}
+
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, status.Error(codes.DeadlineExceeded, "Request timed out")
+		}
+
+	}
+
+	pbUsers := make([]*pb.User,0,len(resp.Users))
+
+
+	for _,user := range resp.Users {
+
+		var pbUser pb.User
+
+		 pbUser = pb.User{
+
+			Name:user.Name,
+			Username: user.Username,
+
+
+		 }
+
+		 pbUsers = append(pbUsers,&pbUser)
+	}
+
+	return &pb.SearchUserResponse{
+		Users: pbUsers,
+		Cursor: resp.Cursor,
+		HasNext: resp.HasNext,
+	}, nil
+}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/abelmalu/golang-posts/Auth/internal/core"
+	"github.com/abelmalu/golang-posts/Auth/internal/dto"
 	ierrors "github.com/abelmalu/golang-posts/Auth/internal/errors"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 	"github.com/abelmalu/golang-posts/Auth/pkg/utils"
@@ -298,4 +299,21 @@ func (authSer *AuthService) issueTokens(userID int, clientType model.ClientType,
 		RefreshToken: refreshToken,
 	}, nil
 
+}
+
+func (authSer *AuthService) SearchUser(ctx context.Context,username,cursor string,limit int)(*dto.PaginatedResponse,error){
+
+
+		searchPattern := "%" + username + "%"
+	   
+	resp,err := authSer.repo.SearchUser(ctx,searchPattern,cursor,limit)
+
+	if err != nil {
+
+
+		return nil, err
+	}
+
+
+	return resp,nil
 }

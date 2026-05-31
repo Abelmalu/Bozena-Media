@@ -9,6 +9,7 @@ service AuthService{
     rpc Login(LoginRequest) returns (LoginResponse);
     rpc Logout(google.protobuf.Empty) returns (LogoutResponse);
     rpc RefreshHandler(RefreshRequest) returns (RefreshResponse);
+    rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
 
 }
 
@@ -48,17 +49,41 @@ message LogoutRequest {
  
 }
 
-message LogoutResponse{
+message LogoutResponse {
     string message = 1;
 
 }
 
-message RefreshRequest{
+message RefreshRequest {
 
     string refresh_token = 1;
 }
 
-message RefreshResponse{
+message RefreshResponse {
     string access_token = 1;
     string refresh_token = 2;
+}
+
+
+message User {
+    
+    string username = 1;
+    string name = 2;
+    
+}
+
+message SearchUserRequest {
+
+    string username = 1;
+    int64 limit = 2;
+    string cursor = 3;
+
+}
+
+message SearchUserResponse {
+
+    repeated User users = 1;
+    string cursor = 2;
+    bool has_next = 3;
+
 }
