@@ -237,8 +237,6 @@ func (postHandler *PostHandler) UpdatePost(ctx context.Context, req *pb.UpdatePo
 
 }
 
-
-
 func (postHandler *PostHandler) GetUserPosts(ctx context.Context, req *pb.GetUserPostRequest) (*pb.GetUserPostResponse, error) {
 	requestID, err := utils.GetRequestID(ctx)
 
