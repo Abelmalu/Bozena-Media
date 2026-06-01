@@ -89,7 +89,7 @@ func (pr *PostRepository) UpdatePost(ctx context.Context, ID int, title string, 
 }
 func (pr *PostRepository) DeletePost(ctx context.Context, postID int) error {
 
-	query := `DELETE FROM posts WHERE id=$1`
+	query := ` DELETE FROM posts WHERE id=$1 `
 
 	result, err := pr.DB.ExecContext(ctx, query, postID)
 

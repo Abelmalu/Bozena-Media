@@ -52,7 +52,7 @@ Each service (`Auth`, `post`, `like`, `follow`) is structured into the following
 - **Structured Logging**: High-performance, structured JSON logging implemented using **Uber's Zap** (`go.uber.org/zap`).
 - **Data Validation**: Strict incoming request validation utilizing **go-playground/validator** and Gin's built-in bindings.
 - **Granular Permissions**: Role-Based Access Control (RBAC) and ownership verification.
-- **Database Migrations**: Managed PostgreSQL schemas for each service.
+- **Independent Database & Migrations**: Each service fully owns its own database and handles its own migrations, ensuring strong data decoupling across the microservices ecosystem.
 - **Containerization**: Docker support for simplified deployment.
 
 ---
@@ -136,6 +136,7 @@ Each service (`Auth`, `post`, `like`, `follow`) is structured into the following
 | `POST` | `/api/auth/login`     | Login and receive Access/Refresh JWT | ❌            |
 | `POST` | `/api/auth/refresh`   | Refresh expired access token         | ❌            |
 | `POST` | `/api/auth/logout`    | Invalidate session                   | ✅            |
+| `GET`  | `/api/auth/search`    | Search users by username             | ✅            |
 
 ### Posts
 
@@ -154,9 +155,10 @@ Each service (`Auth`, `post`, `like`, `follow`) is structured into the following
 
 ### Follows
 
-| Method   | Endpoint              | Description                  | Permissions          |
-| :------- | :-------------------- | :--------------------------- | :------------------- |
-| `POST`   | `/api/follow/:id`     | Toggle follow/unfollow user  | Authenticated User   |
+| Method   | Endpoint                    | Description                  | Permissions          |
+| :------- | :-------------------------- | :--------------------------- | :------------------- |
+| `POST`   | `/api/follow/:id`           | Toggle follow/unfollow user  | Authenticated User   |
+| `GET`    | `/api/follow/followers/:id` | View followers of a user     | Authenticated User   |
 
 ---
 
