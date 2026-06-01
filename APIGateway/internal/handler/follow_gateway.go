@@ -151,6 +151,10 @@ func (followHandler *FollowHandler)  GetUserFollowers(c *gin.Context) {
 	}
 
 	limitStr := c.Query("limit")
+	if limitStr == "" {
+
+		limitStr = "0"
+	}
 
 	limit,err := strconv.Atoi(limitStr)
 

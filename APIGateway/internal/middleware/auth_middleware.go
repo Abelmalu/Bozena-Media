@@ -43,9 +43,9 @@ func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.Hand
 
 		if tokenStr == "" {
 
-			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
+			err := ierrors.NewAppError(ierrors.TypeUnauthorized, ierrors.MSGUnauthorizedAccess, nil)
 
-			logger.Error("token string not found in authorization header",zap.String("requestID",requestID))
+			logger.Error("token string not found in authorization header", zap.String("requestID", requestID))
 
 			c.Error(err)
 			c.Abort()
@@ -57,7 +57,7 @@ func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.Hand
 		tokenClaims, err := utils.ValidateAccessToken(tokenStr)
 
 		if err != nil {
-			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
+			err := ierrors.NewAppError(ierrors.TypeUnauthorized, ierrors.MSGUnauthorizedAccess, nil)
 
 			logger.Error("token string not found in authorization header")
 
@@ -68,7 +68,7 @@ func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.Hand
 
 		uid, ok := tokenClaims["user_id"].(float64)
 		if !ok {
-			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
+			err := ierrors.NewAppError(ierrors.TypeUnauthorized, ierrors.MSGUnauthorizedAccess, nil)
 
 			logger.Error("Invalid token claims:Failed while asserting user_id", zap.Error(err))
 
@@ -79,7 +79,7 @@ func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.Hand
 		c.Set("userID", int(uid))
 		userRole, ok := tokenClaims["userRole"].(string)
 		if !ok {
-			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
+			err := ierrors.NewAppError(ierrors.TypeUnauthorized, ierrors.MSGUnauthorizedAccess, nil)
 
 			logger.Error("Invalid token claims:Failed while asserting userRole", zap.Error(err))
 
@@ -91,7 +91,7 @@ func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.Hand
 
 		JTI, ok := tokenClaims["jti"].(string)
 		if !ok {
-			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
+			err := ierrors.NewAppError(ierrors.TypeUnauthorized, ierrors.MSGUnauthorizedAccess, nil)
 
 			logger.Error("Invalid token claims:Failed while asserting JTI", zap.Error(err))
 
@@ -103,7 +103,7 @@ func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.Hand
 
 		if err == nil {
 			internalErr := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
-			logger.Warn("logged out token reuse",zap.String("JTI",blackListedtoken))
+			logger.Warn("logged out token reuse", zap.String("JTI", blackListedtoken))
 			c.Error(internalErr)
 			c.Abort()
 			return
@@ -114,7 +114,7 @@ func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.Hand
 
 		expTime, ok := tokenClaims["exp"].(float64)
 		if !ok {
-			err := ierrors.NewValidationError(ierrors.MSGUnauthorizedAccess, nil, nil)
+			err := ierrors.NewAppError(ierrors.TypeUnauthorized, ierrors.MSGUnauthorizedAccess, nil)
 
 			logger.Error("Invalid token claims:Failed while asserting expTime", zap.Error(err))
 

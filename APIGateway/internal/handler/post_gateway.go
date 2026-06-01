@@ -283,8 +283,16 @@ func (postHandler *PostHandler) GetUserPosts(c *gin.Context) {
 		c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 		return
 	}
+    
+	limitStr := c.Query("limit")
+	
+	if limitStr == "" {
 
-	limit, err := strconv.Atoi(c.Query("limit"))
+		limitStr= "0"
+	}
+	limit, err := strconv.Atoi(limitStr)
+
+
 
 	if err != nil {
 
