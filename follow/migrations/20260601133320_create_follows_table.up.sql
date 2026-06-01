@@ -9,12 +9,12 @@ CREATE TABLE follows (
 
     CONSTRAINT fk_follower
         FOREIGN KEY (follower_id)
-        REFERENCES users(id)
+        REFERENCES users_cache(user_id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_following
         FOREIGN KEY (following_id)
-        REFERENCES users(id)
+        REFERENCES users_cache(user_id)
         ON DELETE CASCADE,
 
     CONSTRAINT unique_follow
