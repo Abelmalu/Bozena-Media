@@ -23,6 +23,9 @@ type App struct {
 	config *config.Config
 }
 
+var logger = platform.InitZapLogger()
+
+
 func NewApp() *App {
 
 	cfg, err := config.LoadConfig()
@@ -68,6 +71,8 @@ func initDB(config *config.Config) (*sql.DB, error) {
 		return nil, fmt.Errorf("pinging %s database: %w", "pgx", err)
 
 	}
+	logger.Info("Database connected successfully!")
+
 
 	return DBConPool, nil
 }

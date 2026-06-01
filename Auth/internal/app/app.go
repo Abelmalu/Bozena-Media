@@ -84,6 +84,8 @@ func initDB(config *config.Config) (*sql.DB, error) {
 		return nil, fmt.Errorf("pinging %s database: %w", "pgx", err)
 
 	}
+	logger.Info("Database connected successfully!")
+
 
 	return DBConPool, nil
 }

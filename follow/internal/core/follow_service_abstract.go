@@ -11,7 +11,7 @@ import (
 type FollowService interface {
 
 		ToggleFollow(ctx context.Context,state bool,followerID,followingID int)(*dto.FollowResponse,error)
-     	GetUserFollowers(ctx context.Context,followingID,limit int,cursor string)(*dto.PaginatedResponse,error)
+     	GetUserFollowers(ctx context.Context,followingID,limit int,cursor string)(*dto.PaginatedFollowersResponse,error)
 
 
 }

@@ -190,3 +190,12 @@ func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *p
 	},nil
 
 	}
+
+
+
+func (followHandler *FollowHandler) GetUserUserFollowings(ctx context.Context, req *pb.GetUserFollowingsRequest)(*pb.GetUserFollowersResponse,error) {
+
+
+
+	
+}

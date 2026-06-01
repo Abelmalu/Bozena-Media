@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"strconv"
-
 	dto "github.com/abelmalu/golang-posts/follow/internal/dtos"
 	ierrors "github.com/abelmalu/golang-posts/follow/internal/errors"
 	"github.com/abelmalu/golang-posts/follow/internal/models"
@@ -98,7 +97,7 @@ func (followRepository *FollowRepository) ToggleFollow(ctx context.Context, foll
 
 }
 
-func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, followingID, limit int, cursor string) (*dto.PaginatedResponse, error) {
+func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, followingID, limit int, cursor string) (*dto.PaginatedFollowersResponse, error) {
 
 	var followers []*models.Follow
 	var hasNext bool
@@ -170,7 +169,7 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 		}
 
-		return &dto.PaginatedResponse{
+		return &dto.PaginatedFollowersResponse{
 			Followers: followers,
 			HasNext:   hasNext,
 			Cursor:    after,
@@ -236,7 +235,7 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 
 	}
 
-	return &dto.PaginatedResponse{
+	return &dto.PaginatedFollowersResponse{
 		Followers: followers,
 		Cursor:    after,
 		HasNext:   hasNext,

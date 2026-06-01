@@ -184,3 +184,10 @@ func (followHandler *FollowHandler)  GetUserFollowers(c *gin.Context) {
 
 
 }
+
+
+func (followHanlder *FollowHandler) GetUserUserFollowings(c *gin.Context){
+
+	
+
+}

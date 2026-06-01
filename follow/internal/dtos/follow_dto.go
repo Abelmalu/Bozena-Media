@@ -25,13 +25,20 @@ type FollowResponse struct {
 }
 
 
-type PaginatedResponse struct {
+type PaginatedFollowersResponse struct {
 
 	Followers []*models.Follow
 	Cursor string 
 	HasNext bool
 }
 
+
+type PaginatedFollowingsResponse struct {
+
+	Followings []*models.Follow
+	Cursor string 
+	HasNext bool
+}
 var validate = validator.New()
 
 
