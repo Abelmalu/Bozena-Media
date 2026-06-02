@@ -27,7 +27,6 @@ type App struct {
 	RedisClient *redis.Client
 }
 
-	logger.Info("Database connected successfully!")
 var logger = platform.InitZapLogger()
 
 func NewApp() *App {

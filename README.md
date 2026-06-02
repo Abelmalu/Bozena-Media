@@ -124,6 +124,21 @@ Each service (`Auth`, `post`, `like`, `follow`) is structured into the following
    go run cmd/gateway/main.go
    ```
 
+### Running with Docker Compose 🐳
+
+To run the entire microservices ecosystem (including PostgreSQL and Redis) using a single command, use Docker Compose:
+
+1. Make sure Docker and Docker Compose are installed.
+2. Ensure `.env` files are configured for each service (`APIGateway`, `Auth`, `post`, `like`, `follow`).
+   **Important**: In your `.env` files, change hostnames from `localhost` to the Docker service names:
+   - **Database Host**: `postgres` (e.g. `postgres://user:password@postgres:5432/blog...`)
+   - **Redis Host**: `redis` (e.g. `redis:6379`)
+   - **gRPC Service Addresses** (for API Gateway): `post-service:50051`, `auth-service:50052`, `like-service:50053`, `follow-service:50054`
+3. Run the stack from the root directory:
+   ```bash
+   docker-compose up --build
+   ```
+
 ---
 
 ## 🔌 API Endpoints (via Gateway)
@@ -167,7 +182,7 @@ Each service (`Auth`, `post`, `like`, `follow`) is structured into the following
 - [x] **Likes Service**: Allow users to like and react to posts.
 - [x] **Follows Service**: Allow users to follow and unfollow other users.
 - [ ] **Feeds Service**: Optimized algorithm for displaying posts.
-- [ ] **Docker Compose**: Single command to spin up the entire ecosystem.
+- [x] **Docker Compose**: Single command to spin up the entire ecosystem.
 - [ ] **Service Discovery**: Implement Consul or Etcd.
 
 ---

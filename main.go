@@ -1,19 +1,66 @@
 package main
 
 import (
-	"encoding/base64"
-	"fmt"
-	"strconv"
+
+	"github.com/IBM/sarama"
+	"log"
 )
 
+
+
+
 func main() {
-	num := 123
 
-	// 1. Convert the integer to its string format ("123")
-	numStr := strconv.Itoa(num)
+	InitKafkaProducer()
+	
 
-	// 2. Encode the string bytes to Base64
-	encoded := base64.StdEncoding.EncodeToString([]byte(numStr))
 
-	fmt.Println(encoded) // Output: MTIz
 }
+
+
+
+
+
+
+
+
+func InitKafkaProducer(){
+
+ config := sarama.NewConfig()
+  config.Producer.Return.Successes = true
+
+ broker := []string{"localhost:9092"}
+
+ producer, err := sarama.NewSyncProducer(broker,config)
+
+
+ if err != nil {
+
+
+	log.Fatal("Error while initializing kafka producer",err)
+ }
+ defer producer.Close()
+
+	log.Println("Successfully connected to your local Kafka broker!")
+
+
+	msg := &sarama.ProducerMessage{
+		Topic: "test-topic",
+		Value: sarama.StringEncoder("Hello, Kafka from Go!"),
+	}
+
+	// 5. Send the message to Kafka
+	partition, offset, err := producer.SendMessage(msg)
+	if err != nil {
+		log.Fatalf("Failed to send message: %v", err)
+	}
+	log.Printf("Message successfully sent!\n")
+	log.Printf("Topic: %s | Partition: %d | Offset: %d\n", msg.Topic, partition, offset)
+
+
+}
+
+
+
+
+

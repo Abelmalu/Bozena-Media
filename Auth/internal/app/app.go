@@ -27,9 +27,6 @@ type App struct {
 	RedisClient *redis.Client
 }
 
-type postServer struct {
-	pb.UnimplementedAuthServiceServer
-}
 
 	var logger = platform.InitZapLogger()
 
@@ -113,6 +110,7 @@ func initRedis(address,password string,db int,logger *platform.Logger) (*redis.C
 
 
 }
+
 // Run starts the gRPC server on the provided port
 func (app *App) Run() {
 

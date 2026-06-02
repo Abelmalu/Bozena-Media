@@ -43,7 +43,7 @@ func (followService *FollowService) ToggleFollow(ctx context.Context,follow bool
 }
 
 
-func (followService *FollowService)	GetUserFollowers(ctx context.Context,followingID,limit int,cursor string)(*dto.PaginatedResponse,error){
+func (followService *FollowService)	GetUserFollowers(ctx context.Context,followingID,limit int,cursor string)(*dto.PaginatedFollowersResponse,error){
 
      resp,err := followService.followRepo.GetUserFollowers(ctx,followingID,limit,cursor) 
 

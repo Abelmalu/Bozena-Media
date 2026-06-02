@@ -196,6 +196,6 @@ func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *p
 func (followHandler *FollowHandler) GetUserUserFollowings(ctx context.Context, req *pb.GetUserFollowingsRequest)(*pb.GetUserFollowersResponse,error) {
 
 
-
+return nil,nil
 	
 }
