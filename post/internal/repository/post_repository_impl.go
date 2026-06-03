@@ -17,8 +17,6 @@ type PostRepository struct {
 	DB *sql.DB
 }
 
-
-
 func NewPostRepository(DB *sql.DB) *PostRepository {
 
 	return &PostRepository{
@@ -173,15 +171,15 @@ FROM posts
 	return posts, nil
 }
 
-func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, limit int64,cursor string) (*dto.PaginatedResponse, error) {
+func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, limit int64, cursor string) (*dto.PaginatedResponse, error) {
 
-	var posts [] *models.Post
+	var posts []*models.Post
 	var hasNext bool
 	var after string
 
 	if cursor != "" {
 
-		cursorByte,err := base64.StdEncoding.DecodeString(cursor)
+		cursorByte, err := base64.StdEncoding.DecodeString(cursor)
 		if err != nil {
 
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
@@ -197,8 +195,7 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 
 		query := `SELECT id,title,content,user_id FROM posts WHERE user_id=$1 AND id < $2 ORDER BY id DESC LIMIT $3`
 
-		rows,err := postRepo.DB.QueryContext(ctx,query,UserID,cursorInt,(limit + 1))
-		
+		rows, err := postRepo.DB.QueryContext(ctx, query, UserID, cursorInt, (limit + 1))
 
 		if err != nil {
 			var pgErr *pgconn.PgError
@@ -221,25 +218,21 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 		}
 		defer rows.Close()
 
-
-
 		for rows.Next() {
 			var post models.Post
 
-			if err := rows.Scan(&post.ID,&post.Title,&post.Content,&post.UserID); err != nil {
+			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID); err != nil {
 
-
-				return nil,ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 			}
 
 			if len(posts) == int(limit) {
 
 				hasNext = true
-				
+
 				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(post.ID)))
 				break
-
 
 			}
 
@@ -250,14 +243,11 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 		}
-	}else {
-
+	} else {
 
 		query := `SELECT id,title,content,user_id FROM posts WHERE user_id=$1 ORDER BY id DESC LIMIT $2`
 
-		rows,err := postRepo.DB.QueryContext(ctx,query,UserID,(limit + 1))
-
-
+		rows, err := postRepo.DB.QueryContext(ctx, query, UserID, (limit + 1))
 
 		if err != nil {
 			var pgErr *pgconn.PgError
@@ -275,30 +265,26 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 				return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
 			}
 
-
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 		}
 		defer rows.Close()
 
-		 
 		for rows.Next() {
 			var post models.Post
 
-			if err := rows.Scan(&post.ID,&post.Title,&post.Content,&post.UserID); err != nil {
+			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID); err != nil {
 
-
-				return nil,ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 			}
 
 			if len(posts) == int(limit) {
 
 				hasNext = true
-				
+
 				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(post.ID)))
 				break
-
 
 			}
 
@@ -309,7 +295,6 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 		}
-
 
 	}
 
@@ -318,4 +303,33 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 		HasNext: hasNext,
 		Cursor:  after,
 	}, nil
+}
+
+func (postRepo *PostRepository) CreateCacheUser(ctx context.Context, userID int, username, name string) error {
+
+	query := `INSERT INTO users_cache (user_id,username,name)  VALUES($1,$2,$3)`
+
+	_, err := postRepo.DB.ExecContext(ctx, query, userID, username,name)
+
+	var pgErr *pgconn.PgError
+	if err != nil {
+
+		if errors.As(err, &pgErr) {
+
+			return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+	}
+    
+	return nil
 }

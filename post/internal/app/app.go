@@ -26,6 +26,9 @@ type App struct {
 }
 
 
+	var logger = platform.InitZapLogger()
+
+
 
 // NewApp creates the application instance  
 func NewApp() (*App, error) {
@@ -76,6 +79,9 @@ func initDB(config *config.Config) (*sql.DB, error) {
 
 	}
 
+	logger.Info("Database connected successfully!")
+
+
 	return DBConPool, nil
 }
 
@@ -105,7 +111,7 @@ func (app *App) Run() {
 	topic := "test-topic"
 
 	// Run consumer in the background
-	go kafka.StartConsumer(brokers, topic)
+	go kafka.StartConsumer(brokers, topic,postService,logger)
 
 	// start the grpc server
 	s.Serve(lis)

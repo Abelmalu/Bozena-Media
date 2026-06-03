@@ -94,3 +94,33 @@ if err != nil {
 
 	return resp,nil
 }
+
+
+
+
+func (postService *PostService) CreateCacheUser(ctx context.Context,userID int ,username,name string)(error){
+
+
+	if userID <= 0 {
+
+		return ierrors.NewValidationError(ierrors.MSGNameIsRequired,nil,nil)
+	}
+
+
+	if username == "" {
+
+		return ierrors.NewValidationError(ierrors.MSGNameIsRequired,nil,nil)
+	}
+	
+
+  if err := postService.repo.CreateCacheUser(ctx,userID,username,name); err != nil {
+
+
+	return err
+
+
+  }
+
+  return nil
+
+}

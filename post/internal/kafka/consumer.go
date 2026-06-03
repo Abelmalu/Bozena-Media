@@ -1,14 +1,18 @@
 package kafka
 
-
 import (
+	"context"
 	"encoding/json"
 	"log"
-	"github.com/IBM/sarama"
+	"time"
 
+	"github.com/IBM/sarama"
+	"github.com/abelmalu/golang-posts/platform"
+	"github.com/abelmalu/golang-posts/post/internal/core"
+	"go.uber.org/zap"
 )
 
-func StartConsumer(brokers []string, topic string) {
+func StartConsumer(brokers []string, topic string, postService core.PostService,logger *platform.Logger) {
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
 
@@ -30,12 +34,14 @@ func StartConsumer(brokers []string, topic string) {
 
 	// 3. Process loop
 	for {
+
 		select {
 		case msg := <-partitionConsumer.Messages():
 			var user struct {
 
 				ID int `json:"id"`
 				Username string `json:"username"`
+				Name string `json:"name"`
 			}
 			
 			// Unmarshal the raw JSON byte string back into your Go struct
@@ -45,11 +51,21 @@ func StartConsumer(brokers []string, topic string) {
 				continue
 			}
 
-			// Now you can use the object natively in your code
-			log.Printf("Received user registered event: ID=%v, Name=%s", user.ID, user.Username)
+			
+			ctx,cancel := context.WithTimeout(context.Background(),time.Second*2)
+			defer cancel()
+
+			err = postService.CreateCacheUser(ctx,user.ID,user.Username,user.Name)
+			if err != nil {
+
+				logger.Error("Error in inserting to cache users_cache table",zap.Error(err))
+
+				
+			}
+			log.Printf("Received user registered event: ID=%v, Username=%s Name=%s,", user.ID, user.Username,user.Name)
 
 		case err := <-partitionConsumer.Errors():
 			log.Printf("Consumer error encountered: %v", err)
 		}
-	}
+	}  
 }
