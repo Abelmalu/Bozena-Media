@@ -12,4 +12,6 @@ type FollowRepository interface{
 	ToggleFollow(ctx context.Context,state bool,followerID,followingID int)(string,error)
 	GetUserFollowers(ctx context.Context,followingID,limit int,cursor string)(*dto.PaginatedFollowersResponse,error)
    // GetUserUserFollowings(ctx context.Context,followerId int)()
+	CreateCacheUser(ctx context.Context,userID int ,username,name string)(error)
+
 }

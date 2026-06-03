@@ -9,22 +9,22 @@ import (
 
 	"github.com/abelmalu/golang-posts/like/config"
 	handler "github.com/abelmalu/golang-posts/like/internal/handlers"
+	"github.com/abelmalu/golang-posts/like/internal/kafka"
 	"github.com/abelmalu/golang-posts/like/internal/repository"
 	"github.com/abelmalu/golang-posts/like/internal/service"
 	"github.com/abelmalu/golang-posts/like/proto/pb"
 	"github.com/abelmalu/golang-posts/platform"
-	"google.golang.org/grpc"
 	_ "github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"google.golang.org/grpc"
 )
 
 type App struct {
-	DB *sql.DB
+	DB     *sql.DB
 	config *config.Config
 }
 
 var logger = platform.InitZapLogger()
-
 
 func NewApp() *App {
 
@@ -38,10 +38,6 @@ func NewApp() *App {
 	if err != nil {
 		log.Fatalf("Error while initiating db connection %v", err)
 	}
-
-
-
-	
 
 	return &App{
 		DB:     DBConPool,
@@ -73,26 +69,28 @@ func initDB(config *config.Config) (*sql.DB, error) {
 	}
 	logger.Info("Database connected successfully!")
 
-
 	return DBConPool, nil
 }
 
-
 func (app *App) Run() {
 
-		lis, _ := net.Listen("tcp", ":50053")
-	 s := grpc.NewServer()
+	lis, _ := net.Listen("tcp", ":50053")
+	s := grpc.NewServer()
 
 	logger := platform.InitZapLogger()
-	
+
 	likeRepository := repository.NewLikeRepository(app.DB)
 	likeService := service.NewLikeRepository(likeRepository)
-	likeHandler := handler.NewLikeHandler(likeService,logger)
+	likeHandler := handler.NewLikeHandler(likeService, logger)
 
-	
 	pb.RegisterLikeServiceServer(s, likeHandler)
+
+	brokers := []string{"localhost:9092"}
+	topic := "userCreated"
+
+	// Run consumer in the background
+	go kafka.StartConsumer(brokers, topic, likeService, logger)
+
 	s.Serve(lis)
-	
 
 }
-

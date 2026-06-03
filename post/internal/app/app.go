@@ -25,12 +25,9 @@ type App struct {
 	DB     *sql.DB
 }
 
+var logger = platform.InitZapLogger()
 
-	var logger = platform.InitZapLogger()
-
-
-
-// NewApp creates the application instance  
+// NewApp creates the application instance
 func NewApp() (*App, error) {
 
 	config, err := config.LoadConfig()
@@ -81,40 +78,33 @@ func initDB(config *config.Config) (*sql.DB, error) {
 
 	logger.Info("Database connected successfully!")
 
-
 	return DBConPool, nil
 }
 
 func (app *App) Run() {
 	logger := platform.InitZapLogger()
 
-
 	lis, _ := net.Listen("tcp", ":50051")
 	s := grpc.NewServer(
-    grpc.ChainUnaryInterceptor(
-        interceptors.AuthInterceptor(logger),         
-        interceptors.PostOwnershipInterceptor(app.DB,logger), // checks if the user is post owner
-    ),
-)
+		grpc.ChainUnaryInterceptor(
+			interceptors.AuthInterceptor(logger),
+			interceptors.PostOwnershipInterceptor(app.DB, logger), // checks if the user is post owner
+		),
+	)
 
-
-	
 	postRepo := repository.NewPostRepository(app.DB)
 	postService := service.NewPostService(postRepo)
-	postHandler := handlers.NewPostHandler(postService,logger)
+	postHandler := handlers.NewPostHandler(postService, logger)
 
-	
 	pb.RegisterPostServiceServer(s, postHandler)
 
-
 	brokers := []string{"localhost:9092"}
-	topic := "test-topic"
+	topic := "userCreated"
 
 	// Run consumer in the background
-	go kafka.StartConsumer(brokers, topic,postService,logger)
+	go kafka.StartConsumer(brokers, topic, postService, logger)
 
 	// start the grpc server
 	s.Serve(lis)
-	
 
 }

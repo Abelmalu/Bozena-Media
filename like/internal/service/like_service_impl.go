@@ -5,6 +5,7 @@ import (
 
 	"github.com/abelmalu/golang-posts/like/internal/core"
 	dto "github.com/abelmalu/golang-posts/like/internal/dtos"
+	ierrors "github.com/abelmalu/golang-posts/like/internal/errors"
 )
 
 type LikeService struct {
@@ -33,4 +34,34 @@ func (likeService *LikeService)	ToggleLike(ctx context.Context,state bool,userID
 	return dto.ToggleLikeResponse{
 		Message: message,
 	},nil
+}
+
+
+
+func (followService *LikeService )	CreateCacheUser(ctx context.Context,userID int ,username,name string)(error){
+
+	if userID <= 0 {
+
+		return ierrors.NewValidationError(ierrors.MSGNameIsRequired,nil,nil)
+	}
+
+
+	if username == "" {
+
+		return ierrors.NewValidationError(ierrors.MSGNameIsRequired,nil,nil)
+	}
+	
+
+  if err := followService.likeRepo.CreateCacheUser(ctx,userID,username,name); err != nil {
+
+
+	return err
+
+
+  }
+
+  return nil
+
+
+
 }

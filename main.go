@@ -1,51 +1,36 @@
 package main
 
 import (
+	"log"
 
 	"github.com/IBM/sarama"
-	"log"
 )
-
-
-
 
 func main() {
 
 	InitKafkaProducer()
-	
-
 
 }
 
+func InitKafkaProducer() {
 
+	config := sarama.NewConfig()
+	config.Producer.Return.Successes = true
 
+	broker := []string{"localhost:9092"}
 
+	producer, err := sarama.NewSyncProducer(broker, config)
 
+	if err != nil {
 
-
-
-func InitKafkaProducer(){
-
- config := sarama.NewConfig()
-  config.Producer.Return.Successes = true
-
- broker := []string{"localhost:9092"}
-
- producer, err := sarama.NewSyncProducer(broker,config)
-
-
- if err != nil {
-
-
-	log.Fatal("Error while initializing kafka producer",err)
- }
- defer producer.Close()
+		log.Fatal("Error while initializing kafka producer", err)
+	}
+	defer producer.Close()
 
 	log.Println("Successfully connected to your local Kafka broker!")
 
-
 	msg := &sarama.ProducerMessage{
-		Topic: "test-topic",
+		Topic: "userCreated",
 		Value: sarama.StringEncoder("Hello, Kafka from Go!"),
 	}
 
@@ -57,10 +42,4 @@ func InitKafkaProducer(){
 	log.Printf("Message successfully sent!\n")
 	log.Printf("Topic: %s | Partition: %d | Offset: %d\n", msg.Topic, partition, offset)
 
-
 }
-
-
-
-
-

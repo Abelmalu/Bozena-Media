@@ -10,6 +10,7 @@ import (
 
 	"github.com/abelmalu/golang-posts/follow/config"
 	handler "github.com/abelmalu/golang-posts/follow/internal/handlers"
+	"github.com/abelmalu/golang-posts/follow/internal/kafka"
 	"github.com/abelmalu/golang-posts/follow/internal/repository"
 	"github.com/abelmalu/golang-posts/follow/internal/service"
 	"github.com/abelmalu/golang-posts/follow/proto/pb"
@@ -113,9 +114,16 @@ func (app *App) Run() {
 
 	followRepo := repository.NewFollowRepository(app.DB)
 	followService := service.NewFollowService(followRepo)
-	followHandler := handler.NewFollowHandler(followService,logger)
+	followHandler := handler.NewFollowHandler(followService, logger)
 
 	pb.RegisterFollowServiceServer(s, followHandler)
+
+	brokers := []string{"localhost:9092"}
+	topic := "userCreated"
+
+	// Run consumer in the background
+	go kafka.StartConsumer(brokers, topic, followService, logger)
+
 	s.Serve(lis)
 
 }

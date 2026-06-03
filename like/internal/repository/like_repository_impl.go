@@ -96,3 +96,33 @@ func (likeRespository *LikeRespository) ToggleLike(ctx context.Context, state bo
 
 
 }
+
+
+func (followRepository *LikeRespository) CreateCacheUser(ctx context.Context, userID int, username, name string) error {
+
+	query := `INSERT INTO users_cache (user_id,username,name)  VALUES($1,$2,$3)`
+
+	_, err := followRepository.DB.ExecContext(ctx, query, userID, username,name)
+
+	var pgErr *pgconn.PgError
+	if err != nil {
+
+		if errors.As(err, &pgErr) {
+
+			return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+	}
+    
+	return nil
+}
