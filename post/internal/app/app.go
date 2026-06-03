@@ -11,6 +11,7 @@ import (
 	"github.com/abelmalu/golang-posts/post/config"
 	"github.com/abelmalu/golang-posts/post/internal/handlers"
 	"github.com/abelmalu/golang-posts/post/internal/interceptors"
+	"github.com/abelmalu/golang-posts/post/internal/kafka"
 	"github.com/abelmalu/golang-posts/post/internal/repository"
 	"github.com/abelmalu/golang-posts/post/internal/service"
 	"github.com/abelmalu/golang-posts/post/proto/pb"
@@ -98,6 +99,15 @@ func (app *App) Run() {
 
 	
 	pb.RegisterPostServiceServer(s, postHandler)
+
+
+	brokers := []string{"localhost:9092"}
+	topic := "test-topic"
+
+	// Run consumer in the background
+	go kafka.StartConsumer(brokers, topic)
+
+	// start the grpc server
 	s.Serve(lis)
 	
 
