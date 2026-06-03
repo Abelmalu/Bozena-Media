@@ -26,6 +26,7 @@ var (
 	ErrMetaDataNotFound = errors.New("meta data not found")
 	ErrRequestIDNotFound = errors.New("request id not found")
 	ErrJTINotFound = errors.New("JTI not found")
+	ErrKafkaConnection = errors.New("couldn't connect to kafka server")
 )
 
 

@@ -2,10 +2,13 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
+	"github.com/IBM/sarama"
 	"github.com/abelmalu/golang-posts/Auth/internal/core"
 	"github.com/abelmalu/golang-posts/Auth/internal/dto"
 	ierrors "github.com/abelmalu/golang-posts/Auth/internal/errors"
@@ -20,13 +23,15 @@ type AuthService struct {
 	repo   core.AuthRepository
 	logger *platform.Logger
 	redis  *redis.Client
+	kafka sarama.SyncProducer
 }
 
-func NewAuthService(authRepo core.AuthRepository, redisCient *redis.Client) *AuthService {
+func NewAuthService(authRepo core.AuthRepository, redisCient *redis.Client, kafkaClient sarama.SyncProducer) *AuthService {
 
 	return &AuthService{
 		repo:  authRepo,
 		redis: redisCient,
+		kafka:kafkaClient,
 	}
 }
 func (authSer *AuthService) Register(ctx context.Context, user *model.User) (*model.User, *model.TokenPair, error) {
@@ -57,6 +62,23 @@ func (authSer *AuthService) Register(ctx context.Context, user *model.User) (*mo
 
 		return nil, nil, err
 	}
+
+	createdUserByte,err := json.Marshal(createdUser)
+
+	if err != nil {
+
+		return nil,nil,ierrors.NewInternalError(ierrors.MSGSomethingWentWrong,err)
+	}
+    msg := &sarama.ProducerMessage{
+		Topic: "test-topic",
+		Value: sarama.StringEncoder(createdUserByte),
+	}
+
+	// Send the message to Kafka
+	partition, offset, err := authSer.kafka.SendMessage(msg)
+
+	authSer.logger.Info(fmt.Sprintf("Apache kafka Partition : %d Offset : %d",partition,offset))
+	
 	md, exists := metadata.FromIncomingContext(ctx)
 
 	if !exists {

@@ -8,8 +8,10 @@ import (
 	"net"
 	"time"
 
+	"github.com/IBM/sarama"
 	"github.com/abelmalu/golang-posts/Auth/config"
 	handler "github.com/abelmalu/golang-posts/Auth/internal/handlers"
+	"github.com/abelmalu/golang-posts/Auth/internal/kafka"
 	"github.com/abelmalu/golang-posts/Auth/internal/repository"
 	"github.com/abelmalu/golang-posts/Auth/internal/service"
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
@@ -25,6 +27,7 @@ type App struct {
 	config *config.Config
 	DB     *sql.DB
 	RedisClient *redis.Client
+	Kafka   sarama.SyncProducer
 }
 
 
@@ -49,10 +52,21 @@ func NewApp() (*App, error) {
 
 	redisClient := initRedis("127.0.0.1:6379","",0,logger)
 
+
+	// initializing the kafka client 
+
+	kafkaClient,err := kafka.InitKafkaProducer(logger)
+
+	if err != nil {
+
+		log.Fatalf("Couldn't make kafka connection %v",err)
+	}
+
 	app := App{
 		config: config,
 		DB:     DBConPool,
 		RedisClient: redisClient,
+		Kafka: kafkaClient,
 	}
 
 	return &app, nil
@@ -120,7 +134,7 @@ func (app *App) Run() {
 	
     // Dependency Injection for each layer one by one 
 	authRepo := repository.NewAuthRepository(app.DB)
-	authService := service.NewAuthService(authRepo,app.RedisClient)
+	authService := service.NewAuthService(authRepo,app.RedisClient,app.Kafka)
 	authHandler := handler.NewAuthHandler(authService,logger)
 
 	
