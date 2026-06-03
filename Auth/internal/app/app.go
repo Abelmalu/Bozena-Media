@@ -134,7 +134,7 @@ func (app *App) Run() {
 	
     // Dependency Injection for each layer one by one 
 	authRepo := repository.NewAuthRepository(app.DB)
-	authService := service.NewAuthService(authRepo,app.RedisClient,app.Kafka)
+	authService := service.NewAuthService(authRepo,app.RedisClient,app.Kafka,logger)
 	authHandler := handler.NewAuthHandler(authService,logger)
 
 	

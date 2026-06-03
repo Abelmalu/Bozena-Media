@@ -24,4 +24,7 @@ func main() {
 	// Run the created application instance/grpc server
 	app.Run()
 
+	// close kafka connection when the app shuts down
+	defer app.Kafka.Close()
+
 }

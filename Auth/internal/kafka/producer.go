@@ -14,10 +14,13 @@ import (
 func InitKafkaProducer(logger *platform.Logger) ( sarama.SyncProducer,error ){
 
  config := sarama.NewConfig()
+  config.Producer.Return.Successes = true
+
 
  broker := []string{"localhost:9092"}
 
  producer, err := sarama.NewSyncProducer(broker,config)
+
 
  if err != nil {
 
@@ -26,9 +29,8 @@ func InitKafkaProducer(logger *platform.Logger) ( sarama.SyncProducer,error ){
 
 	return nil, ierrors.ErrKafkaConnection
  }
- defer producer.Close()
 
-	logger.Info("Successfully connected to your local Kafka broker!")
+	logger.Info("Kafka connected successfully!")
 
 
 	return producer,nil

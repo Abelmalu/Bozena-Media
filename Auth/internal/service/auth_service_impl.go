@@ -26,12 +26,13 @@ type AuthService struct {
 	kafka sarama.SyncProducer
 }
 
-func NewAuthService(authRepo core.AuthRepository, redisCient *redis.Client, kafkaClient sarama.SyncProducer) *AuthService {
+func NewAuthService(authRepo core.AuthRepository, redisCient *redis.Client, kafkaClient sarama.SyncProducer,logger *platform.Logger) *AuthService {
 
 	return &AuthService{
 		repo:  authRepo,
 		redis: redisCient,
 		kafka:kafkaClient,
+		logger: logger,
 	}
 }
 func (authSer *AuthService) Register(ctx context.Context, user *model.User) (*model.User, *model.TokenPair, error) {
