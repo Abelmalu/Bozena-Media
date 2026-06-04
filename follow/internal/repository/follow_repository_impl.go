@@ -99,7 +99,7 @@ func (followRepository *FollowRepository) ToggleFollow(ctx context.Context, foll
 
 func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, followingID, limit int, cursor string) (*dto.PaginatedFollowersResponse, error) {
 
-	var followers []*models.Follow
+	var followers []*models.UserFollowers
 	var hasNext bool
 	var after string
 
@@ -120,8 +120,12 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 		}
 
-		query := `SELECT id,follower_id,following_id FROM follows WHERE following_id = $1 AND id < $2 ORDER BY id DESC LIMIT $3`
-
+		// query := `SELECT id,follower_id,following_id FROM follows WHERE following_id = $1 AND id < $2 ORDER BY id DESC LIMIT $3`
+		query := `
+		 SELECT users_cache.user_id, users_cache.name, users_cache.username FROM users_cache 
+		 INNER JOIN follows ON users_cache.user_id = follows.follower_id 
+		 WHERE follows.following_id = $1 AND users_cache.user_id < $2
+		 ORDER BY users_cache.user_id DESC LIMIT $3  `
 		rows, err := followRepository.DB.QueryContext(ctx, query, followingID, cursorInt, (limit + 1))
 
 		if err != nil {
@@ -146,9 +150,9 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 
 		defer rows.Close()
 		for rows.Next() {
-			var follows models.Follow
+			var follower models.UserFollowers
 
-			if err := rows.Scan(&follows.ID, &follows.FollowerID, &follows.FollowingID); err != nil {
+			if err := rows.Scan(&follower.ID, &follower.Name,&follower.Username); err != nil {
 
 				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 			}
@@ -157,11 +161,11 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 
 				hasNext = true
 
-				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(follows.ID)))
+				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(follower.ID)))
 				break
 			}
 
-			followers = append(followers, &follows)
+			followers = append(followers, &follower)
 		}
 
 		if err := rows.Err(); err != nil {
@@ -177,7 +181,9 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 
 	} else {
 
-		query := ` SELECT id,follower_id,following_id FROM follows WHERE following_id=$1 ORDER BY id DESC LIMIT $2`
+		//query := ` SELECT id,follower_id,following_id FROM follows WHERE following_id=$1 ORDER BY id DESC LIMIT $2`
+		query := `SELECT users_cache.user_id,users_cache.name,users_cache.username from users_cache 
+		INNER JOIN follows ON users_cache.user_id = follows.follower_id WHERE follows.following_id=$1 ORDER BY users_cache.user_id DESC LIMIT $2 `
 
 		rows, err := followRepository.DB.QueryContext(ctx, query, followingID, (limit + 1))
 
@@ -206,9 +212,9 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 
 		for rows.Next() {
 
-			var follows models.Follow
+			var follower models.UserFollowers
 
-			if err = rows.Scan(&follows.ID, &follows.FollowerID, &follows.FollowingID); err != nil {
+			if err = rows.Scan(&follower.ID, &follower.Name,&follower.Username); err != nil {
 
 				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
@@ -218,13 +224,13 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 
 				hasNext = true
 
-				//changing the id of the follows table to string
-				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(follows.ID)))
+				//changing the id of the follower table to string
+				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(follower.ID)))
 				break
 
 			}
 
-			followers = append(followers, &follows)
+			followers = append(followers, &follower)
 
 		}
 
