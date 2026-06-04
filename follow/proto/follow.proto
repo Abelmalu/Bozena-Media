@@ -44,10 +44,15 @@ message GetUserFollowersRequest {
     
 }
 
+message User {
+
+    string name = 1;
+    string username = 2;
+}
 
 message GetUserFollowersResponse {
 
-    repeated Follow followers  = 1;
+    repeated User followers  = 1;
     bool has_next  = 2;
     int64 limit = 3;
     string cursor  = 4;

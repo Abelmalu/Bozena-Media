@@ -121,6 +121,7 @@ func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *p
 	resp,err := followHandler.followService.GetUserFollowers(ctx,int(req.FollowingId),limit,req.Cursor)
 
 	if err != nil {
+		followHandler.logger.Error("Follow Service Error",zap.Error(err),zap.String("requestID",requestID))
 		var appErr *ierrors.AppError
 
 		if errors.As(err,&appErr){
@@ -161,15 +162,14 @@ func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *p
 	}
 
 
-	pbFollowers := make([]*pb.Follow,0,len(resp.Followers))
+	pbFollowers := make([]*pb.User,0,len(resp.Followers))
 
 
 	for _,follower := range resp.Followers {
 
-		pbFollower := &pb.Follow{
-			Id:int64(follower.ID),
-			FollowerId: int64(follower.FollowerID),
-			FollowingId: int64(follower.FollowingID),
+		pbFollower := &pb.User{
+			Name: (follower.Name),
+			Username: (follower.Username),
 
 
 		}
