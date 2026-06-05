@@ -427,7 +427,7 @@ func (x *GetUserFollowingsRequest) GetCursor() string {
 
 type GetUserFollowingsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Followings    []*Follow              `protobuf:"bytes,1,rep,name=Followings,proto3" json:"Followings,omitempty"`
+	Followings    []*User                `protobuf:"bytes,1,rep,name=Followings,proto3" json:"Followings,omitempty"`
 	HasNext       bool                   `protobuf:"varint,2,opt,name=has_next,json=hasNext,proto3" json:"has_next,omitempty"`
 	Limit         int64                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 	Cursor        string                 `protobuf:"bytes,4,opt,name=cursor,proto3" json:"cursor,omitempty"`
@@ -465,7 +465,7 @@ func (*GetUserFollowingsResponse) Descriptor() ([]byte, []int) {
 	return file_proto_follow_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *GetUserFollowingsResponse) GetFollowings() []*Follow {
+func (x *GetUserFollowingsResponse) GetFollowings() []*User {
 	if x != nil {
 		return x.Followings
 	}
@@ -526,10 +526,10 @@ const file_proto_follow_proto_rawDesc = "" +
 	"\vfollower_id\x18\x01 \x01(\x03R\n" +
 	"followerId\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x03R\x05limit\x12\x16\n" +
-	"\x06cursor\x18\x03 \x01(\tR\x06cursor\"\x9b\x01\n" +
-	"\x19GetUserFollowingsResponse\x125\n" +
+	"\x06cursor\x18\x03 \x01(\tR\x06cursor\"\x99\x01\n" +
+	"\x19GetUserFollowingsResponse\x123\n" +
 	"\n" +
-	"Followings\x18\x01 \x03(\v2\x15.followservice.FollowR\n" +
+	"Followings\x18\x01 \x03(\v2\x13.followservice.UserR\n" +
 	"Followings\x12\x19\n" +
 	"\bhas_next\x18\x02 \x01(\bR\ahasNext\x12\x14\n" +
 	"\x05limit\x18\x03 \x01(\x03R\x05limit\x12\x16\n" +
@@ -565,7 +565,7 @@ var file_proto_follow_proto_goTypes = []any{
 }
 var file_proto_follow_proto_depIdxs = []int32{
 	4, // 0: followservice.GetUserFollowersResponse.followers:type_name -> followservice.User
-	2, // 1: followservice.GetUserFollowingsResponse.Followings:type_name -> followservice.Follow
+	4, // 1: followservice.GetUserFollowingsResponse.Followings:type_name -> followservice.User
 	0, // 2: followservice.FollowService.ToggleFollow:input_type -> followservice.FollowRequest
 	3, // 3: followservice.FollowService.GetUserFollowers:input_type -> followservice.GetUserFollowersRequest
 	6, // 4: followservice.FollowService.GetUserFollowings:input_type -> followservice.GetUserFollowingsRequest

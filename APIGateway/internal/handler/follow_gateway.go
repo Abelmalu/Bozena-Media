@@ -17,6 +17,8 @@ import (
 type FollowService interface {
 	ToggleFollow(ctx context.Context, follow bool, followerID, followingID int) (*pb.FollowResponse, error)
 	GetUserFollowers(ctx context.Context,followingID int,limit int,cursor string)(*pb.GetUserFollowersResponse,error)
+	GetUserFollowings(ctx context.Context,followerID int,limit int,cursor string)(*pb.GetUserFollowingsResponse,error)
+
 }
 type FollowHandler struct {
 	logger       *platform.Logger
@@ -183,10 +185,85 @@ func (followHandler *FollowHandler)  GetUserFollowers(c *gin.Context) {
 	utils.SendSuccessResponse(c,resp,requestID,http.StatusOK)
 
 
+
+
 }
 
 
-func (followHanlder *FollowHandler) GetUserUserFollowings(c *gin.Context){
+func (followHandler *FollowHandler) GetUserUserFollowings(c *gin.Context){
+
+		requestID, err := utils.GetRequestID(c)
+	if err != nil {
+
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+
+			followHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")), zap.String("requestID", requestID))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			followHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+		}
+
+	}
+
+	md := metadata.Pairs(
+		"request-id", requestID,
+	)
+	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
+
+	followerIDStr := c.Param("id")
+
+	followerIDInt,err := strconv.Atoi(followerIDStr)
+	
+	if err != nil {
+
+		followHandler.logger.Error("couldn't change followingID to string", zap.Error(err),zap.String("requestID",requestID))
+		c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+		return
+
+	}
+
+	limitStr := c.Query("limit")
+	if limitStr == "" {
+
+		limitStr = "0"
+	}
+
+	limit,err := strconv.Atoi(limitStr)
+
+
+	if err != nil {
+
+		followHandler.logger.Error("couldn't change followingID to string", zap.Error(err),zap.String("requestID",requestID))
+		c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+		return
+
+	}
+	cursor := c.Query("cursor")
+
+
+	resp,err := followHandler.followClient.GetUserFollowings(ctx,followerIDInt,limit,cursor)
+
+	if err != nil {
+
+		followHandler.logger.Error("GRPC Error",zap.Error(err),zap.String("requestID",requestID))
+
+		c.Error(ierrors.FromGRPC(err))
+
+		return
+	}
+
+	utils.SendSuccessResponse(c,resp,requestID,http.StatusOK)
+
+
+	
+
 
 	
 

@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"time"
 
 	"github.com/abelmalu/golang-posts/follow/proto/pb"
 	"google.golang.org/grpc"
@@ -55,3 +56,21 @@ func (pc *FollowClient) GetUserFollowers(ctx context.Context,followingID int,lim
 	
 }
 
+
+func (pc *FollowClient)	GetUserFollowings(ctx context.Context,followerID int,limit int,cursor string)(*pb.GetUserFollowingsResponse,error){
+
+
+	ctx,cancel := context.WithTimeout(ctx,time.Second * 2)
+	defer cancel()
+
+
+	return pc.client.GetUserFollowings(
+		ctx,
+		&pb.GetUserFollowingsRequest{
+			FollowerId: int64(followerID),
+			Limit: int64(limit),
+			Cursor: cursor,
+		},
+	
+	)
+}

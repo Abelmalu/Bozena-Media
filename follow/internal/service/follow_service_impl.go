@@ -84,3 +84,19 @@ func (followService *FollowService )	CreateCacheUser(ctx context.Context,userID 
 
 }
 
+
+ func(followService *FollowService)   GetUserUserFollowings(ctx context.Context, followerId, limit int, cursor string) (*dto.PaginatedFollowingsResponse, error) {
+
+
+	resp,err := followService.followRepo.GetUserUserFollowings(ctx,followerId,limit,cursor)
+
+	if err != nil  {
+
+		return nil,err
+	}
+
+	return resp,nil
+ }
+
+
+

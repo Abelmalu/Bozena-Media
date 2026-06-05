@@ -71,7 +71,7 @@ message GetUserFollowingsRequest {
 
 message GetUserFollowingsResponse {
 
-    repeated Follow Followings = 1;
+    repeated User Followings = 1;
     bool has_next  = 2;
     int64 limit = 3;
     string cursor  = 4;

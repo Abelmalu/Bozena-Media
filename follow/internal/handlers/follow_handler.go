@@ -193,9 +193,90 @@ func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *p
 
 
 
-func (followHandler *FollowHandler) GetUserUserFollowings(ctx context.Context, req *pb.GetUserFollowingsRequest)(*pb.GetUserFollowersResponse,error) {
+func (followHandler *FollowHandler) GetUserUserFollowings(ctx context.Context, req *pb.GetUserFollowingsRequest)(*pb.GetUserFollowingsResponse,error) {
+
+  requestID, err := utils.GetRequestID(ctx)
+
+	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
+		followHandler.logger.Error("meta data not found",zap.Error(err),zap.String("requestID",requestID))
+		return nil, status.Error(codes.Internal, "something went wrong")
+
+	}
+	if errors.Is(err, ierrors.ErrRequestIDNotFound) {
+		followHandler.logger.Error("requestID not found",zap.Error(err),zap.String("requestID",requestID))
+
+		return nil, status.Error(codes.InvalidArgument, "something went wrong")
+
+	}
+
+	limit := utils.ValidatePaginationLimit(int(req.Limit))
 
 
-return nil,nil
+	resp,err := followHandler.followService.GetUserUserFollowings(ctx,int(req.FollowerId),limit,req.Cursor)
+
+	if err != nil {
+		followHandler.logger.Error("Follow Service Error",zap.Error(err),zap.String("requestID",requestID))
+
+		var appErr *ierrors.AppError
+
+		if errors.As(err,&appErr){
+
+			switch appErr.Type {
+			case ierrors.TypeValidation:
+				return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+			case ierrors.TypeConflict:
+				return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+			case ierrors.TypeUnauthorized:
+				return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+			case ierrors.TypeNotFound:
+				return nil, status.Error(codes.NotFound, string(appErr.Message))
+			case ierrors.TypeTimeout:
+				return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+			case ierrors.TypeCancelled:
+				return nil, status.Error(codes.Canceled, string(appErr.Message))
+
+			default:
+				return nil, status.Error(codes.Internal, "internal error")
+			
+		}
+
+		}
+
+		if errors.Is(err, context.Canceled) {
+
+			return nil, status.Error(codes.Canceled, "Request canceled")
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, status.Error(codes.DeadlineExceeded, "Request timeout")
+
+		
+
+		}
+
+
+	}
+
+
+	pbFollowings := make([]*pb.User,0,len(resp.Followings))
+
+	for _,following := range resp.Followings {
+
+		pbfollowing := &pb.User{
+			Name: following.Name,
+			Username: following.Username,
+		}
+
+		pbFollowings = append(pbFollowings, pbfollowing)
+
+
+	}
+
+return &pb.GetUserFollowingsResponse{
+			Followings:pbFollowings,
+			HasNext:resp.HasNext,
+			Cursor:resp.Cursor,
+
+},nil
 	
 }
