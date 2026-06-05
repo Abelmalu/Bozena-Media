@@ -39,6 +39,17 @@ func InitFollowRoute(router *gin.RouterGroup, handler *handler.FollowHandler,log
 
 
 		},
+		{
+			Method: http.MethodGet,
+			Path:"/followings/:id",
+			Handler: handler.GetUserUserFollowings,
+			Middlewares: [] gin.HandlerFunc{
+
+				middleware.AuthMiddleware(logger,redisClient),
+			},
+
+
+		},
 
 
 	}

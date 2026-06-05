@@ -193,7 +193,7 @@ func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *p
 
 
 
-func (followHandler *FollowHandler) GetUserUserFollowings(ctx context.Context, req *pb.GetUserFollowingsRequest)(*pb.GetUserFollowingsResponse,error) {
+func (followHandler *FollowHandler) GetUserFollowings(ctx context.Context, req *pb.GetUserFollowingsRequest)(*pb.GetUserFollowingsResponse,error) {
 
   requestID, err := utils.GetRequestID(ctx)
 

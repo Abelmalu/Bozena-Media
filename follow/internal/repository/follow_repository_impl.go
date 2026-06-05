@@ -361,7 +361,7 @@ func (followRepository *FollowRepository) GetUserUserFollowings(ctx context.Cont
 		query := ` SELECT u.user_id,u.name,u.username FROM users_cache u
 				   INNER JOIN follows f ON u.user_id = f.following_id WHERE f.follower_id=$1 ORDER BY f.id DESC LIMIT $2 `
 
-		rows, err := followRepository.DB.QueryContext(ctx, query, (limit + 1))
+		rows, err := followRepository.DB.QueryContext(ctx, query, followerId,(limit + 1))
 
 		if err != nil {
 			var pgErr *pgconn.PgError
