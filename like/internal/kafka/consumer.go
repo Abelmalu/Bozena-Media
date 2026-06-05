@@ -4,68 +4,112 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/IBM/sarama"
-	"github.com/abelmalu/golang-posts/platform"
 	"github.com/abelmalu/golang-posts/like/internal/core"
+	"github.com/abelmalu/golang-posts/platform"
 	"go.uber.org/zap"
 )
 
-func StartConsumer(brokers []string, topic string, likeService core.LikeService,logger *platform.Logger) {
+// Define structures for your events
+type UserCreatedPayload struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+	Name     string `json:"name"`
+}
+
+type PostCreatedPayload struct {
+	ID       int    `json:"id"`
+	Title    string `json:"title"`
+}
+
+// StartEventConsumers initializes separate listeners for different topics
+func StartConsumer(brokers []string, userTopic string, postTopic string, likeService core.LikeService, logger *platform.Logger) {
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
 
-	// 1. Create the master consumer
 	consumer, err := sarama.NewConsumer(brokers, config)
 	if err != nil {
-		log.Fatalf("Error creating consumer: %v", err)
+		log.Fatalf("Error creating master consumer: %v", err)
 	}
-	defer consumer.Close()
 
-	// 2. Consume from partition 0 (use a ConsumerGroup if scaling horizontally)
-	partitionConsumer, err := consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	// Launch User Consumer
+	go func() {
+		defer wg.Done()
+		consumeUserEvents(consumer, userTopic, likeService, logger)
+	}()
+
+	// Launch Post Consumer
+	go func() {
+		defer wg.Done()
+		consumePostEvents(consumer, postTopic, likeService, logger)
+	}()
+
+	wg.Wait()
+}
+
+func consumeUserEvents(consumer sarama.Consumer, topic string, likeService core.LikeService, logger *platform.Logger) {
+	pc, err := consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
 	if err != nil {
-		log.Fatalf("Error creating partition consumer: %v", err)
+		log.Fatalf("Error consuming user partition: %v", err)
 	}
-	defer partitionConsumer.Close()
+	defer pc.Close()
 
-	log.Printf("Consumer started. Listening on topic: %s...", topic)
-
-	// 3. Process loop
 	for {
-
 		select {
-		case msg := <-partitionConsumer.Messages():
-			var user struct {
-
-				ID int `json:"id"`
-				Username string `json:"username"`
-				Name string `json:"name"`
-			}
-			
-			// Unmarshal the raw JSON byte string back into your Go struct
-			err := json.Unmarshal(msg.Value, &user)
-			if err != nil {
-				log.Printf("Failed to unmarshal user data: %v", err)
+		case msg := <-pc.Messages():
+			var user UserCreatedPayload
+			if err := json.Unmarshal(msg.Value, &user); err != nil {
+				log.Printf("Failed to unmarshal user: %v", err)
 				continue
 			}
 
-			
-			ctx,cancel := context.WithTimeout(context.Background(),time.Second*2)
-			defer cancel()
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			err = likeService.CreateCacheUser(ctx, user.ID, user.Username, user.Name)
+			cancel() // call immediately instead of defer in a loop to avoid memory leaks
 
-			err = likeService.CreateCacheUser(ctx,user.ID,user.Username,user.Name)
 			if err != nil {
-
-				logger.Error("Error in inserting to cache users_cache table",zap.Error(err))
-
-				
+				logger.Error("Error inserting to users_cache", zap.Error(err))
 			}
-			log.Printf("Received user registered event: ID=%v, Username=%s Name=%s,", user.ID, user.Username,user.Name)
 
-		case err := <-partitionConsumer.Errors():
-			log.Printf("Consumer error encountered: %v", err)
+		case err := <-pc.Errors():
+			log.Printf("User consumer error: %v", err)
 		}
-	}  
+	}
+}
+
+func consumePostEvents(consumer sarama.Consumer, topic string, likeService core.LikeService, logger *platform.Logger) {
+	pc, err := consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
+	if err != nil {
+		log.Fatalf("Error consuming post partition: %v", err)
+	}
+	defer pc.Close()
+
+	for {
+		select {
+		case msg := <-pc.Messages():
+			var post PostCreatedPayload
+			if err := json.Unmarshal(msg.Value, &post); err != nil {
+				log.Printf("Failed to unmarshal post: %v", err)
+				continue
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			// Assuming you implement CreateCachePost in your LikeService
+			err = likeService.CreateCachePost(ctx, post.ID,post.Title)
+			cancel() 
+
+			if err != nil {
+				logger.Error("Error inserting to posts_cache", zap.Error(err))
+			}
+
+		case err := <-pc.Errors():
+			log.Printf("Post consumer error: %v", err)
+		}
+	}
 }

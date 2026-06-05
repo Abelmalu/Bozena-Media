@@ -7,6 +7,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/IBM/sarama"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/abelmalu/golang-posts/post/config"
 	"github.com/abelmalu/golang-posts/post/internal/handlers"
@@ -23,6 +24,7 @@ import (
 type App struct {
 	config *config.Config
 	DB     *sql.DB
+	KafkaClient sarama.SyncProducer
 }
 
 var logger = platform.InitZapLogger()
@@ -44,9 +46,20 @@ func NewApp() (*App, error) {
 
 	}
 
+	// initializing the kafka client 
+
+	kafkaClient,err := kafka.InitKafkaProducer(logger)
+
+	if err != nil {
+
+		log.Fatalf("Couldn't make kafka connection %v",err)
+	}
+
+
 	app := App{
 		config: config,
 		DB:     DBConPool,
+		KafkaClient: kafkaClient,
 	}
 
 	return &app, nil
@@ -93,7 +106,7 @@ func (app *App) Run() {
 	)
 
 	postRepo := repository.NewPostRepository(app.DB)
-	postService := service.NewPostService(postRepo)
+	postService := service.NewPostService(postRepo,app.KafkaClient)
 	postHandler := handlers.NewPostHandler(postService, logger)
 
 	pb.RegisterPostServiceServer(s, postHandler)

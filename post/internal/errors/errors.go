@@ -21,6 +21,7 @@ const (
 	TypeTimeout      ErrorType = "TIMEOUT"
 	TypeCancelled    ErrorType = "CANCELLED"
 	TypeDatabase     ErrorType = "DATABASE"
+	TypeKafka  		 ErrorType = "kafka"
 )
 
 //constant errors 
@@ -28,6 +29,8 @@ var (
 
 	ErrMetaDataNotFound = errors.New("meta data not found")
 	ErrRequestIDNotFound = errors.New("reques id not found")
+	ErrKafkaConnection = errors.New("couldn't connect to kafka server")
+
 )
 
 type AppError struct {

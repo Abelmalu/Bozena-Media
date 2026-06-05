@@ -26,4 +26,6 @@ func main() {
 	// run the application instance 
 	app.Run()
 
+	defer app.KafkaClient.Close()
+
 }

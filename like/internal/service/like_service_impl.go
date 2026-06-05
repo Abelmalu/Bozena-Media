@@ -38,7 +38,7 @@ func (likeService *LikeService)	ToggleLike(ctx context.Context,state bool,userID
 
 
 
-func (followService *LikeService )	CreateCacheUser(ctx context.Context,userID int ,username,name string)(error){
+func (likeService *LikeService )	CreateCacheUser(ctx context.Context,userID int ,username,name string)(error){
 
 	if userID <= 0 {
 
@@ -52,7 +52,7 @@ func (followService *LikeService )	CreateCacheUser(ctx context.Context,userID in
 	}
 	
 
-  if err := followService.likeRepo.CreateCacheUser(ctx,userID,username,name); err != nil {
+  if err := likeService.likeRepo.CreateCacheUser(ctx,userID,username,name); err != nil {
 
 
 	return err
@@ -65,3 +65,14 @@ func (followService *LikeService )	CreateCacheUser(ctx context.Context,userID in
 
 
 }
+
+
+
+	func (likeService *LikeService) CreateCachePost(ctx context.Context, postID int,title string)error{
+
+			err := likeService.likeRepo.CreateCachePost(ctx , postID ,title)
+
+			return err
+
+
+	}

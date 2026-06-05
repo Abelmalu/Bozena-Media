@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 
+	"github.com/IBM/sarama"
 	"github.com/abelmalu/golang-posts/post/internal/core"
 	"github.com/abelmalu/golang-posts/post/internal/dto"
 	"github.com/abelmalu/golang-posts/post/internal/errors"
@@ -10,13 +12,17 @@ import (
 )
 
 type PostService struct {
+
 	repo core.PostRepository
+	kafka  sarama.SyncProducer
+
 }
 
-func NewPostService(repository core.PostRepository) *PostService {
+func NewPostService(repository core.PostRepository,kafkaClient sarama.SyncProducer) *PostService {
 
 	return &PostService{
 		repo: repository,
+		kafka: kafkaClient,
 	}
 }
 
@@ -35,6 +41,26 @@ func (postService *PostService) CreatePost(ctx context.Context, post *models.Pos
 
 		return nil, err
 	}
+
+
+	createdPostByte, err := json.Marshal(createdPost)
+
+	if err != nil {
+
+		return nil, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
+	}
+		msg := &sarama.ProducerMessage{
+		Topic: "postCreated",
+		Value: sarama.StringEncoder(createdPostByte),
+	}
+
+	// Send the message to Kafka
+	_, _, err = postService.kafka.SendMessage(msg)
+
+	if err != nil {
+		return nil,ierrors.NewAppError(ierrors.TypeKafka,ierrors.ErrorMessage("Kafka Error production error"),err)
+	}
+
 
 	return createdPost, nil
 
