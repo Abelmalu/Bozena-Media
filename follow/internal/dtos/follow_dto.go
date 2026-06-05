@@ -27,7 +27,7 @@ type FollowResponse struct {
 
 type PaginatedFollowersResponse struct {
 
-	Followers []*models.UserFollowers
+	Followers []*models.User
 	Cursor string 
 	HasNext bool
 }
@@ -35,7 +35,7 @@ type PaginatedFollowersResponse struct {
 
 type PaginatedFollowingsResponse struct {
 
-	Followings []*models.Follow
+	Followings []*models.User
 	Cursor string 
 	HasNext bool
 }

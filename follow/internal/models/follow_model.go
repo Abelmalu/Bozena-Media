@@ -9,7 +9,7 @@ type Follow struct {
 }
 
 
-type UserFollowers struct {
+type User struct {
 
 
 	ID int `json:"id"`

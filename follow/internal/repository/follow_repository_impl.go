@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"strconv"
+
 	dto "github.com/abelmalu/golang-posts/follow/internal/dtos"
 	ierrors "github.com/abelmalu/golang-posts/follow/internal/errors"
 	"github.com/abelmalu/golang-posts/follow/internal/models"
@@ -99,7 +100,7 @@ func (followRepository *FollowRepository) ToggleFollow(ctx context.Context, foll
 
 func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, followingID, limit int, cursor string) (*dto.PaginatedFollowersResponse, error) {
 
-	var followers []*models.UserFollowers
+	var followers []*models.User
 	var hasNext bool
 	var after string
 
@@ -150,9 +151,9 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 
 		defer rows.Close()
 		for rows.Next() {
-			var follower models.UserFollowers
+			var follower models.User
 
-			if err := rows.Scan(&follower.ID, &follower.Name,&follower.Username); err != nil {
+			if err := rows.Scan(&follower.ID, &follower.Name, &follower.Username); err != nil {
 
 				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 			}
@@ -212,9 +213,9 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 
 		for rows.Next() {
 
-			var follower models.UserFollowers
+			var follower models.User
 
-			if err = rows.Scan(&follower.ID, &follower.Name,&follower.Username); err != nil {
+			if err = rows.Scan(&follower.ID, &follower.Name, &follower.Username); err != nil {
 
 				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
@@ -248,13 +249,11 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 	}, nil
 }
 
-
-
 func (followRepository *FollowRepository) CreateCacheUser(ctx context.Context, userID int, username, name string) error {
 
 	query := `INSERT INTO users_cache (user_id,username,name)  VALUES($1,$2,$3)`
 
-	_, err := followRepository.DB.ExecContext(ctx, query, userID, username,name)
+	_, err := followRepository.DB.ExecContext(ctx, query, userID, username, name)
 
 	var pgErr *pgconn.PgError
 	if err != nil {
@@ -275,6 +274,142 @@ func (followRepository *FollowRepository) CreateCacheUser(ctx context.Context, u
 		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 	}
-    
+
 	return nil
+}
+
+func (followRepository *FollowRepository) GetUserUserFollowings(ctx context.Context, followerId, limit int, cursor string) (*dto.PaginatedFollowingsResponse, error) {
+
+	var followings []*models.User
+	var hasNext bool
+	var after string
+
+	if cursor != "" {
+
+		cursorByte, err := base64.StdEncoding.DecodeString(cursor)
+
+		if err != nil {
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+		cursorStr := string(cursorByte)
+
+		cursorInt, err := strconv.Atoi(cursorStr)
+
+		if err != nil {
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+
+		query := ` SELECT users_cache.user_id, users_cache.name,users_cache.username FROM users_cache
+					INNER JOIN follows ON users_cache.id = following_id 
+					WHERE follower_id=$1 AND follows.id < $2 ORDER BY follows.id DESC LIMIT $3
+				   
+		
+		`
+
+		rows, err := followRepository.DB.QueryContext(ctx, query, followerId, cursorInt, (limit + 1))
+
+		if err != nil {
+			var pgErr *pgconn.PgError
+
+			if errors.As(err, &pgErr) {
+
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			}
+			if errors.Is(err, context.Canceled) {
+
+				return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+			}
+			if errors.Is(err, context.DeadlineExceeded) {
+
+				return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+			}
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+		}
+
+		for rows.Next() {
+
+			var following models.User
+
+			if err := rows.Scan(&following.ID, &following.Name, &following.Username); err != nil {
+
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			}
+
+			if len(followings) == limit {
+
+				hasNext = true
+				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(following.ID)))
+				break
+
+			}
+
+			followings = append(followings, &following)
+		}
+
+		return &dto.PaginatedFollowingsResponse{
+			Followings: followings,
+			HasNext:    hasNext,
+			Cursor:     after,
+		}, nil
+
+	} else {
+
+		query := ` SELECT u.user_id,u.name,u.username FROM users_cache u
+				   INNER JOIN follows f ON u.user_id = f.following_id WHERE f.follower_id=$1 ORDER BY f.id DESC LIMIT $2 `
+
+		rows, err := followRepository.DB.QueryContext(ctx, query, (limit + 1))
+
+		if err != nil {
+			var pgErr *pgconn.PgError
+
+			if errors.As(err, &pgErr) {
+
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			}
+			if errors.Is(err, context.Canceled) {
+
+				return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+			}
+			if errors.Is(err, context.DeadlineExceeded) {
+
+				return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+			}
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+		}
+
+		for rows.Next() {
+
+			var following models.User
+
+			if err := rows.Scan(&following.ID, &following.Name, &following.Username); err != nil {
+
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			}
+
+			if len(followings) == limit {
+
+				hasNext = true
+				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(following.ID)))
+				break
+
+			}
+
+			followings = append(followings, &following)
+
+		}
+
+	}
+
+	return &dto.PaginatedFollowingsResponse{
+		Followings: followings,
+		HasNext:    hasNext,
+		Cursor:     after,
+	}, nil
+
 }
