@@ -133,7 +133,7 @@ func (likeRepository *LikeRespository) CreateCachePost(ctx context.Context, post
 
 
 
-	query := `INSERT INTO posts_cache (post_id,tile)  VALUES($1,$2)`
+	query := `INSERT INTO posts_cache (post_id,title)  VALUES($1,$2)`
 
 	_, err := likeRepository.DB.ExecContext(ctx, query, postID, title)
 
