@@ -11,4 +11,6 @@ type LikeService interface {
 	ToggleLike(ctx context.Context, state bool, userID, postID int) (dto.ToggleLikeResponse, error)
 	CreateCacheUser(ctx context.Context, userID int, username, name string) error
 	CreateCachePost(ctx context.Context, postID int,title string)error
+	GetPostLikes (ctx context.Context, postID,limit int,cursor string)(*dto.PaginatedPostLikesResponse,error)
+
 }

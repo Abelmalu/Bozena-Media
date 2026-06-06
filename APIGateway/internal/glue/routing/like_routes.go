@@ -31,6 +31,17 @@ func InitLikeRoute(router *gin.RouterGroup, handler *handler.LikeHandler,logger 
 
 
 		},
+		{
+			Method: http.MethodGet,
+			Path:"/likes/:id",
+			Handler: handler.GetPostLikes,
+			Middlewares: [] gin.HandlerFunc{
+
+				middleware.AuthMiddleware(logger,redisClient),
+			},
+
+
+		},
 
 
 	}

@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v3.21.12
-// source: like/proto/like.proto
+// source: proto/like.proto
 
 package pb
 
@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LikeService_ToggleLike_FullMethodName = "/postservice.LikeService/ToggleLike"
+	LikeService_ToggleLike_FullMethodName   = "/postservice.LikeService/ToggleLike"
+	LikeService_GetPostLikes_FullMethodName = "/postservice.LikeService/GetPostLikes"
 )
 
 // LikeServiceClient is the client API for LikeService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LikeServiceClient interface {
 	ToggleLike(ctx context.Context, in *LikeRequest, opts ...grpc.CallOption) (*LikeResponse, error)
+	GetPostLikes(ctx context.Context, in *GetPostLikesRequest, opts ...grpc.CallOption) (*GetPostLikesResponse, error)
 }
 
 type likeServiceClient struct {
@@ -47,11 +49,22 @@ func (c *likeServiceClient) ToggleLike(ctx context.Context, in *LikeRequest, opt
 	return out, nil
 }
 
+func (c *likeServiceClient) GetPostLikes(ctx context.Context, in *GetPostLikesRequest, opts ...grpc.CallOption) (*GetPostLikesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPostLikesResponse)
+	err := c.cc.Invoke(ctx, LikeService_GetPostLikes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LikeServiceServer is the server API for LikeService service.
 // All implementations must embed UnimplementedLikeServiceServer
 // for forward compatibility.
 type LikeServiceServer interface {
 	ToggleLike(context.Context, *LikeRequest) (*LikeResponse, error)
+	GetPostLikes(context.Context, *GetPostLikesRequest) (*GetPostLikesResponse, error)
 	mustEmbedUnimplementedLikeServiceServer()
 }
 
@@ -64,6 +77,9 @@ type UnimplementedLikeServiceServer struct{}
 
 func (UnimplementedLikeServiceServer) ToggleLike(context.Context, *LikeRequest) (*LikeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ToggleLike not implemented")
+}
+func (UnimplementedLikeServiceServer) GetPostLikes(context.Context, *GetPostLikesRequest) (*GetPostLikesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPostLikes not implemented")
 }
 func (UnimplementedLikeServiceServer) mustEmbedUnimplementedLikeServiceServer() {}
 func (UnimplementedLikeServiceServer) testEmbeddedByValue()                     {}
@@ -104,6 +120,24 @@ func _LikeService_ToggleLike_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LikeService_GetPostLikes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPostLikesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LikeServiceServer).GetPostLikes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LikeService_GetPostLikes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LikeServiceServer).GetPostLikes(ctx, req.(*GetPostLikesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // LikeService_ServiceDesc is the grpc.ServiceDesc for LikeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -115,7 +149,11 @@ var LikeService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "ToggleLike",
 			Handler:    _LikeService_ToggleLike_Handler,
 		},
+		{
+			MethodName: "GetPostLikes",
+			Handler:    _LikeService_GetPostLikes_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "like/proto/like.proto",
+	Metadata: "proto/like.proto",
 }

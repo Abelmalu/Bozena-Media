@@ -3,8 +3,11 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"errors"
+	"strconv"
 
+	dto "github.com/abelmalu/golang-posts/like/internal/dtos"
 	ierrors "github.com/abelmalu/golang-posts/like/internal/errors"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -161,3 +164,144 @@ func (likeRepository *LikeRespository) CreateCachePost(ctx context.Context, post
 
 
 }
+
+
+func (likeRepository *LikeRespository) GetPostLikes (ctx context.Context, postID,limit int,cursor string)(*dto.PaginatedPostLikesResponse,error) {
+
+	var usersLiked []*dto.User
+	var after string
+	var hasNext bool
+
+
+	if cursor != "" {
+
+		cursorByte,err := base64.StdEncoding.DecodeString(cursor)
+		if err != nil {
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+
+		cursorStr := string(cursorByte)
+
+		cursorInt,err := strconv.Atoi(cursorStr)
+
+		if err != nil {
+
+			return nil,ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+		}
+
+			// Joining likes table and users to get who liked a post 
+		query := `SELECT u.user_id,u.name,u.username FROM users_cache u 
+				  INNER JOIN likes l ON u.user_id = l.user_id WHERE l.post_id = $1 AND l.id < $2 ORDER BY l.id DESC LIMIT $3 `
+
+		rows, err := likeRepository.DB.QueryContext(ctx,query,postID,cursorInt,(limit + 1))		  
+
+		if err != nil {
+			var pgErr *pgconn.PgError
+
+			if errors.As(err, &pgErr) {
+
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			}
+			if errors.Is(err, context.Canceled) {
+
+				return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+			}
+			if errors.Is(err, context.DeadlineExceeded) {
+
+				return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+			}
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+		}
+
+
+		for rows.Next() {
+			var userLiked dto.User
+
+			if err := rows.Scan(&userLiked.ID,&userLiked.Name,&userLiked.Username); err != nil {
+
+
+				return nil,ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+			}
+
+			if len(usersLiked) == limit {
+
+				hasNext = true 
+
+				cursor = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(userLiked.ID)))
+
+				break
+			}
+
+			usersLiked = append(usersLiked, &userLiked)
+
+		}
+
+
+		return &dto.PaginatedPostLikesResponse{
+			UsersLiked: usersLiked,
+			HasNext: hasNext,
+			Cursor: after,
+		},nil
+	} else {
+
+		query := `SELECT u.user_id,u.name,u.username FROM users_cache u 
+				  INNER JOIN likes l ON u.user_id = l.user_id WHERE l.post_id = $1  ORDER BY l.id DESC LIMIT $2 `
+
+
+		rows, err := likeRepository.DB.QueryContext(ctx,query,postID,(limit + 1))		  
+
+		if err != nil {
+			var pgErr *pgconn.PgError
+
+			if errors.As(err, &pgErr) {
+
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			}
+			if errors.Is(err, context.Canceled) {
+
+				return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+			}
+			if errors.Is(err, context.DeadlineExceeded) {
+
+				return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+			}
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+		}
+
+
+		for rows.Next() {
+			var userLiked dto.User
+
+			if err := rows.Scan(&userLiked.ID,&userLiked.Name,&userLiked.Username); err != nil {
+
+
+				return nil,ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+			}
+
+			if len(usersLiked) == limit {
+
+				hasNext = true 
+
+				cursor = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(userLiked.ID)))
+
+				break
+			}
+
+			usersLiked = append(usersLiked, &userLiked)
+
+		}
+
+
+		return &dto.PaginatedPostLikesResponse{
+			UsersLiked: usersLiked,
+			HasNext: hasNext,
+			Cursor: after,
+		},nil
+	}
+}
+ 

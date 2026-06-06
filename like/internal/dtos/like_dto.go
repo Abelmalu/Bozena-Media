@@ -15,6 +15,24 @@ type ToggleLikeResponse struct {
 	Message string `json:"message"`
 }
 
+
+type User struct {
+    ID int
+	Name string 
+	Username string
+}
+
+
+type PaginatedPostLikesResponse struct { 
+   
+	UsersLiked []*User
+	Cursor string
+	HasNext bool
+
+
+
+}
+
 var validate = validator.New()
 
 func (toggleLikeRequest ToggleLikeRequest) Validate() string {

@@ -18,6 +18,7 @@ import (
 
 type LikeService interface {
 	ToggleLike(ctx context.Context, state bool, opts ...grpc.CallOption) (*pb.LikeResponse, error)
+	GetPostLikes(ctx context.Context,postID int,limit int,cursor string)(*pb.GetPostLikesResponse,error)
 }
 type LikeHandler struct {
 	logger     *platform.Logger
@@ -122,4 +123,77 @@ func (likeHandler *LikeHandler) ToggleLike(c *gin.Context) {
 	}
 
    utils.SendSuccessResponse(c,resp,requestID,http.StatusCreated)
+}
+
+
+func (likeHandler *LikeHandler) GetPostLikes(c *gin.Context){
+
+	requestID, err := utils.GetRequestID(c)
+	if err != nil {
+
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+
+			likeHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")), zap.String("requestID", requestID))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			likeHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+		}
+
+	}
+
+	md := metadata.Pairs(
+		"request-id", requestID,
+	)
+	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
+
+	followerIDStr := c.Param("id")
+
+	postIDInt,err := strconv.Atoi(followerIDStr)
+	
+	if err != nil {
+
+		likeHandler.logger.Error("couldn't change followingID to string", zap.Error(err),zap.String("requestID",requestID))
+		c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+		return
+
+	}
+
+	limitStr := c.Query("limit")
+	if limitStr == "" {
+
+		limitStr = "0"
+	}
+
+	limit,err := strconv.Atoi(limitStr)
+
+
+	if err != nil {
+
+		likeHandler.logger.Error("couldn't change followingID to string", zap.Error(err),zap.String("requestID",requestID))
+		c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+		return
+
+	}
+	cursor := c.Query("cursor")
+
+	resp,err := likeHandler.likeClient.GetPostLikes(ctx,postIDInt,limit,cursor)
+
+	if err != nil {
+
+		likeHandler.logger.Error("GRPC Error",zap.Error(err),zap.String("requestID",requestID))
+
+		c.Error(ierrors.FromGRPC(err))
+
+		return
+	}
+
+	utils.SendSuccessResponse(c,resp,requestID,http.StatusOK)
+
 }

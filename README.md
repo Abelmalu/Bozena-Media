@@ -5,6 +5,7 @@
 ![Gin](https://img.shields.io/badge/Gin-Framework-00ADD8?style=for-the-badge&logo=go)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-v15+-336791?style=for-the-badge&logo=postgresql)
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![Kafka](https://img.shields.io/badge/Apache_Kafka-231F20?style=for-the-badge&logo=apachekafka&logoColor=white)
 
 A modern, scalable social network backend built using **Microservices Architecture**. This project leverages **gRPC** for efficient internal communication between services and **Gin** as the entry point via an API Gateway.
 
@@ -44,6 +45,7 @@ Each service (`Auth`, `post`, `like`, `follow`) is structured into the following
 
 - **Clean Architecture Implementation**: Strict separation of concerns for maintainability and testability.
 - **Microservices Architecture**: Decoupled services for better scalability and maintenance.
+- **Event-Driven Architecture**: Configured with **Apache Kafka**. When users register or update their profiles, `userCreated` events are published and consumed by other services. This asynchronous messaging is also utilized for post creation logic.
 - **gRPC Integration**: High-performance internal communication using Protocol Buffers.
 - **Secure Authentication**: JWT-based stateless authentication with token refresh, secure logout using **Redis** for token blacklisting, and cross-platform support (HttpOnly cookies for Web, JSON response for Mobile).
 - **Distributed Rate Limiting**: Token bucket rate limiting applied to routes, leveraging **Redis** for distributed state management and **Lua scripts** to guarantee atomicity and prevent race conditions.
@@ -79,6 +81,7 @@ Each service (`Auth`, `post`, `like`, `follow`) is structured into the following
 - [Go](https://golang.org/dl/) (version 1.25+)
 - [PostgreSQL](https://www.postgresql.org/download/)
 - [Redis](https://redis.io/download/) (for distributed rate limiting and token blacklisting)
+- [Apache Kafka](https://kafka.apache.org/downloads) (for event-driven communication)
 - [Protoc](https://grpc.io/docs/protoc-installation/) (for generating gRPC code)
 
 ### Installation & Running
@@ -155,12 +158,13 @@ To run the entire microservices ecosystem (including PostgreSQL and Redis) using
 
 ### Posts
 
-| Method   | Endpoint           | Description            | Permissions          |
-| :------- | :----------------- | :--------------------- | :------------------- |
-| `GET`    | `/api/posts/`      | List all posts         | Authenticated User   |
-| `POST`   | `/api/posts/`      | Create a new post      | Authenticated User   |
-| `PUT`    | `/api/posts/:id`   | Update a specific post | **Owner Only**       |
-| `DELETE` | `/api/posts/:id`   | Delete a specific post | **Owner Only**       |
+| Method   | Endpoint                | Description            | Permissions          |
+| :------- | :---------------------- | :--------------------- | :------------------- |
+| `GET`    | `/api/posts/`           | List all posts         | Authenticated User   |
+| `POST`   | `/api/posts/`           | Create a new post      | Authenticated User   |
+| `GET`    | `/api/posts/user/:id`   | Get posts by a user    | Authenticated User   |
+| `PUT`    | `/api/posts/update/:id` | Update a specific post | **Owner Only**       |
+| `DELETE` | `/api/posts/delete/:id` | Delete a specific post | **Owner Only**       |
 
 ### Likes
 
@@ -170,10 +174,11 @@ To run the entire microservices ecosystem (including PostgreSQL and Redis) using
 
 ### Follows
 
-| Method   | Endpoint                    | Description                  | Permissions          |
-| :------- | :-------------------------- | :--------------------------- | :------------------- |
-| `POST`   | `/api/follow/:id`           | Toggle follow/unfollow user  | Authenticated User   |
-| `GET`    | `/api/follow/followers/:id` | View followers of a user     | Authenticated User   |
+| Method   | Endpoint                     | Description                  | Permissions          |
+| :------- | :--------------------------- | :--------------------------- | :------------------- |
+| `POST`   | `/api/follow/:id`            | Toggle follow/unfollow user  | Authenticated User   |
+| `GET`    | `/api/follow/followers/:id`  | View followers of a user     | Authenticated User   |
+| `GET`    | `/api/follow/followings/:id` | View users a user follows    | Authenticated User   |
 
 ---
 

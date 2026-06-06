@@ -9,70 +9,70 @@ import (
 )
 
 type LikeService struct {
-
 	likeRepo core.LikeRepository
 }
 
-func NewLikeRepository(likeRepo core.LikeRepository ) *LikeService{
-
+func NewLikeRepository(likeRepo core.LikeRepository) *LikeService {
 
 	return &LikeService{
 		likeRepo: likeRepo,
 	}
 }
 
+func (likeService *LikeService) ToggleLike(ctx context.Context, state bool, userID, postID int) (dto.ToggleLikeResponse, error) {
 
-func (likeService *LikeService)	ToggleLike(ctx context.Context,state bool,userID,postID int)(dto.ToggleLikeResponse,error){
-	
-	message,err := likeService.likeRepo.ToggleLike(ctx,state,userID,postID)
+	message, err := likeService.likeRepo.ToggleLike(ctx, state, userID, postID)
 
-	 if err != nil {
+	if err != nil {
 
-		return  dto.ToggleLikeResponse{},err
-	 }
+		return dto.ToggleLikeResponse{}, err
+	}
 
 	return dto.ToggleLikeResponse{
 		Message: message,
-	},nil
+	}, nil
 }
 
-
-
-func (likeService *LikeService )	CreateCacheUser(ctx context.Context,userID int ,username,name string)(error){
+func (likeService *LikeService) CreateCacheUser(ctx context.Context, userID int, username, name string) error {
 
 	if userID <= 0 {
 
-		return ierrors.NewValidationError(ierrors.MSGNameIsRequired,nil,nil)
+		return ierrors.NewValidationError(ierrors.MSGNameIsRequired, nil, nil)
 	}
-
 
 	if username == "" {
 
-		return ierrors.NewValidationError(ierrors.MSGNameIsRequired,nil,nil)
+		return ierrors.NewValidationError(ierrors.MSGNameIsRequired, nil, nil)
 	}
-	
 
-  if err := likeService.likeRepo.CreateCacheUser(ctx,userID,username,name); err != nil {
+	if err := likeService.likeRepo.CreateCacheUser(ctx, userID, username, name); err != nil {
 
+		return err
+
+	}
+
+	return nil
+
+}
+
+func (likeService *LikeService) CreateCachePost(ctx context.Context, postID int, title string) error {
+
+	err := likeService.likeRepo.CreateCachePost(ctx, postID, title)
 
 	return err
-
-
-  }
-
-  return nil
-
-
 
 }
 
 
+func (likeService *LikeService)	GetPostLikes (ctx context.Context, postID,limit int,cursor string)(*dto.PaginatedPostLikesResponse,error){
 
-	func (likeService *LikeService) CreateCachePost(ctx context.Context, postID int,title string)error{
+	resp,err := likeService.likeRepo.GetPostLikes(ctx,postID,limit,cursor)
 
-			err := likeService.likeRepo.CreateCachePost(ctx , postID ,title)
+	if err != nil {
 
-			return err
-
-
+		return nil,err
 	}
+
+	return resp,nil
+}
+

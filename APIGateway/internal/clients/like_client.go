@@ -37,4 +37,19 @@ func(likeClient *LikeClient) ToggleLike(ctx context.Context, like bool, opts ...
 	
 	)
 }
+
+func (likeClient *LikeClient) GetPostLikes(ctx context.Context,postID int,limit int,cursor string)(*pb.GetPostLikesResponse,error){
+
+
+	return likeClient.client.GetPostLikes(
+		ctx,
+		&pb.GetPostLikesRequest{
+			PostId: int64(postID),
+			Cursor: cursor,
+			Limit: int64(limit),
+			
+		},
+	)
+}
+
  
