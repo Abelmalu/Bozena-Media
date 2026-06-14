@@ -146,8 +146,10 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 	fetchedUser, err := authSer.repo.Login(ctx, userName, password)
 	if err != nil {
 		return nil, nil, err
-	}
 
+	}
+	 
+	// if user is found check the password 
 	if fetchedUser.Password != password {
 
 
