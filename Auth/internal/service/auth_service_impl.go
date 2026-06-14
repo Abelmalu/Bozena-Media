@@ -148,6 +148,14 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 		return nil, nil, err
 	}
 
+	if fetchedUser.Password != password {
+
+
+			return nil,nil, ierrors.NewNotFoundError(ierrors.MSGUserNotFound, err)
+
+
+	}
+
 	md, exists := metadata.FromIncomingContext(ctx)
 
 	if !exists {

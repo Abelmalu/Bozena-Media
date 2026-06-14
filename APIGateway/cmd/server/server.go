@@ -12,7 +12,7 @@ func StartServer(router *gin.Engine){
 	
 	if err := router.Run(":8082"); err != nil {
 
-		log.Fatalf("Couldn't star the router %v",err)
+		log.Fatalf("Couldn't start the router %v",err)
 	}
 
 
