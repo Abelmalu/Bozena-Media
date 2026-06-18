@@ -74,7 +74,7 @@ func (authRepo *AuthRepository) Register(ctx context.Context, user *model.User) 
 func (authrepo *AuthRepository) Login(ctx context.Context, userName, password string) (*model.User, error) {
 	var user model.User
 	query := `SELECT * FROM users WHERE username=$1`
-	if err := authrepo.DB.QueryRowContext(ctx, query, userName).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.Role); err != nil {
+	if err := authrepo.DB.QueryRowContext(ctx, query, userName).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.Role,&user.FailedLoginAttempts,&user.IsPermanentlyLocked,&user.TemporaryLockUntil); err != nil {
 
 		var pgErr *pgconn.PgError
 
@@ -414,4 +414,77 @@ func (authRepo *AuthRepository) SearchUser(ctx context.Context,username,cursor s
 		Cursor: after,
 		HasNext: hasNext,
 	},nil
+}
+
+
+func (authRepo *AuthRepository) UpdateFailedLoginAttempst(ctx context.Context,user *model.User)(*model.User,error){
+
+
+	query := ` UPDATE users SET failed_attempts= failed_attempts+1 WHERE id=$1 RETURNING failed_attempts`
+
+
+	 err := authRepo.DB.QueryRowContext(ctx,query,user.ID).Scan(&user.ID) 
+
+
+	var pgErr *pgconn.PgError
+	if err != nil {
+
+		if errors.As(err, &pgErr) {
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+	}
+
+
+
+	return user,nil
+}
+
+
+func (authRepo *AuthRepository)  TemporaryLockUntil(ctx context.Context, user *model.User)(*model.User,error){
+
+
+	query := ` UPDATE users SET failed_attempts = $1, temporary_lock_until = $2  WHERE id=$3 RETURNING failed_attempts`
+
+
+	 err := authRepo.DB.QueryRowContext(ctx,query,(user.FailedLoginAttempts + 1),user.TemporaryLockUntil,user.ID).Scan(&user.FailedLoginAttempts) 
+
+
+	var pgErr *pgconn.PgError
+	if err != nil {
+
+		if errors.As(err, &pgErr) {
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+	}
+
+
+
+	return user,nil
+
+
+
 }

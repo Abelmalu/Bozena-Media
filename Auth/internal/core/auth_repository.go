@@ -18,4 +18,6 @@ type AuthRepository interface {
 	GetRefreshToken(refreshToken string) (*model.RefreshToken, error)
 	GetUserByID(ID int) (*model.User, error)
 	SearchUser(ctx context.Context,username,cursor string,limit int)(*dto.PaginatedResponse,error)
+	UpdateFailedLoginAttempst(ctx context.Context,user *model.User)(*model.User,error)
+	TemporaryLockUntil(ctx context.Context, user *model.User)(*model.User,error)
 }

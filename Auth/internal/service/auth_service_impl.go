@@ -26,6 +26,9 @@ type AuthService struct {
 	kafka  sarama.SyncProducer
 }
 
+var maxLoginAttempt = 6
+var tempMaxLoginAttempt = 3
+
 func NewAuthService(authRepo core.AuthRepository, redisCient *redis.Client, kafkaClient sarama.SyncProducer, logger *platform.Logger) *AuthService {
 
 	return &AuthService{
@@ -148,13 +151,44 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 		return nil, nil, err
 
 	}
-	 
-	// if user is found check the password 
+
+	// if user is found check the password
 	if fetchedUser.Password != password {
 
+		fetchedUser.FailedLoginAttempts ++
 
-			return nil,nil, ierrors.NewNotFoundError(ierrors.MSGUserNotFound, err)
+		if fetchedUser.FailedLoginAttempts == tempMaxLoginAttempt {
 
+			lockUntil := (time.Now().Add(time.Minute * 3 ))
+
+			fetchedUser.TemporaryLockUntil = &lockUntil
+
+			_, err := authSer.repo.TemporaryLockUntil(ctx, fetchedUser)
+			if err != nil {
+
+				return nil, nil, err
+			}
+
+			return nil, nil, ierrors.NewUnauthorizedError(ierrors.ErrorMessage("Your Account is temporarly blocked"), nil)
+
+		}
+
+		if fetchedUser.FailedLoginAttempts >= maxLoginAttempt {
+			_, err := authSer.repo.UpdateFailedLoginAttempst(ctx, fetchedUser)
+			if err != nil {
+
+				return nil, nil, err
+			}
+
+			return nil, nil, ierrors.NewUnauthorizedError(ierrors.ErrorMessage("Your Account is Prmanently Blocked Contact Adminstrator"), nil)
+
+		}
+
+		_, err := authSer.repo.UpdateFailedLoginAttempst(ctx, fetchedUser)
+		if err != nil {
+
+			return nil, nil, err
+		}
 
 	}
 

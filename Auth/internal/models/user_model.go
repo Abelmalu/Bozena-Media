@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -16,6 +17,9 @@ type User struct{
 	Email string `json:"email" db:"email" validate:"email,required"`
 	Password string `json:"password" db:"password" validate:"required,min=8,max=30"`
 	Role string `json:"role" db:"role"`
+	FailedLoginAttempts int `json:"failed_login_attempt" db:"failed_login_attempts"`
+	TemporaryLockUntil *time.Time 	`json:"temporary_lock_until" db:"temporary_locked_until"`
+	IsPermanentlyLocked bool 	`json:"is_permanently_locked" db:"is_permanently_locked"`
 	CreatedAt string `db:"created_at"`
 	UpdatedAt string `db:"updated_at"`
 }
