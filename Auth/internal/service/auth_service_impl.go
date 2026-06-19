@@ -155,11 +155,11 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 	// if user is found check the password
 	if fetchedUser.Password != password {
 
-		fetchedUser.FailedLoginAttempts ++
+		fetchedUser.FailedLoginAttempts++
 
 		if fetchedUser.FailedLoginAttempts == tempMaxLoginAttempt {
 
-			lockUntil := (time.Now().Add(time.Minute * 3 ))
+			lockUntil := (time.Now().Add(time.Minute * 3))
 
 			fetchedUser.TemporaryLockUntil = &lockUntil
 
@@ -189,6 +189,10 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 
 			return nil, nil, err
 		}
+		
+		remainingAttempts := maxLoginAttempt - fetchedUser.FailedLoginAttempts
+
+		return nil, nil, ierrors.NewUnauthorizedError(ierrors.ErrorMessage(fmt.Sprintf("Invalid Credentials %d Attempts left",remainingAttempts)), nil)
 
 	}
 
