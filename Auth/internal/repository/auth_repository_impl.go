@@ -458,7 +458,7 @@ func (authRepo *AuthRepository)  TemporaryLockUntil(ctx context.Context, user *m
 	query := ` UPDATE users SET failed_attempts = $1, temporary_locked_until = $2  WHERE id=$3 RETURNING failed_attempts`
 
 
-	 err := authRepo.DB.QueryRowContext(ctx,query,(user.FailedLoginAttempts),user.TemporaryLockUntil,user.ID).Scan(&user.FailedLoginAttempts) 
+	 err := authRepo.DB.QueryRowContext(ctx,query,user.FailedLoginAttempts,user.TemporaryLockUntil,user.ID).Scan(&user.FailedLoginAttempts) 
 
 
 	var pgErr *pgconn.PgError
