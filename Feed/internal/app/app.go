@@ -4,14 +4,14 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net"
+//	"net"
 	"time"
 
 	"github.com/abelmalu/golang-posts/Feed/config"
 	"github.com/abelmalu/golang-posts/platform"
 	_ "github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"google.golang.org/grpc"
+	//"google.golang.org/grpc"
 )
 
 type App struct {
@@ -74,12 +74,12 @@ func initDB(cfg *config.Config) (*sql.DB, error) {
 
 
 
-func (app *App) Run () {
+// func (app *App) Run () {
 
-	lis,_ := net.Listen("tcp",":50055")
+// 	lis,_ := net.Listen("tcp",":50055")
 
-	s := grpc.NewServer()
+// 	s := grpc.NewServer()
 	
-}
+// }
 
 

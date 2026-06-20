@@ -119,6 +119,9 @@ func (authSer *AuthService) Register(ctx context.Context, user *model.User) (*mo
 func (authSer *AuthService) Login(ctx context.Context, userName, password string) (*model.User, *model.TokenPair, error) {
 	var clientMetadata string
 	var clientType model.ClientType
+
+	key := fmt.Sprintf("locked:%s", userName)
+
 	if userName == "" {
 
 		return nil, nil, ierrors.NewValidationError(ierrors.MSGUsernameIsRequired, nil, nil)
@@ -151,26 +154,46 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 		return nil, nil, err
 
 	}
-    
+	user, err := authSer.redis.Get(ctx, key).Result()
+
+	if err != nil && err !=  redis.Nil {
+		internalErr := ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
+
+		return nil,nil,internalErr
+
+	}
+
+	if user != "" {
+
+		timeLeft,err := authSer.redis.TTL(ctx,key).Result()
+
+		if err != nil {
+
+
+				return nil,nil,ierrors.NewInternalError(ierrors.MSGSomethingWentWrong,err)
+
+
+
+		}
+
+
+		message := fmt.Sprintf("Account Temporarly blocked %f",timeLeft.Minutes())
+
+
+		return nil,nil,ierrors.NewValidationError(ierrors.ErrorMessage(message),nil,nil)
+	}
+
 	if fetchedUser.TemporaryLockUntil != nil {
 
+		if !fetchedUser.TemporaryLockUntil.IsZero() && time.Now().Before(*fetchedUser.TemporaryLockUntil) {
 
-		if !fetchedUser.TemporaryLockUntil.IsZero() && time.Now().Before(*fetchedUser.TemporaryLockUntil){
+			remainingTime := time.Until(*(fetchedUser.TemporaryLockUntil))
 
-			fmt.Println(time.Now().UTC(),"**************")
-			fmt.Println(fetchedUser.TemporaryLockUntil,"&&&&&&&&&&&&&&&")
-		remainingTime := time.Until(*(fetchedUser.TemporaryLockUntil))
+			return nil, nil, ierrors.NewUnauthorizedError(ierrors.ErrorMessage(fmt.Sprintf("Your Account is temporarly blocked wait for %v minutes", remainingTime.Minutes())), nil)
 
-			return nil, nil, ierrors.NewUnauthorizedError(ierrors.ErrorMessage(fmt.Sprintf("Your Account is temporarly blocked wait for %v minutes",remainingTime.Minutes())), nil)
-
-
+		}
 
 	}
-
-
-	}
-
-	
 
 	// if user is found check the password
 	if fetchedUser.Password != password {
@@ -178,12 +201,20 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 		fetchedUser.FailedLoginAttempts++
 
 		if fetchedUser.FailedLoginAttempts == tempMaxLoginAttempt {
-
 			lockUntil := (time.Now().UTC().Add(time.Minute * 3))
+
+			key := fmt.Sprintf("locked:%s", fetchedUser.Username)
+			err := authSer.redis.Set(ctx, key, 1, time.Duration(time.Minute*3)).Err()
+
+			if err != nil {
+
+
+				return nil,nil,ierrors.NewInternalError(ierrors.MSGSomethingWentWrong,err)
+			}
 
 			fetchedUser.TemporaryLockUntil = &lockUntil
 
-			_, err := authSer.repo.TemporaryLockUntil(ctx, fetchedUser)
+			_, err = authSer.repo.TemporaryLockUntil(ctx, fetchedUser)
 			if err != nil {
 
 				return nil, nil, err
@@ -209,10 +240,10 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 
 			return nil, nil, err
 		}
-		
+
 		remainingAttempts := maxLoginAttempt - fetchedUser.FailedLoginAttempts
 
-		return nil, nil, ierrors.NewUnauthorizedError(ierrors.ErrorMessage(fmt.Sprintf("Invalid Credentials %d Attempts left",remainingAttempts)), nil)
+		return nil, nil, ierrors.NewUnauthorizedError(ierrors.ErrorMessage(fmt.Sprintf("Invalid Credentials %d Attempts left", remainingAttempts)), nil)
 
 	}
 
