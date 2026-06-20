@@ -152,6 +152,18 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 
 	}
 
+
+	if !fetchedUser.TemporaryLockUntil.IsZero() || time.Now().Before(*fetchedUser.TemporaryLockUntil){
+
+
+		remainingTime := time.Until(*(fetchedUser.TemporaryLockUntil))
+
+			return nil, nil, ierrors.NewUnauthorizedError(ierrors.ErrorMessage(fmt.Sprintf("Your Account is temporarly blocked wait for %d",remainingTime)), nil)
+
+
+
+	}
+
 	// if user is found check the password
 	if fetchedUser.Password != password {
 
@@ -169,7 +181,7 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 				return nil, nil, err
 			}
 
-			return nil, nil, ierrors.NewUnauthorizedError(ierrors.ErrorMessage("Your Account is temporarly blocked"), nil)
+			return nil, nil, ierrors.NewUnauthorizedError(ierrors.ErrorMessage(fmt.Sprintf("Your Account is temporarly blocked for")), nil)
 
 		}
 
