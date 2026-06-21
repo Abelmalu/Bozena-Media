@@ -8,7 +8,6 @@ import (
 func Initialize() {
 
 	router := gin.New()
-	router.Use(server.CORSMiddleware())
 
 	//initializing loggers 
 	logger := InitLogger()

@@ -19,11 +19,6 @@ var luaScript = redis.NewScript(luaScriptString)
 
 func RateLimitMiddleware(redisClient *redis.Client,logger *platform.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.Request.Method == "OPTIONS" {
-			c.Next()
-			return
-		}
-
 		key := "bucket:" + c.ClientIP()
 		now := float64(time.Now().UnixNano()) / 1e9
 
@@ -31,8 +26,8 @@ func RateLimitMiddleware(redisClient *redis.Client,logger *platform.Logger) gin.
 			c.Request.Context(),
 			redisClient,
 			[]string{key},
-			500,
-			500,
+			2,
+			1,
 			now,
 			1,
 		).Result()
