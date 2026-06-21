@@ -67,10 +67,23 @@ Each service (`Auth`, `post`, `like`, `follow`) is structured into the following
 ├── post/                 # Post management service (gRPC Server)
 ├── like/                 # Like management service (gRPC Server)
 ├── follow/               # Follow management service (gRPC Server)
+├── frontend/             # React + TypeScript web client
 ├── pkg/                  # Shared utilities (JWT, etc.)
 ├── migrations/           # Database migration files
 └── proto/                # Shared Protocol Buffer definitions (if applicable)
 ```
+
+### Frontend
+
+The React frontend lives in `frontend/` and talks only to the API Gateway.
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Set `VITE_API_BASE_URL` if your gateway is not on `http://localhost:8080`.
 
 ---
 
