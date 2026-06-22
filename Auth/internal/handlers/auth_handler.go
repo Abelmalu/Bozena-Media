@@ -366,6 +366,7 @@ func (authHandler *AuthHandler) SearchUser(ctx context.Context, req *pb.SearchUs
 
 		 pbUser = pb.User{
 
+			Id:int64(user.ID),
 			Name:user.Name,
 			Username: user.Username,
 

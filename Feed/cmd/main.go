@@ -3,7 +3,7 @@ package cmd
 import (
 	"log"
 
-	//application "github.com/abelmalu/golang-posts/Feed/internal/app"
+	application "github.com/abelmalu/golang-posts/Feed/internal/app"
 	"github.com/joho/godotenv"
 )
 
@@ -16,7 +16,7 @@ func main() {
 
 	}
 
-	//app := application.NewApp()
+	app := application.NewApp()
 
-	//app.Run()
+	app.Run()
 }

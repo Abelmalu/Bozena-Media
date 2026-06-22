@@ -1,4 +1,38 @@
 syntax = "proto3";
 package feedservice;
+option go_package = "./proto/pb";
 
-option go_package = "
+
+service FeedService {
+
+    rpc  GetUserFeed(GetUserFeedRequest) returns (GetUserFeedResponse);
+}
+
+
+
+
+message GetUserFeedRequest {
+
+    int64 user_id = 1;
+}
+
+
+message UserFeed  {
+	
+	int64 PostID = 1;     
+	string PostTitle  = 2; 
+	string PostContent  = 3;
+	int64 PostOwnerID = 4;
+	string UserName = 5;
+	string Name     = 6;
+
+}
+
+message GetUserFeedResponse {
+    
+    repeated UserFeed userfeeds  = 1;
+    string cursor = 2;
+    int64 limit = 3;
+
+
+}

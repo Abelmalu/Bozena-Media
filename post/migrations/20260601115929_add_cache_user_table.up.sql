@@ -7,4 +7,3 @@ CREATE TABLE users_cache (
     name VARCHAR(100)
 
 
-)
