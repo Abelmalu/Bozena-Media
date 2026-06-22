@@ -4,14 +4,18 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-"net"
+	"net"
 	"time"
 
+	"github.com/abelmalu/golang-posts/Feed/proto/pb"
 	"github.com/abelmalu/golang-posts/Feed/config"
+	"github.com/abelmalu/golang-posts/Feed/internal/handler"
+	"github.com/abelmalu/golang-posts/Feed/internal/repository"
+	"github.com/abelmalu/golang-posts/Feed/internal/service"
 	"github.com/abelmalu/golang-posts/platform"
 	_ "github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
-"google.golang.org/grpc"
+	"google.golang.org/grpc"
 )
 
 type App struct {
@@ -19,7 +23,6 @@ type App struct {
 	config *config.Config
 }
 
-var logger = platform.InitZapLogger()
 
 func NewApp() *App {
 
@@ -72,6 +75,7 @@ func initDB(cfg *config.Config) (*sql.DB, error) {
 }
 
 
+var logger = platform.InitZapLogger()
 
 
 func (app *App) Run () {
@@ -79,6 +83,14 @@ func (app *App) Run () {
 	lis,_ := net.Listen("tcp",":50055")
 
 	s := grpc.NewServer()
+
+
+	feedRepo := repository.NewFeedRepository(app.DB)
+	feedService := service.NewFeedService(feedRepo)
+	feedHandler := handler.NewFeedHandler(feedService,logger)
+
+		pb.RegisterFeedServiceServer(s, feedHandler)
+	s.Serve(lis)
 	
 }
 

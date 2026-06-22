@@ -1,6 +1,11 @@
 package service
 
-import "github.com/abelmalu/golang-posts/Feed/internal/core"
+import (
+	"context"
+
+	"github.com/abelmalu/golang-posts/Feed/internal/core"
+	"github.com/abelmalu/golang-posts/Feed/internal/dto"
+)
 
 
 
@@ -23,3 +28,8 @@ func NewFeedService(feedRepo core.FeedRepository) *FeedService {
 }
 
 
+func (feedService *FeedService)	GetUserFeed(ctx context.Context,userID int)(*dto.PaginatedResponse,error){
+
+
+	return nil,nil
+}

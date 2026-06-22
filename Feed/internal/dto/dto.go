@@ -6,7 +6,7 @@ type PostOwner struct {
 }
 
 type UserFeed struct {
-	
+
 	PostID      int64
 	PostTitle   string
 	PostContent string
@@ -17,7 +17,7 @@ type UserFeed struct {
 }
 
 type PaginatedResponse struct {
-	userFeeds  []*UserFeed
+	UserFeeds  []*UserFeed
 	Cursor string
 	Limit  int64
 }

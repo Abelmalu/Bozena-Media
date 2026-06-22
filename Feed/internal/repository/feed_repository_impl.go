@@ -1,6 +1,11 @@
 package repository
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+
+	"github.com/abelmalu/golang-posts/Feed/internal/dto"
+)
 
 
 
@@ -20,4 +25,11 @@ func NewFeedRepository(db *sql.DB) *FeedRepository {
 	return &FeedRepository{
 		DB: db,
 	}
+}
+
+
+func (feedRepo *FeedRepository)	GetUserFeed(ctx context.Context,userID int)(*dto.PaginatedResponse,error){
+
+
+	return nil,nil
 }
