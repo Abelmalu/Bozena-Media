@@ -7,6 +7,7 @@ type PostOwner struct {
 
 type UserFeed struct {
 
+	ID int
 	PostID      int64
 	PostTitle   string
 	PostContent string
@@ -19,5 +20,5 @@ type UserFeed struct {
 type PaginatedResponse struct {
 	UserFeeds  []*UserFeed
 	Cursor string
-	Limit  int64
+    HasNext bool
 }

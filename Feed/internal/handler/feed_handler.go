@@ -31,7 +31,7 @@ func NewFeedHandler(service core.FeedService, logger *platform.Logger) *FeedHand
 
 func (feedHandler *FeedHandler) GetUserFeed(ctx context.Context, req *pb.GetUserFeedRequest) (*pb.GetUserFeedResponse, error) {
 
-	resp, err := feedHandler.feedService.GetUserFeed(ctx, int(req.UserId))
+	resp, err := feedHandler.feedService.GetUserFeed(ctx, req.Cursor,int(req.UserId),int(req.Limit))
 
 	if err != nil {
 

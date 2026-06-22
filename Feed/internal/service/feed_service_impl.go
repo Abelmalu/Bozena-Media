@@ -28,8 +28,14 @@ func NewFeedService(feedRepo core.FeedRepository) *FeedService {
 }
 
 
-func (feedService *FeedService)	GetUserFeed(ctx context.Context,userID int)(*dto.PaginatedResponse,error){
+func (feedService *FeedService)	GetUserFeed(ctx context.Context,cursor string, userID,limit int)(*dto.PaginatedResponse,error){
 
+		resp,err := feedService.FeedRepo.GetUserFeed(ctx,cursor,userID,limit)
 
-	return nil,nil
+		if err != nil {
+
+			return nil,err
+		}
+
+	return resp,nil
 }
