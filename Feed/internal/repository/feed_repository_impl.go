@@ -6,9 +6,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"strconv"
-
 	"github.com/abelmalu/golang-posts/Feed/internal/dto"
-	ierrors "github.com/abelmalu/golang-posts/Feed/internal/errors"
+    "github.com/abelmalu/golang-posts/Feed/internal/errors"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -155,7 +154,7 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 
 				hasNext = true
 
-				cursor = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(userFeed.ID)))
+				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(userFeed.ID)))
 
 				break
 
@@ -167,7 +166,7 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 
 		return &dto.PaginatedResponse{
 			UserFeeds: userFeeds,
-			Cursor: cursor,
+			Cursor: after,
 			HasNext: hasNext,
 
 		},nil

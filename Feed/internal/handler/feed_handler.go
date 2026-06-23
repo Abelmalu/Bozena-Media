@@ -88,7 +88,6 @@ func (feedHandler *FeedHandler) GetUserFeed(ctx context.Context, req *pb.GetUser
 	return &pb.GetUserFeedResponse{
 		Userfeeds: pbUserFeeds,
 		Cursor: resp.Cursor,
-		Limit: resp.Limit,
 	}, nil
 
 }
