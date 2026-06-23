@@ -5,6 +5,7 @@ import (
 
 	"github.com/abelmalu/golang-posts/Feed/internal/core"
 	"github.com/abelmalu/golang-posts/Feed/internal/dto"
+	ierrors "github.com/abelmalu/golang-posts/Feed/internal/errors"
 )
 
 
@@ -38,4 +39,36 @@ func (feedService *FeedService)	GetUserFeed(ctx context.Context,cursor string, u
 		}
 
 	return resp,nil
+}
+
+
+func (likeService *FeedService) CreateCachePost(ctx context.Context, postID int, title,content string) error {
+
+	err := likeService.FeedRepo.CreateCachePost(ctx, postID, title,content)
+
+	return err
+
+}
+
+
+func (feedService *FeedService) CreateCacheUser(ctx context.Context, userID int, username, name string) error {
+
+	if userID <= 0 {
+
+		return ierrors.NewValidationError(ierrors.MSGNameIsRequired, nil, nil)
+	}
+
+	if username == "" {
+
+		return ierrors.NewValidationError(ierrors.MSGNameIsRequired, nil, nil)
+	}
+
+	if err := feedService.FeedRepo.CreateCacheUser(ctx, userID, username, name); err != nil {
+
+		return err
+
+	}
+
+	return nil
+
 }

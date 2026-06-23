@@ -7,11 +7,12 @@ import (
 	"net"
 	"time"
 
-	"github.com/abelmalu/golang-posts/Feed/proto/pb"
 	"github.com/abelmalu/golang-posts/Feed/config"
 	"github.com/abelmalu/golang-posts/Feed/internal/handler"
+	"github.com/abelmalu/golang-posts/Feed/internal/kafka"
 	"github.com/abelmalu/golang-posts/Feed/internal/repository"
 	"github.com/abelmalu/golang-posts/Feed/internal/service"
+	"github.com/abelmalu/golang-posts/Feed/proto/pb"
 	"github.com/abelmalu/golang-posts/platform"
 	_ "github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -22,7 +23,6 @@ type App struct {
 	DB     *sql.DB
 	config *config.Config
 }
-
 
 func NewApp() *App {
 
@@ -74,24 +74,30 @@ func initDB(cfg *config.Config) (*sql.DB, error) {
 
 }
 
-
 var logger = platform.InitZapLogger()
 
+func (app *App) Run() {
 
-func (app *App) Run () {
-
-	lis,_ := net.Listen("tcp",":50055")
+	lis, _ := net.Listen("tcp", ":50055")
 
 	s := grpc.NewServer()
 
-
 	feedRepo := repository.NewFeedRepository(app.DB)
 	feedService := service.NewFeedService(feedRepo)
-	feedHandler := handler.NewFeedHandler(feedService,logger)
+	feedHandler := handler.NewFeedHandler(feedService, logger)
 
-		pb.RegisterFeedServiceServer(s, feedHandler)
+	pb.RegisterFeedServiceServer(s, feedHandler)
+
+
+
+	brokers := []string{"localhost:9092"}
+	Usertopic := "userCreated"
+	postTopic := "postCreated"
+
+
+	// Run consumer in the background
+	go kafka.StartConsumer(brokers, Usertopic,postTopic, feedService, logger)
+
 	s.Serve(lis)
-	
+
 }
-
-
