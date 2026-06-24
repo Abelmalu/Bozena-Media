@@ -127,6 +127,7 @@ func (followRepository *FollowRepository) GetUserFollowers(ctx context.Context, 
 		 INNER JOIN follows ON users_cache.user_id = follows.follower_id 
 		 WHERE follows.following_id = $1 AND users_cache.user_id < $2
 		 ORDER BY users_cache.user_id DESC LIMIT $3  `
+		 
 		rows, err := followRepository.DB.QueryContext(ctx, query, followingID, cursorInt, (limit + 1))
 
 		if err != nil {

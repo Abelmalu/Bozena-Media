@@ -21,8 +21,6 @@ type FeedService struct {
 
 func NewFeedService(feedRepo core.FeedRepository) *FeedService {
 
-
-
 	return &FeedService{
 		FeedRepo: feedRepo,
 	}
@@ -42,9 +40,9 @@ func (feedService *FeedService)	GetUserFeed(ctx context.Context,cursor string, u
 }
 
 
-func (likeService *FeedService) CreateCachePost(ctx context.Context, postID int, title,content string) error {
+func (feedService *FeedService) CreateCachePost(ctx context.Context, postID int, title,content string) error {
 
-	err := likeService.FeedRepo.CreateCachePost(ctx, postID, title,content)
+	err := feedService.FeedRepo.CreateCachePost(ctx, postID, title,content)
 
 	return err
 
@@ -72,3 +70,9 @@ func (feedService *FeedService) CreateCacheUser(ctx context.Context, userID int,
 	return nil
 
 }
+
+// func (feedService *FeedService) CreateFeedEntries(ctx context.Context,userID,ownerID,postID int) error{
+
+
+
+// }

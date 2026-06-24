@@ -180,9 +180,9 @@ func (feedRepository *FeedRepository) CreateCachePost(ctx context.Context, postI
 
 
 
-	query := `INSERT INTO posts_cache (post_id,title)  VALUES($1,$2)`
+	query := `INSERT INTO posts_cache (post_id,title,content)  VALUES($1,$2,$3)`
 
-	_, err := feedRepository.DB.ExecContext(ctx, query, postID, title)
+	_, err := feedRepository.DB.ExecContext(ctx, query, postID, title,content)
 
 	var pgErr *pgconn.PgError
 	if err != nil {

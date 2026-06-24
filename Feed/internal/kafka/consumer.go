@@ -1,6 +1,5 @@
 package kafka
 
-
 import (
 	"context"
 	"encoding/json"
@@ -22,9 +21,10 @@ type UserCreatedPayload struct {
 }
 
 type PostCreatedPayload struct {
-	ID       int    `json:"id"`
-	Title    string `json:"title"`
+	ID      int    `json:"id"`
+	Title   string `json:"title"`
 	Content string `json:"content"`
+	UserID  int    `json:"user_id"`
 }
 
 // StartEventConsumers initializes separate listeners for different topics
@@ -37,8 +37,7 @@ func StartConsumer(brokers []string, userTopic string, postTopic string, feedSer
 		log.Fatalf("Error creating master consumer: %v", err)
 	}
 
-	log.Printf("Consumer started. Listening on topic: %s and %s", userTopic,postTopic)
-
+	log.Printf("Consumer started. Listening on topic: %s and %s", userTopic, postTopic)
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -54,8 +53,6 @@ func StartConsumer(brokers []string, userTopic string, postTopic string, feedSer
 		defer wg.Done()
 		consumePostEvents(consumer, postTopic, feedService, logger)
 	}()
-
-
 
 	wg.Wait()
 }
@@ -108,8 +105,8 @@ func consumePostEvents(consumer sarama.Consumer, topic string, feedService core.
 
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			// Assuming you implement CreateCachePost in your feedService
-			err = feedService.CreateCachePost(ctx, post.ID,post.Title,post.Content)
-			cancel() 
+			err = feedService.CreateCachePost(ctx, post.ID, post.Title, post.Content)
+			cancel()
 
 			if err != nil {
 				logger.Error("Error inserting to posts_cache", zap.Error(err))

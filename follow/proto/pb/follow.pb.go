@@ -249,6 +249,7 @@ type User struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	UserId        int64                  `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -295,6 +296,13 @@ func (x *User) GetUsername() string {
 		return x.Username
 	}
 	return ""
+}
+
+func (x *User) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
 }
 
 type GetUserFollowersResponse struct {
@@ -513,10 +521,11 @@ const file_proto_follow_proto_rawDesc = "" +
 	"\x17GetUserFollowersRequest\x12!\n" +
 	"\ffollowing_id\x18\x01 \x01(\x03R\vfollowingId\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x03R\x05limit\x12\x16\n" +
-	"\x06cursor\x18\x03 \x01(\tR\x06cursor\"6\n" +
+	"\x06cursor\x18\x03 \x01(\tR\x06cursor\"O\n" +
 	"\x04User\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\"\x96\x01\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x17\n" +
+	"\auser_id\x18\x03 \x01(\x03R\x06userId\"\x96\x01\n" +
 	"\x18GetUserFollowersResponse\x121\n" +
 	"\tfollowers\x18\x01 \x03(\v2\x13.followservice.UserR\tfollowers\x12\x19\n" +
 	"\bhas_next\x18\x02 \x01(\bR\ahasNext\x12\x14\n" +

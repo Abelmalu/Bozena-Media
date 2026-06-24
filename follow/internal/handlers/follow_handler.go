@@ -170,6 +170,7 @@ func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *p
 		pbFollower := &pb.User{
 			Name: (follower.Name),
 			Username: (follower.Username),
+			UserId:int64(follower.ID),
 
 
 		}
