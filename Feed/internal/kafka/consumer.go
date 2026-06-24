@@ -37,6 +37,9 @@ func StartConsumer(brokers []string, userTopic string, postTopic string, feedSer
 		log.Fatalf("Error creating master consumer: %v", err)
 	}
 
+	log.Printf("Consumer started. Listening on topic: %s and %s", userTopic,postTopic)
+
+
 	var wg sync.WaitGroup
 	wg.Add(2)
 
@@ -51,6 +54,8 @@ func StartConsumer(brokers []string, userTopic string, postTopic string, feedSer
 		defer wg.Done()
 		consumePostEvents(consumer, postTopic, feedService, logger)
 	}()
+
+
 
 	wg.Wait()
 }
