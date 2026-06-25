@@ -3,14 +3,19 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"sync"
 	"time"
 
 	"github.com/IBM/sarama"
 	"github.com/abelmalu/golang-posts/Feed/internal/core"
+	"github.com/abelmalu/golang-posts/follow/proto/pb"
 	"github.com/abelmalu/golang-posts/platform"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 // Define structures for your events
@@ -25,6 +30,21 @@ type PostCreatedPayload struct {
 	Title   string `json:"title"`
 	Content string `json:"content"`
 	UserID  int    `json:"user_id"`
+}
+
+func initFollowClient() pb.FollowServiceClient {
+
+	followConn, err := grpc.NewClient("localhost:50054", grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	if err != nil {
+
+		log.Fatalf("failed to connect to gRPC server: %v", err)
+
+	}
+
+	followClient := pb.NewFollowServiceClient(followConn)
+
+	return followClient
 }
 
 // StartEventConsumers initializes separate listeners for different topics
@@ -94,6 +114,8 @@ func consumePostEvents(consumer sarama.Consumer, topic string, feedService core.
 	}
 	defer pc.Close()
 
+	followCleint := initFollowClient()
+
 	for {
 		select {
 		case msg := <-pc.Messages():
@@ -103,15 +125,45 @@ func consumePostEvents(consumer sarama.Consumer, topic string, feedService core.
 				continue
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 			// Assuming you implement CreateCachePost in your feedService
 			err = feedService.CreateCachePost(ctx, post.ID, post.Title, post.Content)
-			cancel()
 
 			if err != nil {
 				logger.Error("Error inserting to posts_cache", zap.Error(err))
 			}
 
+			md := metadata.Pairs(
+				"request-id", "askdfjalksdjfalsdkjflskdjf",
+			)
+			ctx = metadata.NewOutgoingContext(ctx, md)
+
+			resp, err := followCleint.GetUserFollowers(
+				ctx,
+				&pb.GetUserFollowersRequest{
+					FollowingId: int64(post.UserID),
+					Limit:       int64(10),
+				},
+			)
+
+			if err != nil {
+
+				logger.Error("Erroor while getting followers from follow service ", zap.Error(err))
+			}
+
+			followers := make([]int, 0, len(resp.Followers))
+
+			for _, follower := range resp.Followers {
+
+				user := UserCreatedPayload{
+					ID: int(follower.UserId),
+				}
+
+				followers = append(followers, user.ID)
+
+			}
+
+			fmt.Println("*****************followers**************", followers)
 		case err := <-pc.Errors():
 			log.Printf("Post consumer error: %v", err)
 		}
