@@ -16,7 +16,7 @@ A modern, scalable social network backend built using **Microservices Architectu
 The project is built using **Clean Architecture** principles in each service to ensure scalability, testability, and a clear separation of concerns.
 
 ### 🏛️ Clean Architecture Layers
-Each service (`Auth`, `post`, `like`, `follow`) is structured into the following layers within the `internal/` directory:
+Each service (`Auth`, `post`, `like`, `follow`, `feed`) is structured into the following layers within the `internal/` directory:
 
 - **`internal/handlers/`**: The **Delivery/Transport Layer**. It implements the gRPC server interfaces and handles incoming requests and outgoing responses.
 - **`internal/service/`**: The **Business Logic/Use Case Layer**. This contains the core logic of the application and is independent of external frameworks.
@@ -31,7 +31,7 @@ Each service (`Auth`, `post`, `like`, `follow`) is structured into the following
 3.  **Post Service**: Handles all post-related operations (CRUD).
 4.  **Likes Service**: Manages post reactions and likes.
 5.  **Follow Service**: Manages follow and unfollow relationships between users.
-6.  **Feeds Service** *(Coming Soon 🚀)*: Will generate user-specific timelines and feeds.
+6.  **Feeds Service**: Generates user-specific timelines and feeds.
 
 ### 🔌 Communication Map
 
@@ -67,6 +67,7 @@ Each service (`Auth`, `post`, `like`, `follow`) is structured into the following
 ├── post/                 # Post management service (gRPC Server)
 ├── like/                 # Like management service (gRPC Server)
 ├── follow/               # Follow management service (gRPC Server)
+├── feed/                 # Feed management service (gRPC Server)
 ├── pkg/                  # Shared utilities (JWT, etc.)
 ├── migrations/           # Database migration files
 └── proto/                # Shared Protocol Buffer definitions (if applicable)
@@ -121,6 +122,12 @@ Each service (`Auth`, `post`, `like`, `follow`) is structured into the following
    go run cmd/main.go
    ```
 
+   **Feed Service (Port 50055):**
+   ```bash
+   cd feed
+   go run cmd/main.go
+   ```
+
    **API Gateway (Port 8080):**
    ```bash
    cd APIGateway
@@ -136,7 +143,7 @@ To run the entire microservices ecosystem (including PostgreSQL and Redis) using
    **Important**: In your `.env` files, change hostnames from `localhost` to the Docker service names:
    - **Database Host**: `postgres` (e.g. `postgres://user:password@postgres:5432/blog...`)
    - **Redis Host**: `redis` (e.g. `redis:6379`)
-   - **gRPC Service Addresses** (for API Gateway): `post-service:50051`, `auth-service:50052`, `like-service:50053`, `follow-service:50054`
+   - **gRPC Service Addresses** (for API Gateway): `post-service:50051`, `auth-service:50052`, `like-service:50053`, `follow-service:50054`, `feed-service:50055`
 3. Run the stack from the root directory:
    ```bash
    docker-compose up --build
@@ -171,6 +178,7 @@ To run the entire microservices ecosystem (including PostgreSQL and Redis) using
 | Method   | Endpoint              | Description                  | Permissions          |
 | :------- | :-------------------- | :--------------------------- | :------------------- |
 | `POST`   | `/api/posts/like/:id` | Toggle like/unlike on a post | Authenticated User   |
+| `GET`    | `/api/posts/likes/:id`| Get total likes for a post   | Authenticated User   |
 
 ### Follows
 
@@ -180,13 +188,19 @@ To run the entire microservices ecosystem (including PostgreSQL and Redis) using
 | `GET`    | `/api/follow/followers/:id`  | View followers of a user     | Authenticated User   |
 | `GET`    | `/api/follow/followings/:id` | View users a user follows    | Authenticated User   |
 
+### Feeds
+
+| Method   | Endpoint              | Description                  | Permissions          |
+| :------- | :-------------------- | :--------------------------- | :------------------- |
+| `GET`    | `/api/feed/`          | Get user timeline feed       | Authenticated User   |
+
 ---
 
 ## 📅 Roadmap
 
 - [x] **Likes Service**: Allow users to like and react to posts.
 - [x] **Follows Service**: Allow users to follow and unfollow other users.
-- [ ] **Feeds Service**: Optimized algorithm for displaying posts.
+- [x] **Feeds Service**: Optimized algorithm for displaying posts.
 - [x] **Docker Compose**: Single command to spin up the entire ecosystem.
 - [ ] **Service Discovery**: Implement Consul or Etcd.
 
