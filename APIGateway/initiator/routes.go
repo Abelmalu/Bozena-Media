@@ -38,4 +38,12 @@ func InitRoute(router *gin.Engine, handler Handler,logger *platform.Logger,redis
 
 
 
+	//follow route initialization
+
+	feedRouter := router.Group("api/feed")
+
+	routing.InitFeedRoute(feedRouter,handler.feedHandler,logger,redisClient)
+
+
+
 }

@@ -17,6 +17,7 @@ type Client struct {
 	postClient *client.PostClient
 	likeClient *client.LikeClient
 	followClient *client.FollowClient
+	feedClient *client.FeedClient
 	logger *platform.Logger
 }
 
@@ -55,6 +56,15 @@ func NewClient(logger *platform.Logger) *Client{
 		log.Fatalf("failed to connect to gRPC server: %v", err)
 
 	}
+    
+
+	feedConn, err := grpc.NewClient("localhost:50055", grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	if err != nil {
+
+		log.Fatalf("failed to connect to gRPC server: %v", err)
+
+	}
 
 	
 
@@ -66,6 +76,7 @@ func NewClient(logger *platform.Logger) *Client{
 		postClient: client.NewPostClient(postConn),
 		likeClient: client.NewLikeClient(likeConn),
 		followClient: client.NewFollowClient(followConn),
+		feedClient: client.NewFeedClient(feedConn),
 		logger: logger,
 
 	}

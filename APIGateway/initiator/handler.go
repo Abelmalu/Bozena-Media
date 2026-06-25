@@ -12,6 +12,7 @@ type Handler struct{
 	postHandler *handler.PostHandler
 	likeHandler *handler.LikeHandler
 	followHandler *handler.FollowHandler
+	feedHandler *handler.FeedHandler
 
 }
 
@@ -23,6 +24,7 @@ func InitHandler(client Client,logger *platform.Logger ) *Handler{
 		postHandler: handler.NewPostHandler(client.postClient,logger),
 		likeHandler: handler.NewLikeHandler(client.likeClient,logger),
 		followHandler: handler.NewFollowHandler(client.followClient,logger),
+		feedHandler: handler.NewFeedHandler(client.feedClient,logger),
 	}
 
 
