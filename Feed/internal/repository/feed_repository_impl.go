@@ -6,8 +6,9 @@ import (
 	"encoding/base64"
 	"errors"
 	"strconv"
+
 	"github.com/abelmalu/golang-posts/Feed/internal/dto"
-    "github.com/abelmalu/golang-posts/Feed/internal/errors"
+	ierrors "github.com/abelmalu/golang-posts/Feed/internal/errors"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -53,7 +54,7 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 		
 		`
 
-		rows, err := feedRepo.DB.QueryContext(ctx, query, userID,cursorInt, (limit + 1))
+		rows, err := feedRepo.DB.QueryContext(ctx, query, userID, cursorInt, (limit + 1))
 
 		if err != nil {
 			var pgErr *pgconn.PgError
@@ -101,11 +102,9 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 		return &dto.PaginatedResponse{
 
 			UserFeeds: userFeeds,
-			Cursor: after,
-			HasNext: hasNext,
-			
-		},nil
-
+			Cursor:    after,
+			HasNext:   hasNext,
+		}, nil
 
 	} else {
 
@@ -118,7 +117,7 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 		
 		`
 
-		rows, err := feedRepo.DB.QueryContext(ctx,query,userID,(limit + 1))		  
+		rows, err := feedRepo.DB.QueryContext(ctx, query, userID, (limit + 1))
 
 		if err != nil {
 			var pgErr *pgconn.PgError
@@ -140,9 +139,8 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 
 		}
 
-
 		for rows.Next() {
-			
+
 			var userFeed dto.UserFeed
 
 			if err := rows.Scan(&userFeed.ID, &userFeed.PostOwnerID, &userFeed.UserName, &userFeed.Name, &userFeed.PostTitle, &userFeed.PostContent); err != nil {
@@ -166,23 +164,18 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 
 		return &dto.PaginatedResponse{
 			UserFeeds: userFeeds,
-			Cursor: after,
-			HasNext: hasNext,
-
-		},nil
+			Cursor:    after,
+			HasNext:   hasNext,
+		}, nil
 	}
 
-	
 }
 
-
-func (feedRepository *FeedRepository) CreateCachePost(ctx context.Context, postID int, title,content string)error{
-
-
+func (feedRepository *FeedRepository) CreateCachePost(ctx context.Context, postID int, title, content string) error {
 
 	query := `INSERT INTO posts_cache (post_id,title,content)  VALUES($1,$2,$3)`
 
-	_, err := feedRepository.DB.ExecContext(ctx, query, postID, title,content)
+	_, err := feedRepository.DB.ExecContext(ctx, query, postID, title, content)
 
 	var pgErr *pgconn.PgError
 	if err != nil {
@@ -203,18 +196,16 @@ func (feedRepository *FeedRepository) CreateCachePost(ctx context.Context, postI
 		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 	}
-    
+
 	return nil
 
-
 }
-
 
 func (feedRepository *FeedRepository) CreateCacheUser(ctx context.Context, userID int, username, name string) error {
 
 	query := `INSERT INTO users_cache (user_id,username,name)  VALUES($1,$2,$3)`
 
-	_, err := feedRepository.DB.ExecContext(ctx, query, userID, username,name)
+	_, err := feedRepository.DB.ExecContext(ctx, query, userID, username, name)
 
 	var pgErr *pgconn.PgError
 	if err != nil {
@@ -235,6 +226,31 @@ func (feedRepository *FeedRepository) CreateCacheUser(ctx context.Context, userI
 		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 	}
-    
+
 	return nil
+}
+func (repo *FeedRepository) InsertFeedEntries(ctx context.Context, followersID []int, postID, ownerID int) error {
+	tx, err := repo.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.PrepareContext(ctx, `
+		INSERT INTO feed_entries(user_id, post_id, owner_id) 
+		VALUES ($1, $2, $3)
+	`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, followerID := range followersID {
+		_, err := stmt.ExecContext(ctx, followerID, postID, ownerID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }

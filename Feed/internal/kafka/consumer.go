@@ -35,7 +35,7 @@ type PostCreatedPayload struct {
 func initFollowClient() pb.FollowServiceClient {
 
 	followConn, err := grpc.NewClient("localhost:50054", grpc.WithTransportCredentials(insecure.NewCredentials()))
-
+;
 	if err != nil {
 
 		log.Fatalf("failed to connect to gRPC server: %v", err)
@@ -163,7 +163,14 @@ func consumePostEvents(consumer sarama.Consumer, topic string, feedService core.
 
 			}
 
-			fmt.Println("*****************followers**************", followers)
+
+			err = feedService.CreateFeedEntries(ctx,followers,post.ID,post.UserID)
+
+			if err != nil {
+
+				logger.Error("Error",zap.Error(err))
+			}
+			
 		case err := <-pc.Errors():
 			log.Printf("Post consumer error: %v", err)
 		}

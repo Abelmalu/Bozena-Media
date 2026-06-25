@@ -71,8 +71,14 @@ func (feedService *FeedService) CreateCacheUser(ctx context.Context, userID int,
 
 }
 
-// func (feedService *FeedService) CreateFeedEntries(ctx context.Context,userID,ownerID,postID int) error{
+func (feedService *FeedService) CreateFeedEntries(ctx context.Context,followersID []int,postID,ownerID int ) error {
+
+
+	err := feedService.FeedRepo.InsertFeedEntries(ctx,followersID,postID,ownerID)
+	
+
+	return err
 
 
 
-// }
+}
