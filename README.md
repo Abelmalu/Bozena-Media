@@ -68,6 +68,7 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`) is structured into the f
 ├── like/                 # Like management service (gRPC Server)
 ├── follow/               # Follow management service (gRPC Server)
 ├── feed/                 # Feed management service (gRPC Server)
+├── frontend/             # React + TypeScript web client
 ├── pkg/                  # Shared utilities (JWT, etc.)
 ├── migrations/           # Database migration files
 └── proto/                # Shared Protocol Buffer definitions (if applicable)
@@ -209,3 +210,7 @@ To run the entire microservices ecosystem (including PostgreSQL and Redis) using
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Frontend
+
+The React frontend lives in [`frontend/`](/home/abel/Projects/GO/Bozena-Media/frontend) and talks only to the API Gateway.

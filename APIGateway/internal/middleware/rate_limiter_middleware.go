@@ -26,8 +26,8 @@ func RateLimitMiddleware(redisClient *redis.Client,logger *platform.Logger) gin.
 			c.Request.Context(),
 			redisClient,
 			[]string{key},
-			2,
-			1,
+			500,
+			500,
 			now,
 			1,
 		).Result()

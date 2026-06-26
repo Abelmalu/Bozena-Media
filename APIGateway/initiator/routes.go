@@ -16,6 +16,7 @@ func InitRoute(router *gin.Engine, handler Handler,logger *platform.Logger,redis
 	router.Use(middleware.RequestLoggerMiddleware(logger))
 	router.Use(middleware.RecoveryMiddleware(logger))
 	router.Use(middleware.RateLimitMiddleware(redisClient,logger))
+	router.Use(middleware.CORSMiddleware())
 
 	authRouter := router.Group("api/auth")
 	routing.InitAuthRoute(authRouter,handler.authHandler,logger,redisClient)

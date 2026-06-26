@@ -2,7 +2,6 @@ package server
 
 import (
 	"log"
-
 	"github.com/gin-gonic/gin"
 )
 
