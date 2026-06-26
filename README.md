@@ -7,7 +7,7 @@
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 ![Kafka](https://img.shields.io/badge/Apache_Kafka-231F20?style=for-the-badge&logo=apachekafka&logoColor=white)
 
-A modern, scalable social network backend built using **Microservices Architecture**. This project leverages **gRPC** for efficient internal communication between services and **Gin** as the entry point via an API Gateway.
+A modern, scalable social network backend built using **Microservices Architecture**. The system uses **Gin** as the public HTTP entry point and **gRPC** for service-to-service communication.
 
 ---
 
@@ -26,18 +26,32 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`) is structured into the f
 
 ### 🛰️ The Services
 
-1.  **API Gateway**: The entry point for all client requests. It handles routing and authenticates requests using the **Auth Service** before forwarding them to the internal services.
-2.  **Auth Service**: Manages user registration, login, JWT issuance, and session management.
-3.  **Post Service**: Handles all post-related operations (CRUD).
-4.  **Likes Service**: Manages post reactions and likes.
-5.  **Follow Service**: Manages follow and unfollow relationships between users.
-6.  **Feeds Service**: Generates user-specific timelines and feeds.
+1.  **API Gateway**: The public entry point. It handles routing, request IDs, CORS, rate limiting, auth checks, and forwards requests to internal services over gRPC.
+2.  **Auth Service**: Manages user registration, login, refresh, logout, JWT issuance, session management, and username search.
+3.  **Post Service**: Handles post CRUD and user-specific post lookup.
+4.  **Like Service**: Manages like and unlike operations plus post like listings.
+5.  **Follow Service**: Manages follow and unfollow relationships between users, plus follower/following listings.
+6.  **Feed Service**: Builds the authenticated user feed from post and user metadata.
 
 ### 🔌 Communication Map
 
 - **External (Client -> Gateway)**: REST API (HTTP/JSON)
 - **Internal (Gateway -> Services)**: gRPC (Protobuf)
 - **Internal (Service -> Service)**: gRPC (Protobuf)
+
+### 🔁 Request Flow
+
+1. A client calls the API Gateway.
+2. The Gateway authenticates the request, applies middleware, and attaches request metadata.
+3. The Gateway forwards the request to the relevant service over gRPC.
+4. Services persist data in PostgreSQL, use Redis for auth/rate-limit state, and emit Kafka events where needed.
+
+### 🧩 Data Ownership
+
+- Each service owns its own PostgreSQL database and migrations.
+- Auth, Post, Follow, and Feed all maintain user caches for username/name lookups.
+- Kafka propagates `userCreated` and post-related events to downstream services.
+- Redis is used for refresh-token/session blacklist state and distributed token-bucket rate limiting.
 
 ---
 
@@ -213,4 +227,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Frontend
 
-The React frontend lives in [`frontend/`](/home/abel/Projects/GO/Bozena-Media/frontend) and talks only to the API Gateway.
+The React frontend  which is vibe coded lives in [`frontend/`](/home/abel/Projects/GO/Bozena-Media/frontend) and talks only to the API Gateway.
