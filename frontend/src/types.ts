@@ -21,6 +21,7 @@ export type AuthPayload = {
 export type AuthResponse = AuthPayload;
 
 export type SearchUser = {
+  id: number;
   username: string;
   name: string;
 };

@@ -1,31 +1,8 @@
-import { FormEvent, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { createPost } from '../lib/api';
-import { FEED_REFRESH_EVENT } from '../lib/events';
 
 export function AppShell() {
   const { signOut, sessionUser, username } = useAuth();
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [posting, setPosting] = useState(false);
-  const [error, setError] = useState('');
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setPosting(true);
-    setError('');
-    try {
-      await createPost({ title, content });
-      setTitle('');
-      setContent('');
-      window.dispatchEvent(new Event(FEED_REFRESH_EVENT));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create post');
-    } finally {
-      setPosting(false);
-    }
-  }
 
   return (
     <div className="app-shell">
@@ -49,6 +26,9 @@ export function AppShell() {
           <NavLink to="/app/feed" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
             Feed
           </NavLink>
+          <NavLink to="/app/create-post" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+            Create Post
+          </NavLink>
           <NavLink to="/app/profile" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
             Profile
           </NavLink>
@@ -60,27 +40,6 @@ export function AppShell() {
         <button type="button" className="button button-ghost" onClick={() => void signOut()}>
           Logout
         </button>
-
-        <div className="compose-sidebar">
-          <div className="section-tag">Create Post</div>
-          <h3>Publish to feed</h3>
-          <p className="hero-copy">This composer lives in the sidebar. The feed page stays read-only.</p>
-
-          <form className="compose-form compose-form-sidebar" onSubmit={onSubmit}>
-            <label>
-              <span>Title</span>
-              <input value={title} onChange={(event) => setTitle(event.target.value)} minLength={3} maxLength={30} required />
-            </label>
-            <label>
-              <span>Content</span>
-              <textarea value={content} onChange={(event) => setContent(event.target.value)} minLength={5} rows={5} required />
-            </label>
-            {error ? <div className="form-error">{error}</div> : null}
-            <button type="submit" className="button" disabled={posting}>
-              {posting ? 'Publishing...' : 'Create post'}
-            </button>
-          </form>
-        </div>
       </aside>
 
       <main className="app-main">

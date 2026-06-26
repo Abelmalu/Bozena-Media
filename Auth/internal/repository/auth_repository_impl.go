@@ -72,6 +72,7 @@ func (authRepo *AuthRepository) Register(ctx context.Context, user *model.User) 
 	return &newUser, nil
 }
 func (authrepo *AuthRepository) Login(ctx context.Context, userName, password string) (*model.User, error) {
+	
 	var user model.User
 	query := `SELECT * FROM users WHERE username=$1`
 	if err := authrepo.DB.QueryRowContext(ctx, query, userName).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.Role,&user.FailedLoginAttempts,&user.IsPermanentlyLocked,&user.TemporaryLockUntil); err != nil {

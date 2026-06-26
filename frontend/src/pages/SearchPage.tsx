@@ -1,4 +1,5 @@
 import { FormEvent, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { searchUsers } from '../lib/api';
 import type { SearchUser } from '../types';
 import { PageFrame } from '../components/PageFrame';
@@ -45,7 +46,7 @@ export function SearchPage() {
     <PageFrame
       eyebrow="Search"
       title="Find users"
-      subtitle="The backend currently returns username and name only, so results are informational for now."
+      subtitle="Click a result to open that user's profile with posts, followers, and followings."
     >
       <section className="panel">
         <form className="search-form" onSubmit={onSubmit}>
@@ -63,10 +64,11 @@ export function SearchPage() {
           <>
             <div className="compact-grid">
               {results.map((user) => (
-                <div key={`${user.username}-${user.name}`} className="user-card">
+                <Link key={user.id} to={`/app/profile/${user.id}`} className="user-card user-card-link">
                   <div className="user-name">{user.name}</div>
                   <div className="user-handle">@{user.username}</div>
-                </div>
+                  <div className="user-card-hint">Open profile</div>
+                </Link>
               ))}
             </div>
 

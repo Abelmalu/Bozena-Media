@@ -47,11 +47,11 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 
 		query := `
 
-				 SELECT fe.id,fe.owner_id,u.username,u.name,p.title,p.content FROM feed_entries fe
+				 SELECT fe.id,fe.owner_id,u.username,u.name,p.post_id,p.title,p.content FROM feed_entries fe
 				 INNER JOIN  users_cache u ON  fe.owner_id = u.user_id 
 				 INNER JOIN  posts_cache p ON   fe.post_id = p.post_id 
 				 WHERE fe.user_id = $1 AND fe.id < $2 ORDER BY fe.id DESC LIMIT $3
-		
+
 		`
 
 		rows, err := feedRepo.DB.QueryContext(ctx, query, userID, cursorInt, (limit + 1))
@@ -80,7 +80,7 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 
 			var userFeed dto.UserFeed
 
-			if err := rows.Scan(&userFeed.ID, &userFeed.PostOwnerID, &userFeed.UserName, &userFeed.Name, &userFeed.PostTitle, &userFeed.PostContent); err != nil {
+			if err := rows.Scan(&userFeed.ID, &userFeed.PostOwnerID, &userFeed.UserName, &userFeed.Name, &userFeed.PostID,&userFeed.PostTitle, &userFeed.PostContent); err != nil {
 
 				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 			}
@@ -109,7 +109,7 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 	} else {
 
 		query := `
-				 SELECT fe.id,fe.owner_id,u.username,u.name,p.title,p.content FROM feed_entries fe
+				 SELECT fe.id,fe.owner_id,u.username,u.name,p.post_id,p.title,p.content FROM feed_entries fe
 				 INNER JOIN  users_cache u ON  fe.owner_id = u.user_id 
 				 INNER JOIN  posts_cache p ON   fe.post_id = p.post_id 
 				 WHERE fe.user_id = $1 ORDER BY fe.id DESC LIMIT $2
@@ -143,7 +143,7 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 
 			var userFeed dto.UserFeed
 
-			if err := rows.Scan(&userFeed.ID, &userFeed.PostOwnerID, &userFeed.UserName, &userFeed.Name, &userFeed.PostTitle, &userFeed.PostContent); err != nil {
+			if err := rows.Scan(&userFeed.ID, &userFeed.PostOwnerID, &userFeed.UserName, &userFeed.Name, &userFeed.PostID,&userFeed.PostTitle, &userFeed.PostContent); err != nil {
 
 				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 			}

@@ -409,28 +409,6 @@ p {
   margin-top: 0.25rem;
 }
 
-.profile-subvalue {
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.compose-sidebar {
-  display: grid;
-  gap: 0.9rem;
-  border-radius: 18px;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border);
-}
-
-.compose-sidebar h3 {
-  font-size: 1.05rem;
-}
-
-.compose-form-sidebar {
-  margin-top: 0.25rem;
-}
-
 .profile-label {
   color: var(--muted);
   font-size: 0.85rem;
@@ -620,6 +598,21 @@ p {
   gap: 0.35rem;
   text-align: left;
   color: var(--text);
+}
+
+.user-card-link {
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.user-card-link:hover {
+  transform: translateY(-1px);
+  border-color: rgba(244, 184, 96, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.user-card-hint {
+  color: var(--muted-2);
+  font-size: 0.82rem;
 }
 
 .user-name {

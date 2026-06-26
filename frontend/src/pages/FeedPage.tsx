@@ -7,6 +7,7 @@ import { FeedCard } from '../components/Card';
 import { Modal } from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
 import { FEED_REFRESH_EVENT } from '../lib/events';
+import { readLikedPosts, writeLikedPosts } from '../lib/session';
 
 export function FeedPage() {
   const { sessionUser, username } = useAuth();
@@ -16,7 +17,7 @@ export function FeedPage() {
   const [hasNext, setHasNext] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [likedMap, setLikedMap] = useState<Record<number, boolean>>({});
+  const [likedMap, setLikedMap] = useState<Record<number, boolean>>(() => readLikedPosts());
   const [likesModal, setLikesModal] = useState<{ postId: number; data: LikesResponse | null }>({ postId: 0, data: null });
 
   async function loadFeed(nextCursor = '', append = false) {
@@ -76,12 +77,16 @@ export function FeedPage() {
 
   async function handleLike(postId: number) {
     const nextState = !likedMap[postId];
-    setLikedMap((current) => ({ ...current, [postId]: nextState }));
+    const nextMap = { ...likedMap, [postId]: nextState };
+    setLikedMap(nextMap);
     try {
       await toggleLike(postId, nextState);
+      writeLikedPosts(nextMap);
     } catch (err) {
-      setLikedMap((current) => ({ ...current, [postId]: !nextState }));
+      const revertedMap = { ...nextMap, [postId]: !nextState };
+      setLikedMap(revertedMap);
       setError(err instanceof Error ? err.message : 'Could not toggle like');
+      writeLikedPosts(revertedMap);
     }
   }
 
@@ -121,7 +126,6 @@ export function FeedPage() {
               <FeedCard
                 key={resolvePostId(item) || `${item.UserName}-${item.PostTitle}`}
                 item={item}
-                postId={resolvePostId(item)}
                 ownerId={resolveOwnerId(item)}
                 liked={Boolean(likedMap[resolvePostId(item)])}
                 onLike={() => {

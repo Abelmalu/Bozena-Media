@@ -122,7 +122,7 @@ func (authHandler *AuthHandler) Register(c *gin.Context) {
 		registerResponse.RefreshToken = resp.RefreshToken
 	}
 
-	utils.SendSuccessResponse(c, registerResponse, requestID, http.StatusOK)
+	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
 
 }
 
@@ -187,7 +187,7 @@ func (authHandler *AuthHandler) Login(c *gin.Context) {
 		loginResponse.RefreshToken = resp.RefreshToken
 	}
 
-	utils.SendSuccessResponse(c, loginResponse, requestID, http.StatusOK)
+	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
 
 }
 

@@ -3,14 +3,12 @@ import type { FeedItem, ProfileUser } from '../types';
 
 export function FeedCard({
   item,
-  postId,
   ownerId,
   liked,
   onLike,
   onOpenLikes,
 }: {
   item: FeedItem;
-  postId: number;
   ownerId: number;
   liked: boolean;
   onLike: () => void;

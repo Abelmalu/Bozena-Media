@@ -1,6 +1,14 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { clearAccessToken, clearUsername, readAccessToken, readUsername, writeAccessToken, writeUsername } from '../lib/session';
+import {
+  clearAccessToken,
+  clearLikedPosts,
+  clearUsername,
+  readAccessToken,
+  readUsername,
+  writeAccessToken,
+  writeUsername,
+} from '../lib/session';
 import { decodeSessionUser } from '../lib/jwt';
 import { login, logout, refreshSession, registerAuthHooks, registerUser } from '../lib/api';
 import type { SessionUser } from '../types';
@@ -39,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearAccessToken: () => {
         clearAccessToken();
         clearUsername();
+        clearLikedPosts();
         setAccessTokenState(null);
         setUsername(null);
         setSessionUser({ userId: null, role: null });
@@ -69,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch {
           clearAccessToken();
           clearUsername();
+          clearLikedPosts();
           setAccessTokenState(null);
           setUsername(null);
           setSessionUser({ userId: null, role: null });
@@ -106,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {
         clearAccessToken();
         clearUsername();
+        clearLikedPosts();
         setAccessTokenState(null);
         setUsername(null);
         setSessionUser({ userId: null, role: null });
@@ -154,6 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       clearAccessToken();
       clearUsername();
+      clearLikedPosts();
       setAccessTokenState(null);
       setUsername(null);
       setSessionUser({ userId: null, role: null });
@@ -180,6 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       clearAccessToken();
       clearUsername();
+      clearLikedPosts();
       setAccessTokenState(null);
       setUsername(null);
       setSessionUser({ userId: null, role: null });
