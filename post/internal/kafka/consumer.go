@@ -16,14 +16,12 @@ func StartConsumer(brokers []string, topic string, postService core.PostService,
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
 
-	// 1. Create the master consumer
 	consumer, err := sarama.NewConsumer(brokers, config)
 	if err != nil {
 		log.Fatalf("Error creating consumer: %v", err)
 	}
 	defer consumer.Close()
 
-	// 2. Consume from partition 0 (use a ConsumerGroup if scaling horizontally)
 	partitionConsumer, err := consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
 	if err != nil {
 		log.Fatalf("Error creating partition consumer: %v", err)
@@ -32,7 +30,6 @@ func StartConsumer(brokers []string, topic string, postService core.PostService,
 
 	log.Printf("Consumer started. Listening on topic: %s...", topic)
 
-	// 3. Process loop
 	for {
 
 		select {
@@ -52,8 +49,7 @@ func StartConsumer(brokers []string, topic string, postService core.PostService,
 			}
 
 			
-			ctx,cancel := context.WithTimeout(context.Background(),time.Second*2)
-			defer cancel()
+			ctx,_ := context.WithTimeout(context.Background(),time.Second*2)
 
 			err = postService.CreateCacheUser(ctx,user.ID,user.Username,user.Name)
 			if err != nil {

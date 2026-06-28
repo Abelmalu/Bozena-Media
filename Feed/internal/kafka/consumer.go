@@ -34,7 +34,7 @@ type PostCreatedPayload struct {
 func initFollowClient() pb.FollowServiceClient {
 
 	followConn, err := grpc.NewClient("localhost:50054", grpc.WithTransportCredentials(insecure.NewCredentials()))
-;
+
 	if err != nil {
 
 		log.Fatalf("failed to connect to gRPC server: %v", err)
@@ -45,6 +45,8 @@ func initFollowClient() pb.FollowServiceClient {
 
 	return followClient
 }
+
+
 
 // StartEventConsumers initializes separate listeners for different topics
 func StartConsumer(brokers []string, userTopic string, postTopic string, feedService core.FeedService, logger *platform.Logger) {
@@ -61,13 +63,11 @@ func StartConsumer(brokers []string, userTopic string, postTopic string, feedSer
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	// Launch User Consumer
 	go func() {
 		defer wg.Done()
 		consumeUserEvents(consumer, userTopic, feedService, logger)
 	}()
 
-	// Launch Post Consumer
 	go func() {
 		defer wg.Done()
 		consumePostEvents(consumer, postTopic, feedService, logger)
@@ -125,51 +125,65 @@ func consumePostEvents(consumer sarama.Consumer, topic string, feedService core.
 			}
 
 			ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
-			// Assuming you implement CreateCachePost in your feedService
-			err = feedService.CreateCachePost(ctx, post.ID, post.Title, post.Content)
 
-			if err != nil {
-				logger.Error("Error inserting to posts_cache", zap.Error(err))
-			}
+			wg := sync.WaitGroup{}
+
+			wg.Add(2)
+
+			go func() {
+				defer wg.Done()
+
+				err = feedService.CreateCachePost(ctx, post.ID, post.Title, post.Content)
+
+				if err != nil {
+					logger.Error("Error inserting to posts_cache", zap.Error(err))
+				}
+
+			}()
 
 			md := metadata.Pairs(
 				"request-id", "askdfjalksdjfalsdkjflskdjf",
 			)
 			ctx = metadata.NewOutgoingContext(ctx, md)
 
-			resp, err := followCleint.GetUserFollowers(
-				ctx,
-				&pb.GetUserFollowersRequest{
-					FollowingId: int64(post.UserID),
-					Limit:       int64(10),
-				},
-			)
+			go func() {
 
-			if err != nil {
+				defer wg.Done()
 
-				logger.Error("Erroor while getting followers from follow service ", zap.Error(err))
-			}
+				resp, err := followCleint.GetUserFollowers(
+					ctx,
+					&pb.GetUserFollowersRequest{
+						FollowingId: int64(post.UserID),
+						Limit:       int64(10),
+					},
+				)
 
-			followers := make([]int, 0, len(resp.Followers))
+				if err != nil {
 
-			for _, follower := range resp.Followers {
-
-				user := UserCreatedPayload{
-					ID: int(follower.UserId),
+					logger.Error("Erroor while getting followers from follow service ", zap.Error(err))
 				}
 
-				followers = append(followers, user.ID)
+				followers := make([]int, 0, len(resp.Followers))
 
-			}
+				for _, follower := range resp.Followers {
 
+					user := UserCreatedPayload{
+						ID: int(follower.UserId),
+					}
 
-			err = feedService.CreateFeedEntries(ctx,followers,post.ID,post.UserID)
+					followers = append(followers, user.ID)
 
-			if err != nil {
+				}
 
-				logger.Error("Error",zap.Error(err))
-			}
-			
+				err = feedService.CreateFeedEntries(ctx, followers, post.ID, post.UserID)
+
+				if err != nil {
+
+					logger.Error("Error", zap.Error(err))
+				}
+
+			}()
+
 		case err := <-pc.Errors():
 			log.Printf("Post consumer error: %v", err)
 		}
