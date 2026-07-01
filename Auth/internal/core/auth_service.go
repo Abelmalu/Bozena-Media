@@ -10,7 +10,8 @@ import (
 type AuthService interface {
 	Register(ctx context.Context, post *model.User) (*model.User, *model.TokenPair, error)
 	Login(ctx context.Context, userName, password string) (*model.User, *model.TokenPair, error)
-	Logout(ctx context.Context, refreshToken string) (error)
-	RefreshHandler(ctx context.Context,refreshToken string)(*model.TokenPair,error)
-	SearchUser(ctx context.Context,username,cursor string,limit int)(*dto.PaginatedResponse,error)
+	Logout(ctx context.Context, refreshToken string) error
+	RefreshHandler(ctx context.Context, refreshToken string) (*model.TokenPair, error)
+	SearchUser(ctx context.Context, username, cursor string, limit int) (*dto.PaginatedResponse, error)
+	IncreaseFollowCounts(ctx context.Context, followerID, followingID int) error
 }

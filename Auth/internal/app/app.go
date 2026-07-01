@@ -136,8 +136,12 @@ func (app *App) Run() {
 	authRepo := repository.NewAuthRepository(app.DB)
 	authService := service.NewAuthService(authRepo,app.RedisClient,app.Kafka,logger)
 	authHandler := handler.NewAuthHandler(authService,logger)
-
+	brokers := []string{"localhost:9092"}
+	followedTopic := "followed"
+	unfollowTopic := "unfollowed"
 	
+
+	go kafka.StartConsumer(brokers,followedTopic,unfollowTopic,authService,logger)
 	pb.RegisterAuthServiceServer(s, authHandler)
 	s.Serve(lis)
 	

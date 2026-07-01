@@ -46,8 +46,6 @@ func initFollowClient() pb.FollowServiceClient {
 	return followClient
 }
 
-
-
 // StartEventConsumers initializes separate listeners for different topics
 func StartConsumer(brokers []string, userTopic string, postTopic string, feedService core.FeedService, logger *platform.Logger) {
 	config := sarama.NewConfig()

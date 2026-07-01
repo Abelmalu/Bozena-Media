@@ -21,6 +21,9 @@ type User struct {
 	IsPermanentlyLocked bool       `json:"is_permanently_locked" db:"is_permanently_locked"`
 	CreatedAt           string     `db:"created_at"`
 	UpdatedAt           string     `db:"updated_at"`
+	FollowerCount 		int 		`json:"follower_count" db:"follower_count"`
+	FollowingCount 		int 		`json:"following_count" db:"following_count"`
+
 }
 
 // client types for mobile apps and browsers

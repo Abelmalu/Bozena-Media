@@ -83,7 +83,7 @@ func (authSer *AuthService) Register(ctx context.Context, user *model.User) (*mo
 
 	if err != nil {
 
-		return nil,nil,ierrors.NewInternalError(ierrors.ErrorMessage("Kafka Sending Error"),err)
+		return nil, nil, ierrors.NewInternalError(ierrors.ErrorMessage("Kafka Sending Error"), err)
 	}
 
 	authSer.logger.Info(fmt.Sprintf("Apache kafka Partition : %d Offset : %d", partition, offset))
@@ -434,4 +434,15 @@ func (authSer *AuthService) SearchUser(ctx context.Context, username, cursor str
 	}
 
 	return resp, nil
+}
+
+func (authSer *AuthService) IncreaseFollowCounts(ctx context.Context, followerID, followingID int) error {
+
+	if err := authSer.IncreaseFollowCounts(ctx, followerID, followingID); err != nil {
+
+		return err
+	}
+
+	return nil
+
 }

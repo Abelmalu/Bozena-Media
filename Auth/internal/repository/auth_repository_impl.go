@@ -32,7 +32,7 @@ func (authRepo *AuthRepository) Register(ctx context.Context, user *model.User) 
 	var newUser model.User
 
 	query := `INSERT INTO users(name,username,email,password) VALUES($1,$2,$3,$4) RETURNING id,role,name,username`
-	if err := authRepo.DB.QueryRowContext(ctx, query, user.Name, user.Username, user.Email, user.Password).Scan(&newUser.ID, &newUser.Role,&newUser.Name,&newUser.Username); err != nil {
+	if err := authRepo.DB.QueryRowContext(ctx, query, user.Name, user.Username, user.Email, user.Password).Scan(&newUser.ID, &newUser.Role, &newUser.Name, &newUser.Username); err != nil {
 		// Change *pq.Error to *pgconn.PgError
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -72,10 +72,10 @@ func (authRepo *AuthRepository) Register(ctx context.Context, user *model.User) 
 	return &newUser, nil
 }
 func (authrepo *AuthRepository) Login(ctx context.Context, userName, password string) (*model.User, error) {
-	
+
 	var user model.User
 	query := `SELECT * FROM users WHERE username=$1`
-	if err := authrepo.DB.QueryRowContext(ctx, query, userName).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.Role,&user.FailedLoginAttempts,&user.IsPermanentlyLocked,&user.TemporaryLockUntil); err != nil {
+	if err := authrepo.DB.QueryRowContext(ctx, query, userName).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.Role, &user.FailedLoginAttempts, &user.IsPermanentlyLocked, &user.TemporaryLockUntil, &user.FollowerCount, &user.FollowingCount); err != nil {
 
 		var pgErr *pgconn.PgError
 
@@ -277,27 +277,26 @@ func (authRepo *AuthRepository) GetUserByID(ID int) (*model.User, error) {
 	return &user, nil
 }
 
+func (authRepo *AuthRepository) SearchUser(ctx context.Context, username, cursor string, limit int) (*dto.PaginatedResponse, error) {
 
-func (authRepo *AuthRepository) SearchUser(ctx context.Context,username,cursor string,limit int) (*dto.PaginatedResponse,error){
-	 
 	var users []*model.User
-	var after string 
+	var after string
 	var hasNext bool
 
 	if cursor != "" {
 
 		cursorByte := base64.StdEncoding.EncodeToString([]byte(cursor))
 		cursorStr := string(cursorByte)
-		cursorInt,err := strconv.Atoi(cursorStr)
+		cursorInt, err := strconv.Atoi(cursorStr)
 		username = "% "
 		if err != nil {
 
-			return nil,ierrors.NewValidationError(ierrors.MSGBadRequest,nil,err)
+			return nil, ierrors.NewValidationError(ierrors.MSGBadRequest, nil, err)
 		}
 
 		query := ` SELECT id,name,username FROM users WHERE username ILIKE $1 AND id < $2 ORDER BY id DESC LIMIT $3 `
 
-		rows,err := authRepo.DB.QueryContext(ctx,query,username,cursorInt,(limit + 1))
+		rows, err := authRepo.DB.QueryContext(ctx, query, username, cursorInt, (limit + 1))
 
 		if err != nil {
 			var pgErr *pgconn.PgError
@@ -324,31 +323,26 @@ func (authRepo *AuthRepository) SearchUser(ctx context.Context,username,cursor s
 		for rows.Next() {
 			var user model.User
 
-			if err := rows.Scan(&user.ID,&user.Name,&user.Username); err != nil {
+			if err := rows.Scan(&user.ID, &user.Name, &user.Username); err != nil {
 
-			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 			}
-
 
 			if len(users) == limit {
 
 				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(user.ID)))
-				hasNext = true 
+				hasNext = true
 
 				break
-				
 
 			}
 
 			users = append(users, &user)
 
-
 		}
 
-
-
-	}else {
+	} else {
 
 		query := ` SELECT id,name,username FROM users WHERE username ILIKE $1 ORDER BY id DESC LIMIT $2`
 
@@ -381,7 +375,7 @@ func (authRepo *AuthRepository) SearchUser(ctx context.Context,username,cursor s
 
 			var user model.User
 
-			if err = rows.Scan(&user.ID,&user.Name, &user.Username); err != nil {
+			if err = rows.Scan(&user.ID, &user.Name, &user.Username); err != nil {
 
 				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
@@ -408,24 +402,18 @@ func (authRepo *AuthRepository) SearchUser(ctx context.Context,username,cursor s
 
 	}
 
-
-
 	return &dto.PaginatedResponse{
-		Users: users,
-		Cursor: after,
+		Users:   users,
+		Cursor:  after,
 		HasNext: hasNext,
-	},nil
+	}, nil
 }
 
-
-func (authRepo *AuthRepository) UpdateFailedLoginAttempts(ctx context.Context,user *model.User)(*model.User,error){
-
+func (authRepo *AuthRepository) UpdateFailedLoginAttempts(ctx context.Context, user *model.User) (*model.User, error) {
 
 	query := ` UPDATE users SET failed_attempts=failed_attempts+1 WHERE id=$1 RETURNING failed_attempts`
 
-
-	 err := authRepo.DB.QueryRowContext(ctx,query,user.ID).Scan(&user.FailedLoginAttempts) 
-
+	err := authRepo.DB.QueryRowContext(ctx, query, user.ID).Scan(&user.FailedLoginAttempts)
 
 	var pgErr *pgconn.PgError
 	if err != nil {
@@ -447,20 +435,14 @@ func (authRepo *AuthRepository) UpdateFailedLoginAttempts(ctx context.Context,us
 
 	}
 
-
-
-	return user,nil
+	return user, nil
 }
 
-
-func (authRepo *AuthRepository)  TemporaryLockUntil(ctx context.Context, user *model.User)(*model.User,error){
-
+func (authRepo *AuthRepository) TemporaryLockUntil(ctx context.Context, user *model.User) (*model.User, error) {
 
 	query := ` UPDATE users SET failed_attempts = $1, temporary_locked_until = $2  WHERE id=$3 RETURNING failed_attempts`
 
-
-	 err := authRepo.DB.QueryRowContext(ctx,query,user.FailedLoginAttempts,user.TemporaryLockUntil,user.ID).Scan(&user.FailedLoginAttempts) 
-
+	err := authRepo.DB.QueryRowContext(ctx, query, user.FailedLoginAttempts, user.TemporaryLockUntil, user.ID).Scan(&user.FailedLoginAttempts)
 
 	var pgErr *pgconn.PgError
 	if err != nil {
@@ -482,10 +464,38 @@ func (authRepo *AuthRepository)  TemporaryLockUntil(ctx context.Context, user *m
 
 	}
 
+	return user, nil
 
+}
 
-	return user,nil
+func (authRepo *AuthRepository) IncreaseFollowCount(ctx context.Context, followerID, followingID int) error {
 
+	tx,err := authRepo.DB.BeginTx(ctx,nil)
 
+	defer tx.Rollback()
 
+	if err != nil {
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+	}
+
+	query1 := `UPDATE users SET follower_count=follower_count+1 WHERE follower_id=$1`
+
+	_,err = tx.ExecContext(ctx,query1,followerID)
+
+	if err != nil {
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+	}
+
+	query2 := `UPDATE users SET following_count=following_count+1 WHERE following_id=$1`
+
+	_,err = tx.ExecContext(ctx,query2,followingID)
+
+	if err != nil {
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+	}
+	
+	return nil
 }

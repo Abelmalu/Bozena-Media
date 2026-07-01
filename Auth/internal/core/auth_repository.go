@@ -8,6 +8,7 @@ import (
 	"github.com/abelmalu/golang-posts/Auth/internal/dto"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 )
+
 type AuthRepository interface {
 	Register(ctx context.Context, user *model.User) (*model.User, error)
 	Login(ctx context.Context, userName, password string) (*model.User, error)
@@ -19,4 +20,5 @@ type AuthRepository interface {
 	SearchUser(ctx context.Context, username, cursor string, limit int) (*dto.PaginatedResponse, error)
 	UpdateFailedLoginAttempts(ctx context.Context, user *model.User) (*model.User, error)
 	TemporaryLockUntil(ctx context.Context, user *model.User) (*model.User, error)
+	IncreaseFollowCount(ctx context.Context, followerID, followingID int) error
 }
