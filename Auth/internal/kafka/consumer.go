@@ -57,9 +57,6 @@ func followedConsumer(consumer sarama.Consumer, followedTopic string, authServic
 	}
 	defer pc.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
 	for {
 
 		select {
@@ -73,6 +70,9 @@ func followedConsumer(consumer sarama.Consumer, followedTopic string, authServic
 				logger.Error("Error while unmarshaling followed event", zap.Error(err))
 				continue
 			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
 
 			if err := authService.IncreaseFollowCounts(ctx, followed.FollowerID, followed.FollowingID); err != nil {
 
@@ -106,6 +106,16 @@ func unfollowedConsumer(consumer sarama.Consumer, unfollowedTopic string, authSe
 
 				logger.Error("Error while unmarshaling followed event", zap.Error(err))
 				continue
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+
+			err := authService.DecreaseFollowCounts(ctx, followed.FollowerID, followed.FollowingID)
+
+			if err != nil {
+
+				logger.Error("Error when decreasing follow count", zap.Error(err))
 			}
 
 		case err := <-pc.Errors():

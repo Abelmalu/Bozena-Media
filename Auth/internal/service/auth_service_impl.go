@@ -438,7 +438,19 @@ func (authSer *AuthService) SearchUser(ctx context.Context, username, cursor str
 
 func (authSer *AuthService) IncreaseFollowCounts(ctx context.Context, followerID, followingID int) error {
 
-	if err := authSer.IncreaseFollowCounts(ctx, followerID, followingID); err != nil {
+	if err := authSer.repo.IncreaseFollowCount(ctx, followerID, followingID); err != nil {
+
+		return err
+	}
+
+	return nil
+
+}
+
+
+func (authSer *AuthService) DecreaseFollowCounts(ctx context.Context, followerID, followingID int) error {
+
+	if err := authSer.repo.DecreaseFollowCount(ctx, followerID, followingID); err != nil {
 
 		return err
 	}

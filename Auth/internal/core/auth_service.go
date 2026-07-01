@@ -14,4 +14,6 @@ type AuthService interface {
 	RefreshHandler(ctx context.Context, refreshToken string) (*model.TokenPair, error)
 	SearchUser(ctx context.Context, username, cursor string, limit int) (*dto.PaginatedResponse, error)
 	IncreaseFollowCounts(ctx context.Context, followerID, followingID int) error
+	DecreaseFollowCounts(ctx context.Context, followerID, followingID int) error
+
 }

@@ -472,29 +472,72 @@ func (authRepo *AuthRepository) IncreaseFollowCount(ctx context.Context, followe
 
 	tx,err := authRepo.DB.BeginTx(ctx,nil)
 
+	if err != nil {
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+	}
+
 	defer tx.Rollback()
 
-	if err != nil {
+	query1 := `UPDATE users SET follower_count=follower_count+1 WHERE id=$1`
 
-		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
-	}
-
-	query1 := `UPDATE users SET follower_count=follower_count+1 WHERE follower_id=$1`
-
-	_,err = tx.ExecContext(ctx,query1,followerID)
+	_,err = tx.ExecContext(ctx,query1,followingID)
 
 	if err != nil {
 
 		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
 	}
 
-	query2 := `UPDATE users SET following_count=following_count+1 WHERE following_id=$1`
+	query2 := `UPDATE users SET following_count=following_count+1 WHERE id=$1`
 
-	_,err = tx.ExecContext(ctx,query2,followingID)
+	_,err = tx.ExecContext(ctx,query2,followerID)
 
 	if err != nil {
 
 		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+	}
+
+	if err := tx.Commit(); err != nil {
+
+		 return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+	}
+	
+	return nil
+}
+
+
+func (authRepo *AuthRepository) DecreaseFollowCount(ctx context.Context, followerID, followingID int) error {
+
+	tx,err := authRepo.DB.BeginTx(ctx,nil)
+
+	if err != nil {
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+	}
+
+	defer tx.Rollback()
+
+	query1 := `UPDATE users SET follower_count=follower_count-1 WHERE id=$1`
+
+	_,err = tx.ExecContext(ctx,query1,followingID)
+
+	if err != nil {
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+	}
+
+	query2 := `UPDATE users SET following_count=following_count-1 WHERE id=$1`
+
+	_,err = tx.ExecContext(ctx,query2,followerID)
+
+	if err != nil {
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+	}
+
+	if err := tx.Commit(); err != nil {
+
+		 return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
 	}
 	
 	return nil

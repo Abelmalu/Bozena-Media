@@ -38,7 +38,7 @@ func (followService *FollowService) ToggleFollow(ctx context.Context, follow boo
 		FollowerID:  followerID,
 		FollowingID: followingID,
 	}
-	
+
 	var msg *sarama.ProducerMessage
 
 	createdUserByte, err := json.Marshal(followReturned)
@@ -47,8 +47,6 @@ func (followService *FollowService) ToggleFollow(ctx context.Context, follow boo
 
 		return nil, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
 	}
-
-	// Send the message to Kafka
 
 	switch resp {
 
@@ -66,9 +64,6 @@ func (followService *FollowService) ToggleFollow(ctx context.Context, follow boo
 			Value: sarama.StringEncoder(createdUserByte),
 		}
 
-		fmt.Println("unfollowed event sent to kafka")
-
-
 	}
 
 	_, _, err = followService.kafka.SendMessage(msg)
@@ -77,8 +72,6 @@ func (followService *FollowService) ToggleFollow(ctx context.Context, follow boo
 
 		return nil, ierrors.NewInternalError(ierrors.ErrorMessage("Kafka Sending Error"), err)
 	}
-
-		fmt.Println("no error while  sending to kafka")
 
 
 	return &dto.FollowResponse{

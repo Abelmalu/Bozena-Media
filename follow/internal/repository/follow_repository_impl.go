@@ -29,8 +29,7 @@ func (followRepository *FollowRepository) ToggleFollow(ctx context.Context, foll
 	if follow {
 		query := `
 			INSERT INTO follows (follower_id, following_id) 
-			VALUES ($1, $2) 
-			ON CONFLICT (follower_id, following_id) DO NOTHING; `
+			VALUES ($1, $2); `
 
 		_, err := followRepository.DB.ExecContext(ctx, query, followerID, followingID)
 

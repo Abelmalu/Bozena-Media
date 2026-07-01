@@ -21,4 +21,5 @@ type AuthRepository interface {
 	UpdateFailedLoginAttempts(ctx context.Context, user *model.User) (*model.User, error)
 	TemporaryLockUntil(ctx context.Context, user *model.User) (*model.User, error)
 	IncreaseFollowCount(ctx context.Context, followerID, followingID int) error
+	DecreaseFollowCount(ctx context.Context, followerID, followingID int) error
 }
