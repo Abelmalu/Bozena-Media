@@ -418,7 +418,7 @@ func (authRepo *AuthRepository) SearchUser(ctx context.Context,username,cursor s
 }
 
 
-func (authRepo *AuthRepository) UpdateFailedLoginAttempst(ctx context.Context,user *model.User)(*model.User,error){
+func (authRepo *AuthRepository) UpdateFailedLoginAttempts(ctx context.Context,user *model.User)(*model.User,error){
 
 
 	query := ` UPDATE users SET failed_attempts=failed_attempts+1 WHERE id=$1 RETURNING failed_attempts`
