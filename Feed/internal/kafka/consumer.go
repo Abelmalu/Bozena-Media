@@ -79,7 +79,7 @@ func StartConsumer(brokers []string, userTopic string, postTopic string, feedSer
 func consumeUserEvents(consumer sarama.Consumer, topic string, feedService core.FeedService, logger *platform.Logger) {
 	pc, err := consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
 	if err != nil {
-		log.Fatalf("Error consuming user partition: %v", err)
+		log.Fatalf("Error consuming user topic: %v", err)
 	}
 	defer pc.Close()
 

@@ -81,6 +81,11 @@ func (authSer *AuthService) Register(ctx context.Context, user *model.User) (*mo
 	// Send the message to Kafka
 	partition, offset, err := authSer.kafka.SendMessage(msg)
 
+	if err != nil {
+
+		return nil,nil,ierrors.NewInternalError(ierrors.ErrorMessage("Kafka Sending Error"),err)
+	}
+
 	authSer.logger.Info(fmt.Sprintf("Apache kafka Partition : %d Offset : %d", partition, offset))
 
 	md, exists := metadata.FromIncomingContext(ctx)
@@ -156,31 +161,26 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 	}
 	user, err := authSer.redis.Get(ctx, key).Result()
 
-	if err != nil && err !=  redis.Nil {
+	if err != nil && err != redis.Nil {
 		internalErr := ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
 
-		return nil,nil,internalErr
+		return nil, nil, internalErr
 
 	}
 
 	if user != "" {
 
-		timeLeft,err := authSer.redis.TTL(ctx,key).Result()
+		timeLeft, err := authSer.redis.TTL(ctx, key).Result()
 
 		if err != nil {
 
-
-				return nil,nil,ierrors.NewInternalError(ierrors.MSGSomethingWentWrong,err)
-
-
+			return nil, nil, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
 
 		}
 
+		message := fmt.Sprintf("Account Temporarly blocked %f", timeLeft.Minutes())
 
-		message := fmt.Sprintf("Account Temporarly blocked %f",timeLeft.Minutes())
-
-
-		return nil,nil,ierrors.NewValidationError(ierrors.ErrorMessage(message),nil,nil)
+		return nil, nil, ierrors.NewValidationError(ierrors.ErrorMessage(message), nil, nil)
 	}
 
 	if fetchedUser.TemporaryLockUntil != nil {
@@ -208,8 +208,7 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 
 			if err != nil {
 
-
-				return nil,nil,ierrors.NewInternalError(ierrors.MSGSomethingWentWrong,err)
+				return nil, nil, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
 			}
 
 			fetchedUser.TemporaryLockUntil = &lockUntil
@@ -225,7 +224,7 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 		}
 
 		if fetchedUser.FailedLoginAttempts >= maxLoginAttempt {
-			_, err := authSer.repo.UpdateFailedLoginAttempst(ctx, fetchedUser)
+			_, err := authSer.repo.UpdateFailedLoginAttempts(ctx, fetchedUser)
 			if err != nil {
 
 				return nil, nil, err
@@ -235,7 +234,7 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 
 		}
 
-		_, err := authSer.repo.UpdateFailedLoginAttempst(ctx, fetchedUser)
+		_, err := authSer.repo.UpdateFailedLoginAttempts(ctx, fetchedUser)
 		if err != nil {
 
 			return nil, nil, err

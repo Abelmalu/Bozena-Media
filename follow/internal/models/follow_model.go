@@ -3,9 +3,9 @@ package models
 
 type Follow struct {
 	
-	ID int 
-	FollowerID int 
-	FollowingID int
+	ID int `json:"id"`
+	FollowerID int `json:"follower_id"`
+	FollowingID int `json:"following_id"`
 }
 
 

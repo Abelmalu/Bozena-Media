@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/IBM/sarama"
 	"github.com/abelmalu/golang-posts/follow/config"
 	handler "github.com/abelmalu/golang-posts/follow/internal/handlers"
 	"github.com/abelmalu/golang-posts/follow/internal/kafka"
@@ -26,8 +27,10 @@ type App struct {
 	DB          *sql.DB
 	Config      *config.Config
 	RedisClient *redis.Client
-}
+	KafkaClient	sarama.SyncProducer
 
+}
+ 
 var logger = platform.InitZapLogger()
 
 func NewApp() *App {
@@ -44,13 +47,23 @@ func NewApp() *App {
 
 		log.Fatalf("error while connectiong DB %v", err)
 	}
-
+	// Init Reids 
 	redisClient := initRedis("127.0.0.1:6379", "", 0, logger)
+
+	// initializing the kafka client 
+
+	kafkaClient,err := kafka.InitKafkaProducer(logger)
+
+	if err != nil {
+
+		log.Fatalf("Couldn't make kafka connection %v",err)
+	}
 
 	return &App{
 		DB:          DBConnPool,
 		Config:      config,
 		RedisClient: redisClient,
+		KafkaClient: kafkaClient,
 	}
 }
 
@@ -113,7 +126,7 @@ func (app *App) Run() {
 	s := grpc.NewServer()
 
 	followRepo := repository.NewFollowRepository(app.DB)
-	followService := service.NewFollowService(followRepo)
+	followService := service.NewFollowService(followRepo,app.KafkaClient)
 	followHandler := handler.NewFollowHandler(followService, logger)
 
 	pb.RegisterFollowServiceServer(s, followHandler)
