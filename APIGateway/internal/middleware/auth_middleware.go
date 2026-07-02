@@ -53,7 +53,6 @@ func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.Hand
 		}
 
 		// Validate the token
-
 		tokenClaims, err := utils.ValidateAccessToken(tokenStr)
 
 		if err != nil {

@@ -54,8 +54,9 @@ export function ProfilePage() {
 
   async function handleToggleFollow() {
     try {
-      await toggleFollow(userId);
-      setIsFollowing(!isFollowing);
+      const nextState = !isFollowing;
+      await toggleFollow(userId, nextState);
+      setIsFollowing(nextState);
       // Reload followers to reflect changes
       const updatedFollowers = await getUserFollowers(userId, '', 10);
       setFollowers(updatedFollowers);

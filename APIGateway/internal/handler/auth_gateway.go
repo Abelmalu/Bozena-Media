@@ -40,12 +40,15 @@ func NewAuthHandler(au AuthService, logger *platform.Logger) *AuthHandler {
 // ExtractRefreshToken extracts refresh tokens from the request
 func ExtractRefreshToken(c *gin.Context) (string, error) {
 
-	var refreshToken string
+	var req struct {
+
+		RefreshToken string `json:"refresh_token"`
+	}
 
 	//for mobile apps from request body
-	if err := c.ShouldBindJSON(&refreshToken); err == nil {
-		if refreshToken != "" {
-			return refreshToken, nil
+	if err := c.ShouldBindJSON(&req); err == nil {
+		if req.RefreshToken != "" {
+			return req.RefreshToken, nil
 		}
 	}
 
@@ -181,13 +184,21 @@ func (authHandler *AuthHandler) Login(c *gin.Context) {
 		})
 
 		loginResponse.AccessToken = resp.AccessToken
+		loginResponse.UserName = resp.Username
+		loginResponse.FollowerCount = int(resp.FollowerCount)
+		loginResponse.FollowingCount = int(resp.FollowingCount)
+		loginResponse.ID = int(resp.Id)
 
 	case "mobile":
 		loginResponse.AccessToken = resp.AccessToken
 		loginResponse.RefreshToken = resp.RefreshToken
+		loginResponse.UserName = resp.Username
+		loginResponse.FollowerCount = int(resp.FollowerCount)
+		loginResponse.FollowingCount = int(resp.FollowingCount)
+		loginResponse.ID = int(resp.Id)
 	}
 
-	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
+	utils.SendSuccessResponse(c, loginResponse, requestID, http.StatusOK)
 
 }
 
