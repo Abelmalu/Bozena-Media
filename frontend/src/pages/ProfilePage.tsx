@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getUserFollowers, getUserFollowings, getUserPosts } from '../lib/api';
+import { getUserFollowers, getUserFollowings, getUserPosts, toggleFollow } from '../lib/api';
 import type { FollowersResponse, FollowingsResponse, ProfileUser, UserPostsResponse } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { PageFrame } from '../components/PageFrame';
 import { StatCard } from '../components/StatCard';
-
-type Section = 'followers' | 'followings';
+import { Modal } from '../components/Modal';
 
 export function ProfilePage() {
   const params = useParams();
@@ -16,12 +15,13 @@ export function ProfilePage() {
   const [followers, setFollowers] = useState<FollowersResponse | null>(null);
   const [followings, setFollowings] = useState<FollowingsResponse | null>(null);
   const [posts, setPosts] = useState<UserPostsResponse | null>(null);
-  const [section, setSection] = useState<Section>('followers');
+  const [modalOpen, setModalOpen] = useState<'none' | 'followers' | 'followings'>('none');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [followerCursor, setFollowerCursor] = useState('');
   const [followingCursor, setFollowingCursor] = useState('');
   const [postsCursor, setPostsCursor] = useState('');
+  const [isFollowing, setIsFollowing] = useState(false);
 
   useEffect(() => {
     async function loadProfile() {
@@ -39,6 +39,7 @@ export function ProfilePage() {
         setFollowerCursor(followersResponse.cursor ?? '');
         setFollowingCursor(followingsResponse.cursor ?? '');
         setPostsCursor(postsResponse.cursor ?? '');
+        setIsFollowing(followersResponse.followers?.some((f) => f.username === username) ?? false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Could not load profile');
       } finally {
@@ -49,7 +50,19 @@ export function ProfilePage() {
     if (!Number.isNaN(userId)) {
       void loadProfile();
     }
-  }, [userId]);
+  }, [userId, username]);
+
+  async function handleToggleFollow() {
+    try {
+      await toggleFollow(userId);
+      setIsFollowing(!isFollowing);
+      // Reload followers to reflect changes
+      const updatedFollowers = await getUserFollowers(userId, '', 10);
+      setFollowers(updatedFollowers);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not toggle follow');
+    }
+  }
 
   async function loadMoreFollowers() {
     try {
@@ -101,29 +114,28 @@ export function ProfilePage() {
       subtitle="Counts below use exactly what the backend returned, including the current page limit."
       aside={
         <div className="stack">
-          <StatCard label="Followers returned" value={String(followersCount)} hint={`Limit ${followers?.limit ?? 10}`} />
-          <StatCard label="Following returned" value={String(followingsCount)} hint={`Limit ${followings?.limit ?? 10}`} />
+          {!isOwnProfile && (
+            <button
+              type="button"
+              className={`button ${isFollowing ? 'button-soft' : ''}`}
+              onClick={() => void handleToggleFollow()}
+              style={{ width: '100%' }}
+            >
+              {isFollowing ? 'Unfollow' : 'Follow'}
+            </button>
+          )}
+          <StatCard label="Followers" value={String(followersCount)} hint="Click to view" onClick={() => setModalOpen('followers')} />
+          <StatCard label="Following" value={String(followingsCount)} hint="Click to view" onClick={() => setModalOpen('followings')} />
           <StatCard label="Posts returned" value={String(postsCount)} hint={posts?.cursor ? 'More posts available' : 'No more posts'} />
           <StatCard label="Viewer" value={username ?? 'unknown'} hint={sessionUser.userId ? `ID #${sessionUser.userId}` : sessionUser.role ?? 'role unavailable'} />
         </div>
       }
     >
-      <section className="panel">
-        <div className="tabs">
-          <button type="button" className={section === 'followers' ? 'tab active' : 'tab'} onClick={() => setSection('followers')}>
-            Followers
-          </button>
-          <button type="button" className={section === 'followings' ? 'tab active' : 'tab'} onClick={() => setSection('followings')}>
-            Following
-          </button>
-        </div>
+      {error ? <div className="form-error">{error}</div> : null}
 
-        {error ? <div className="form-error">{error}</div> : null}
-
-        {loading ? (
-          <div className="empty-state">Loading profile...</div>
-        ) : section === 'followers' ? (
-          <>
+      {modalOpen === 'followers' && (
+        <Modal title="Followers" onClose={() => setModalOpen('none')}>
+          <div className="modal-body" style={{ maxHeight: '400px', overflowY: 'auto', padding: '16px' }}>
             <div className="compact-grid">
               {followers?.followers?.length ? (
                 followers.followers.map((user: ProfileUser) => (
@@ -133,20 +145,23 @@ export function ProfilePage() {
                   </div>
                 ))
               ) : (
-                <div className="empty-state">No followers returned on this page.</div>
+                <div className="empty-state">0 followers</div>
               )}
             </div>
-
-            {followers?.cursor ? (
-              <div className="load-more-row">
+            {followers?.cursor && (
+              <div className="load-more-row" style={{ marginTop: '16px' }}>
                 <button type="button" className="button button-soft" onClick={() => void loadMoreFollowers()}>
-                  Load more followers
+                  Load more
                 </button>
               </div>
-            ) : null}
-          </>
-        ) : (
-          <>
+            )}
+          </div>
+        </Modal>
+      )}
+
+      {modalOpen === 'followings' && (
+        <Modal title="Following" onClose={() => setModalOpen('none')}>
+          <div className="modal-body" style={{ maxHeight: '400px', overflowY: 'auto', padding: '16px' }}>
             <div className="compact-grid">
               {followings?.Followings?.length ? (
                 followings.Followings.map((user: ProfileUser) => (
@@ -156,20 +171,19 @@ export function ProfilePage() {
                   </div>
                 ))
               ) : (
-                <div className="empty-state">No followings returned on this page.</div>
+                <div className="empty-state">0 following</div>
               )}
             </div>
-
-            {followings?.cursor ? (
-              <div className="load-more-row">
+            {followings?.cursor && (
+              <div className="load-more-row" style={{ marginTop: '16px' }}>
                 <button type="button" className="button button-soft" onClick={() => void loadMoreFollowings()}>
-                  Load more followings
+                  Load more
                 </button>
               </div>
-            ) : null}
-          </>
-        )}
-      </section>
+            )}
+          </div>
+        </Modal>
+      )}
 
       <section className="panel">
         <div className="panel-header">

@@ -27,6 +27,7 @@ message RegisterResponse{
     string email = 4;
     string access_token = 5;
     string refresh_token = 6;
+  
     
 }
 
@@ -42,6 +43,8 @@ message LoginResponse {
     string username =3;
     string access_token = 4;
     string refresh_token = 5;
+      int64 follower_count = 6;
+    int64 following_count = 7;
 }
 
 message LogoutRequest {

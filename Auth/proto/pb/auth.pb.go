@@ -227,14 +227,16 @@ func (x *LoginRequest) GetPassword() string {
 }
 
 type LoginResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	Username      string                 `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
-	AccessToken   string                 `protobuf:"bytes,4,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	RefreshToken  string                 `protobuf:"bytes,5,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Message        string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Username       string                 `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
+	AccessToken    string                 `protobuf:"bytes,4,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
+	RefreshToken   string                 `protobuf:"bytes,5,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+	FollowerCount  int64                  `protobuf:"varint,6,opt,name=follower_count,json=followerCount,proto3" json:"follower_count,omitempty"`
+	FollowingCount int64                  `protobuf:"varint,7,opt,name=following_count,json=followingCount,proto3" json:"following_count,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *LoginResponse) Reset() {
@@ -300,6 +302,20 @@ func (x *LoginResponse) GetRefreshToken() string {
 		return x.RefreshToken
 	}
 	return ""
+}
+
+func (x *LoginResponse) GetFollowerCount() int64 {
+	if x != nil {
+		return x.FollowerCount
+	}
+	return 0
+}
+
+func (x *LoginResponse) GetFollowingCount() int64 {
+	if x != nil {
+		return x.FollowingCount
+	}
+	return 0
 }
 
 type LogoutRequest struct {
@@ -677,13 +693,15 @@ const file_proto_auth_proto_rawDesc = "" +
 	"\rrefresh_token\x18\x06 \x01(\tR\frefreshToken\"F\n" +
 	"\fLoginRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"\x9d\x01\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\"\xed\x01\n" +
 	"\rLoginResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1a\n" +
 	"\busername\x18\x03 \x01(\tR\busername\x12!\n" +
 	"\faccess_token\x18\x04 \x01(\tR\vaccessToken\x12#\n" +
-	"\rrefresh_token\x18\x05 \x01(\tR\frefreshToken\"\x0f\n" +
+	"\rrefresh_token\x18\x05 \x01(\tR\frefreshToken\x12%\n" +
+	"\x0efollower_count\x18\x06 \x01(\x03R\rfollowerCount\x12'\n" +
+	"\x0ffollowing_count\x18\a \x01(\x03R\x0efollowingCount\"\x0f\n" +
 	"\rLogoutRequest\"*\n" +
 	"\x0eLogoutResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\"5\n" +

@@ -169,6 +169,9 @@ func (authHandler *AuthHandler) Login(ctx context.Context, req *pb.LoginRequest)
 		Username:     user.Username,
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
+		FollowerCount: int64(user.FollowerCount),
+		FollowingCount: int64(user.FollowingCount),
+	
 	}, nil
 }
 func (authHandler *AuthHandler) Logout(ctx context.Context, req *emptypb.Empty) (*pb.LogoutResponse, error) {

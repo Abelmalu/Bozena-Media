@@ -231,3 +231,9 @@ export async function getUserPosts(userId: number, cursor = '', limit = 10) {
   }
   return request<UserPostsResponse>(`/api/posts/user/${userId}?${params.toString()}`);
 }
+
+export async function toggleFollow(userId: number) {
+  return request<{ message: string }>(`/api/follow/${userId}`, {
+    method: 'POST',
+  });
+}
