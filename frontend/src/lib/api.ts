@@ -238,3 +238,16 @@ export async function toggleFollow(userId: number, state: boolean) {
     body: { follow: state },
   });
 }
+
+export async function updatePost(postId: number, payload: PostDraft) {
+  return request<PostResponse>(`/api/posts/update/${postId}`, {
+    method: 'PUT',
+    body: payload,
+  });
+}
+
+export async function deletePost(postId: number) {
+  return request<{ message: string }>(`/api/posts/delete/${postId}`, {
+    method: 'DELETE',
+  });
+}

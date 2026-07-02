@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getUserFollowers, getUserFollowings, getUserPosts, toggleFollow } from '../lib/api';
-import type { FollowersResponse, FollowingsResponse, ProfileUser, UserPostsResponse } from '../types';
+import { getUserFollowers, getUserFollowings, getUserPosts, toggleFollow, updatePost, deletePost } from '../lib/api';
+import type { FollowersResponse, FollowingsResponse, ProfileUser, UserPostsResponse, UserPost } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { PageFrame } from '../components/PageFrame';
 import { StatCard } from '../components/StatCard';
@@ -22,6 +22,9 @@ export function ProfilePage() {
   const [followingCursor, setFollowingCursor] = useState('');
   const [postsCursor, setPostsCursor] = useState('');
   const [isFollowing, setIsFollowing] = useState(false);
+  const [editingPost, setEditingPost] = useState<UserPost | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
 
   useEffect(() => {
     async function loadProfile() {
@@ -107,6 +110,46 @@ export function ProfilePage() {
   const followersCount = followers?.followers?.length ?? 0;
   const followingsCount = followings?.Followings?.length ?? 0;
   const postsCount = posts?.posts?.length ?? 0;
+
+  function openEditModal(post: UserPost) {
+    setEditingPost(post);
+    setEditTitle(post.title);
+    setEditContent(post.content);
+  }
+
+  async function handleUpdatePost(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingPost) return;
+    try {
+      await updatePost(editingPost.id, { title: editTitle, content: editContent });
+      setPosts((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          posts: current.posts.map((p) => (p.id === editingPost.id ? { ...p, title: editTitle, content: editContent } : p)),
+        };
+      });
+      setEditingPost(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Could not update post');
+    }
+  }
+
+  async function handleDeletePost(postId: number) {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+    try {
+      await deletePost(postId);
+      setPosts((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          posts: current.posts.filter((p) => p.id !== postId),
+        };
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Could not delete post');
+    }
+  }
 
   return (
     <PageFrame
@@ -208,6 +251,12 @@ export function ProfilePage() {
                     <div className="feed-meta">Post #{post.id}</div>
                     <h3>{post.title}</h3>
                   </div>
+                  {isOwnProfile && (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button type="button" className="button button-soft" style={{ padding: '4px 8px', fontSize: '0.875rem' }} onClick={() => openEditModal(post)}>Edit</button>
+                      <button type="button" className="button" style={{ padding: '4px 8px', fontSize: '0.875rem', backgroundColor: '#ef4444', color: 'white', border: 'none' }} onClick={() => void handleDeletePost(post.id)}>Delete</button>
+                    </div>
+                  )}
                 </div>
                 <p className="feed-content">{post.content}</p>
                 <div className="feed-byline">{isOwnProfile && username ? `By @${username}` : `Author ID #${post.user_id}`}</div>
@@ -226,6 +275,25 @@ export function ProfilePage() {
           </div>
         ) : null}
       </section>
+
+      {editingPost && (
+        <Modal title="Edit Post" onClose={() => setEditingPost(null)}>
+          <form className="modal-body stack" onSubmit={(e) => void handleUpdatePost(e)} style={{ padding: '16px' }}>
+            <div className="form-group">
+              <label htmlFor="edit-title">Title</label>
+              <input id="edit-title" type="text" className="input" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} required />
+            </div>
+            <div className="form-group">
+              <label htmlFor="edit-content">Content</label>
+              <textarea id="edit-content" className="input" value={editContent} onChange={(e) => setEditContent(e.target.value)} rows={4} required />
+            </div>
+            <div className="form-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
+              <button type="button" className="button button-soft" onClick={() => setEditingPost(null)}>Cancel</button>
+              <button type="submit" className="button">Save Changes</button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </PageFrame>
   );
 }
