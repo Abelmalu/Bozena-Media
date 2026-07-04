@@ -100,22 +100,25 @@ func consumeUserEvents(consumer sarama.Consumer, topic string, feedService core.
 
 		case err := <-pc.Errors():
 			log.Printf("User consumer error: %v", err)
+
 		}
 	}
 }
 
 func consumePostEvents(consumer sarama.Consumer, topic string, feedService core.FeedService, logger *platform.Logger) {
+
 	pc, err := consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
 	if err != nil {
 		log.Fatalf("Error consuming post partition: %v", err)
 	}
 	defer pc.Close()
 
+
 	jobs := make(chan *sarama.ConsumerMessage, 100)
 
 	wg := sync.WaitGroup{}
 
-	for range 10 {
+	for range 100 {
 
 		wg.Add(1)
 		go workers(jobs, &wg, feedService, logger)
@@ -130,6 +133,8 @@ func consumePostEvents(consumer sarama.Consumer, topic string, feedService core.
 
 		case err := <-pc.Errors():
 			log.Printf("Post consumer error: %v", err)
+
+	
 		}
 	}
 }
@@ -140,10 +145,11 @@ func workers(msgs <-chan *sarama.ConsumerMessage, wgs *sync.WaitGroup, feedServi
 
 	followCleint := initFollowClient()
 
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-
 	for msg := range msgs {
+
+		ctx, cancel:= context.WithTimeout(context.Background(), 2*time.Second)
+
+		 cancel()
 
 		var post PostCreatedPayload
 		if err := json.Unmarshal(msg.Value, &post); err != nil {
@@ -151,7 +157,7 @@ func workers(msgs <-chan *sarama.ConsumerMessage, wgs *sync.WaitGroup, feedServi
 			continue
 		}
 
-		ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+		
 
 		wg := sync.WaitGroup{}
 
@@ -188,6 +194,8 @@ func workers(msgs <-chan *sarama.ConsumerMessage, wgs *sync.WaitGroup, feedServi
 			if err != nil {
 
 				logger.Error("Erroor while getting followers from follow service ", zap.Error(err))
+
+				return
 			}
 
 			followers := make([]int, 0, len(resp.Followers))
@@ -210,6 +218,8 @@ func workers(msgs <-chan *sarama.ConsumerMessage, wgs *sync.WaitGroup, feedServi
 			}
 
 		}()
+
+		wg.Wait()
 
 	}
 
