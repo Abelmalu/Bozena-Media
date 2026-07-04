@@ -111,79 +111,106 @@ func consumePostEvents(consumer sarama.Consumer, topic string, feedService core.
 	}
 	defer pc.Close()
 
-	followCleint := initFollowClient()
+	jobs := make(chan *sarama.ConsumerMessage, 100)
+
+	wg := sync.WaitGroup{}
+
+	for range 10 {
+
+		wg.Add(1)
+		go workers(jobs, &wg, feedService, logger)
+		
+	}
 
 	for {
 		select {
 		case msg := <-pc.Messages():
-			var post PostCreatedPayload
-			if err := json.Unmarshal(msg.Value, &post); err != nil {
-				log.Printf("Failed to unmarshal post: %v", err)
-				continue
-			}
 
-			ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
-
-			wg := sync.WaitGroup{}
-
-			wg.Add(2)
-
-			go func() {
-				defer wg.Done()
-
-				err = feedService.CreateCachePost(ctx, post.ID, post.Title, post.Content)
-
-				if err != nil {
-					logger.Error("Error inserting to posts_cache", zap.Error(err))
-				}
-
-			}()
-
-			md := metadata.Pairs(
-				"request-id", "askdfjalksdjfalsdkjflskdjf",
-			)
-			ctx = metadata.NewOutgoingContext(ctx, md)
-
-			go func() {
-
-				defer wg.Done()
-
-				resp, err := followCleint.GetUserFollowers(
-					ctx,
-					&pb.GetUserFollowersRequest{
-						FollowingId: int64(post.UserID),
-						Limit:       int64(10),
-					},
-				)
-
-				if err != nil {
-
-					logger.Error("Erroor while getting followers from follow service ", zap.Error(err))
-				}
-
-				followers := make([]int, 0, len(resp.Followers))
-
-				for _, follower := range resp.Followers {
-
-					user := UserCreatedPayload{
-						ID: int(follower.UserId),
-					}
-
-					followers = append(followers, user.ID)
-
-				}
-
-				err = feedService.CreateFeedEntries(ctx, followers, post.ID, post.UserID)
-
-				if err != nil {
-
-					logger.Error("Error", zap.Error(err))
-				}
-
-			}()
+			jobs <- msg
 
 		case err := <-pc.Errors():
 			log.Printf("Post consumer error: %v", err)
 		}
 	}
+}
+
+func workers(msgs <-chan *sarama.ConsumerMessage, wgs *sync.WaitGroup, feedService core.FeedService, logger *platform.Logger) {
+
+	defer wgs.Done()
+
+	followCleint := initFollowClient()
+
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
+	for msg := range msgs {
+
+		var post PostCreatedPayload
+		if err := json.Unmarshal(msg.Value, &post); err != nil {
+			log.Printf("Failed to unmarshal post: %v", err)
+			continue
+		}
+
+		ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+
+		wg := sync.WaitGroup{}
+
+		wg.Add(2)
+
+		go func() {
+			defer wg.Done()
+
+			err := feedService.CreateCachePost(ctx, post.ID, post.Title, post.Content)
+
+			if err != nil {
+				logger.Error("Error inserting to posts_cache", zap.Error(err))
+			}
+
+		}()
+
+		md := metadata.Pairs(
+			"request-id", "askdfjalksdjfalsdkjflskdjf",
+		)
+		ctx = metadata.NewOutgoingContext(ctx, md)
+
+		go func() {
+
+			defer wg.Done()
+
+			resp, err := followCleint.GetUserFollowers(
+				ctx,
+				&pb.GetUserFollowersRequest{
+					FollowingId: int64(post.UserID),
+					Limit:       int64(10),
+				},
+			)
+
+			if err != nil {
+
+				logger.Error("Erroor while getting followers from follow service ", zap.Error(err))
+			}
+
+			followers := make([]int, 0, len(resp.Followers))
+
+			for _, follower := range resp.Followers {
+
+				user := UserCreatedPayload{
+					ID: int(follower.UserId),
+				}
+
+				followers = append(followers, user.ID)
+
+			}
+
+			err = feedService.CreateFeedEntries(ctx, followers, post.ID, post.UserID)
+
+			if err != nil {
+
+				logger.Error("Error", zap.Error(err))
+			}
+
+		}()
+
+	}
+
 }

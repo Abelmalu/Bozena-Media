@@ -5,7 +5,7 @@ WORKDIR /app
 
 ARG SERVICE_NAME
 ARG MAIN_PATH=cmd/main.go
-
+  
 COPY go.mod go.sum ./
 
 COPY . .
