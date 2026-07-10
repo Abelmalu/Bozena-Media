@@ -18,7 +18,7 @@ func InitNotificationRoutes(router *gin.RouterGroup, handler *handler.Notificati
 
 		{
 			Method: http.MethodGet,
-			Path: "",
+			Path: "/",
 			Handler: handler.Stream,
 			Middlewares: [] gin.HandlerFunc{
 

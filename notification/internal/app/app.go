@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-//	"net/http"
+	"net/http"
+
+	//	"net/http"
 	"time"
 
 	_ "github.com/jackc/pgx/v5"
@@ -87,10 +89,11 @@ func (app *App) Run() {
 
 func InitRoute(handler *handler.NotificationHanlder, ) *gin.Engine {
 
-	// router.Handle(http.MethodGet, "api/notification/stream", handler.Stream)
 
 	router := gin.New()
-	router.GET("/",handler.Stream)
+	//router.GET("/api/notification/stream",handler.Stream)
+	 router.Handle(http.MethodGet, "/api/notification/stream/", handler.Stream)
+
 
 
 	return router
