@@ -4,10 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/abelmalu/golang-posts/notification/config"
+	"github.com/abelmalu/golang-posts/notification/internal/handler"
 	"github.com/abelmalu/golang-posts/platform"
+	"github.com/gin-gonic/gin"
 )
 
 
@@ -72,3 +75,33 @@ func initDB(config *config.Config) (*sql.DB, error) {
 	return DBConnPool, nil
 
 }
+
+
+func (app *App) Run(){
+
+	r := gin.New()
+
+	notificationHandler := handler.NewNotificationHandler(logger)
+
+	InitRoute(notificationHandler,r)
+	
+
+	if err := r.Run(":8083"); err != nil {
+
+		log.Fatalf("Error starting server %v",err)
+	}
+
+
+
+}
+
+
+
+func InitRoute(handler *handler.NotificationHanlder,router *gin.Engine){
+
+
+	router.Handle(http.MethodGet,"/notification/stream",handler.Stream)
+
+}
+
+
