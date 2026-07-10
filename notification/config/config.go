@@ -20,11 +20,11 @@ func LoadConfig() (*Config,error){
 
 	var err error
 
-	portStr := os.Getenv("GRPC_PORT")
+	portStr := os.Getenv("PORT")
 
 	if portStr == "" {
 
-		portStr = "50056"
+		portStr = "8083"
 	}
 	cfg.GRPCPORT, err = strconv.Atoi(portStr)
 	if err != nil {

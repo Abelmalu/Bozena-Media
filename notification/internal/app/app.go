@@ -4,8 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net/http"
+//	"net/http"
 	"time"
+
+	_ "github.com/jackc/pgx/v5"
+	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/abelmalu/golang-posts/notification/config"
 	"github.com/abelmalu/golang-posts/notification/internal/handler"
@@ -13,22 +16,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
-
 type App struct {
-
-	DB *sql.DB
-	Config  *config.Config
- 
+	DB     *sql.DB
+	Config *config.Config
 }
-
 
 var logger = platform.InitZapLogger()
 
-
 func NewApp() *App {
-
-
 
 	config, err := config.LoadConfig()
 
@@ -43,10 +38,9 @@ func NewApp() *App {
 		log.Fatalf("error while connectiong DB %v", err)
 	}
 
-
 	return &App{
 
-		DB: DBConnPool,
+		DB:     DBConnPool,
 		Config: config,
 	}
 }
@@ -76,32 +70,29 @@ func initDB(config *config.Config) (*sql.DB, error) {
 
 }
 
+func (app *App) Run() {
 
-func (app *App) Run(){
-
-	r := gin.New()
+	
 
 	notificationHandler := handler.NewNotificationHandler(logger)
 
-	InitRoute(notificationHandler,r)
-	
+  router :=	InitRoute(notificationHandler)
 
-	if err := r.Run(":8083"); err != nil {
+	if err := router.Run(":8083"); err != nil {
 
-		log.Fatalf("Error starting server %v",err)
+		log.Fatalf("Error starting server %v", err)
 	}
 
-
-
 }
 
+func InitRoute(handler *handler.NotificationHanlder, ) *gin.Engine {
+
+	// router.Handle(http.MethodGet, "api/notification/stream", handler.Stream)
+
+	router := gin.New()
+	router.GET("/",handler.Stream)
 
 
-func InitRoute(handler *handler.NotificationHanlder,router *gin.Engine){
-
-
-	router.Handle(http.MethodGet,"/notification/stream",handler.Stream)
+	return router
 
 }
-
-
