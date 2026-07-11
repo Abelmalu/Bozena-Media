@@ -1,24 +1,30 @@
 package handler
 
 import (
+	"errors"
 	"io"
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/abelmalu/golang-posts/notification/internal/core"
+	ierrors "github.com/abelmalu/golang-posts/notification/internal/errors"
+	"github.com/abelmalu/golang-posts/notification/pkg"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type NotificationHanlder struct {
-	logger *platform.Logger
+	logger              *platform.Logger
 	notificationService core.NotificationService
 }
 
-func NewNotificationHandler(logger *platform.Logger,service core.NotificationService) *NotificationHanlder {
+func NewNotificationHandler(logger *platform.Logger, service core.NotificationService) *NotificationHanlder {
 
 	return &NotificationHanlder{
 
-		logger: logger,
+		logger:              logger,
 		notificationService: service,
 	}
 }
@@ -29,35 +35,80 @@ func (notificationHanlder *NotificationHanlder) Stream(c *gin.Context) {
 	c.Header("Cache-Control", "no-cache")
 	c.Header("Connection", "keep-alive")
 
-
 	c.Stream(func(w io.Writer) bool {
 
-			time.Sleep(time.Second * 5)
-			
-			c.SSEvent("this","number is u lucky number")
+		time.Sleep(time.Second * 5)
 
-			// select {
-			// // Handle client disconnection
-			// case <-c.Request.Context().Done():
-			// 	return false
+		c.SSEvent("this", "number is u lucky number")
 
-			// // Handle next tick event
-			// case t := <-ticker.C:
-			// 	c.SSEvent("time-update", map[string]string{
-			// 		"time": t.Format(time.RFC3339),
-			// 		"user":"hellow",
-			// 	})
-			// 	return true
-			// }
+		// select {
+		// // Handle client disconnection
+		// case <-c.Request.Context().Done():
+		// 	return false
 
-			return true
-		})
+		// // Handle next tick event
+		// case t := <-ticker.C:
+		// 	c.SSEvent("time-update", map[string]string{
+		// 		"time": t.Format(time.RFC3339),
+		// 		"user":"hellow",
+		// 	})
+		// 	return true
+		// }
+
+		return true
+	})
 }
-
-
-
 
 func (notificationHanlder *NotificationHanlder) GetUserNotifications(c *gin.Context) {
 
-	
+	userID := c.GetHeader("X-User-ID")
+	requestID := c.GetHeader("X-Request-ID")
+	userIDInt, err := strconv.Atoi(userID)
+
+	if err != nil {
+		notificationHanlder.logger.Error("Error", zap.Error(err))
+
+		pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
+
+	}
+
+	limitStr := c.Query("limit")
+	limit, err := strconv.Atoi(limitStr)
+
+	if err != nil {
+
+		notificationHanlder.logger.Error("Error", zap.Error(err))
+
+		pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
+
+	}
+
+	cursor := c.Query("cursor")
+
+	resp, err := notificationHanlder.notificationService.GetUserNotifications(c.Request.Context(), userIDInt, cursor, limit)
+
+	if err != nil {
+
+		notificationHanlder.logger.Error("Error", zap.Error(err))
+
+		var appErr *ierrors.AppError
+
+		if errors.As(err, &appErr) {
+
+			switch appErr.Type {
+			case ierrors.TypeDatabase:
+
+				pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
+			default:
+				pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
+
+			}
+
+		}
+
+		pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
+
+	}
+
+	pkg.SendSuccessResponse(c, resp, requestID, http.StatusOK)
 }

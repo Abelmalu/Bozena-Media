@@ -11,5 +11,6 @@ type NotificationRepository interface {
 
 
 	GetUserNotifications(ctx context.Context,userID int , intcursor string,limit int)(*dto.PaginatedResponse,error)
+	CreateCacheUser(ctx context.Context, userID int, username, name string) error 
 
 }

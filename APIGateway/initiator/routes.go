@@ -46,7 +46,7 @@ func InitRoute(router *gin.Engine, handler Handler,logger *platform.Logger,redis
 	routing.InitFeedRoute(feedRouter,handler.feedHandler,logger,redisClient)
 
 
-	notificationRouter := router.Group("api/notification/stream")
+	notificationRouter := router.Group("api/notification")
 
 	routing.InitNotificationRoutes(notificationRouter,handler.notificationHandler,logger,redisClient)
 

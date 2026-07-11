@@ -100,8 +100,8 @@ func InitRoute(handler *handler.NotificationHanlder) *gin.Engine {
 
 	router := gin.New()
 	//router.GET("/api/notification/stream",handler.Stream)
-	router.Handle(http.MethodGet, "/api/notification/stream/", handler.Stream)
-	router.Handle(http.MethodGet, "/api/notification/", handler.Stream)
+	router.Handle(http.MethodGet, "/api/notification/stream", handler.Stream)
+	router.Handle(http.MethodGet, "/api/notification/user", handler.GetUserNotifications)
 
 
 	return router
