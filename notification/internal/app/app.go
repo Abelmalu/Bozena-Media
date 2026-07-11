@@ -15,6 +15,8 @@ import (
 	"github.com/abelmalu/golang-posts/notification/config"
 	"github.com/abelmalu/golang-posts/notification/internal/handler"
 	"github.com/abelmalu/golang-posts/notification/internal/kafka"
+	"github.com/abelmalu/golang-posts/notification/internal/repository"
+	"github.com/abelmalu/golang-posts/notification/internal/service"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 )
@@ -75,7 +77,9 @@ func initDB(config *config.Config) (*sql.DB, error) {
 
 func (app *App) Run() {
 
-	notificationHandler := handler.NewNotificationHandler(logger)
+	notificationRepo := repository.NewNotificationRepository(app.DB)
+	notificationService := service.NewNotificationService(notificationRepo)
+	notificationHandler := handler.NewNotificationHandler(logger,notificationService)
 
 	router := InitRoute(notificationHandler)
 
@@ -83,7 +87,7 @@ func (app *App) Run() {
 	followedtopic := "followed"
 	userCreatedTopic := "userCreated"
 
-	go kafka.StartConsumer(brokers,followedtopic,userCreatedTopic,)
+	go kafka.StartConsumer(brokers, followedtopic, userCreatedTopic,notificationService,logger)
 
 	if err := router.Run(":8083"); err != nil {
 

@@ -4,19 +4,22 @@ import (
 	"io"
 	"time"
 
+	"github.com/abelmalu/golang-posts/notification/internal/core"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 )
 
 type NotificationHanlder struct {
 	logger *platform.Logger
+	notificationService core.NotificationService
 }
 
-func NewNotificationHandler(logger *platform.Logger) *NotificationHanlder {
+func NewNotificationHandler(logger *platform.Logger,service core.NotificationService) *NotificationHanlder {
 
 	return &NotificationHanlder{
 
 		logger: logger,
+		notificationService: service,
 	}
 }
 
