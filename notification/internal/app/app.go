@@ -87,7 +87,7 @@ func (app *App) Run() {
 	followedtopic := "followed"
 	userCreatedTopic := "userCreated"
 
-	go kafka.StartConsumer(brokers, followedtopic, userCreatedTopic,notificationService,logger)
+	go kafka.StartConsumer(brokers, userCreatedTopic,followedtopic,notificationService,logger)
 
 	if err := router.Run(":8083"); err != nil {
 

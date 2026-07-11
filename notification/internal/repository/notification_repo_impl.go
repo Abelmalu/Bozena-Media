@@ -25,7 +25,7 @@ func NewNotificationRepository(db *sql.DB) *NotificationRepository {
 
 func (notificationRepo *NotificationRepository) GetUserNotifications(ctx context.Context, userID int, cursor string, limit int) (*dto.PaginatedResponse, error) {
 
-	var UserNotifications [] *dto.UserNotification
+	var UserNotifications []*dto.UserNotification
 	var hasNext bool
 	var after string
 
@@ -75,7 +75,7 @@ func (notificationRepo *NotificationRepository) GetUserNotifications(ctx context
 
 			var UserNotification dto.UserNotification
 
-			if err := rows.Scan(&UserNotification.ID,&UserNotification.UseraName, &UserNotification.ActorID, &UserNotification.Message, &UserNotification.CreatedAT); err != nil {
+			if err := rows.Scan(&UserNotification.ID, &UserNotification.UseraName, &UserNotification.ActorID, &UserNotification.Message, &UserNotification.CreatedAT); err != nil {
 				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 			}
@@ -85,32 +85,24 @@ func (notificationRepo *NotificationRepository) GetUserNotifications(ctx context
 				hasNext = true
 				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(UserNotification.ID)))
 
-				break 
-
-
-
+				break
 
 			}
 
 			UserNotifications = append(UserNotifications, &UserNotification)
 
-
 		}
 
 		return &dto.PaginatedResponse{
 
-			HasNext: hasNext,
-			Cursor: after,
+			HasNext:           hasNext,
+			Cursor:            after,
 			UserNotifications: UserNotifications,
-		},nil
+		}, nil
 	} else {
 
 		query := ` SELECT n.id,u.username,n.actor_id,n.message,n.created_at FROM notifications AS n
 				INNER JOIN users_cache AS u ON n.actor_id = u.user_id WHERE recipient_id = $1 AND  ORDER BY id DESC limit $2 `
-
-
-
-
 
 		rows, err := notificationRepo.DB.QueryContext(ctx, query, userID, (limit + 1))
 
@@ -138,7 +130,7 @@ func (notificationRepo *NotificationRepository) GetUserNotifications(ctx context
 
 			var UserNotification dto.UserNotification
 
-			if err := rows.Scan(&UserNotification.ID,&UserNotification.UseraName, &UserNotification.ActorID, &UserNotification.Message, &UserNotification.CreatedAT); err != nil {
+			if err := rows.Scan(&UserNotification.ID, &UserNotification.UseraName, &UserNotification.ActorID, &UserNotification.Message, &UserNotification.CreatedAT); err != nil {
 				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 			}
@@ -148,39 +140,30 @@ func (notificationRepo *NotificationRepository) GetUserNotifications(ctx context
 				hasNext = true
 				after = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(UserNotification.ID)))
 
-				break 
-
-
-
+				break
 
 			}
 
 			UserNotifications = append(UserNotifications, &UserNotification)
 
-
 		}
 
 		return &dto.PaginatedResponse{
 
-			HasNext: hasNext,
-			Cursor: after,
+			HasNext:           hasNext,
+			Cursor:            after,
 			UserNotifications: UserNotifications,
-		},nil
+		}, nil
 
-
-
-		
 	}
 
 }
-
-
 
 func (notificationRepo *NotificationRepository) CreateCacheUser(ctx context.Context, userID int, username, name string) error {
 
 	query := `INSERT INTO users_cache (user_id,username,name)  VALUES($1,$2,$3)`
 
-	_, err := notificationRepo.DB.ExecContext(ctx, query, userID, username,name)
+	_, err := notificationRepo.DB.ExecContext(ctx, query, userID, username, name)
 
 	var pgErr *pgconn.PgError
 	if err != nil {
@@ -201,6 +184,39 @@ func (notificationRepo *NotificationRepository) CreateCacheUser(ctx context.Cont
 		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 	}
-    
+
 	return nil
+}
+
+
+
+func (notificationRepo *NotificationRepository)	InsertUserNotification(ctx context.Context,actorID,recipientID int)  error {
+
+
+query := `INSERT INTO notifications (actor_id,recipient_id)  VALUES($1,$2)`
+
+	_, err := notificationRepo.DB.ExecContext(ctx, query, actorID, recipientID)
+
+	var pgErr *pgconn.PgError
+	if err != nil {
+
+		if errors.As(err, &pgErr) {
+
+			return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+	}
+
+	return nil
+
 }

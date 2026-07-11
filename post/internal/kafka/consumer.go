@@ -41,7 +41,6 @@ func StartConsumer(brokers []string, topic string, postService core.PostService,
 				Name string `json:"name"`
 			}
 			
-			// Unmarshal the raw JSON byte string back into your Go struct
 			err := json.Unmarshal(msg.Value, &user)
 			if err != nil {
 				log.Printf("Failed to unmarshal user data: %v", err)

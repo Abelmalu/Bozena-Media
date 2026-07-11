@@ -20,7 +20,10 @@ type NotificationService struct {
 func NewNotificationService(notificationRepo core.NotificationRepository) *NotificationService{
 
 
-	return &NotificationService{}
+	return &NotificationService{
+
+		notificationRepo: notificationRepo,
+	}
 }
 
 func (notificationService *NotificationService)GetUserNotifications(ctx context.Context, userID int, cursor string, limit int) (*dto.PaginatedResponse, error){
@@ -65,5 +68,16 @@ func (notificationService *NotificationService) CreateCacheUser(ctx context.Cont
   return nil
 
 }
+
+
+func (notificationService *NotificationService)	CreateUserNotification(ctx context.Context,actorID,recipientID int)  error {
+
+	err := notificationService.notificationRepo.InsertUserNotification(ctx,actorID,recipientID)
+
+	return err
+
+
+}
+
 
 
