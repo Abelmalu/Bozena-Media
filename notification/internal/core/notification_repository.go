@@ -1,11 +1,15 @@
 package core
 
-import "context"
+import (
+	"context"
+
+	"github.com/abelmalu/golang-posts/notification/internal/dto"
+)
 
 
 type NotificationRepository interface {
 
 
-	GetUserNotifications(ctx context.Context,userID int)
+	GetUserNotifications(ctx context.Context,userID int , intcursor string,limit int)(*dto.PaginatedResponse,error)
 
 }

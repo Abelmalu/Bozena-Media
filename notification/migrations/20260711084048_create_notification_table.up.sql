@@ -4,7 +4,7 @@ CREATE TABLE notifications(
     recipient_id INT NOT NULL,
     actor_id    INT NOT NULL,
     is_read     BOOLEAN NOT NULL DEFAULT FALSE,
-    message_str    TEXT DEFAULT 'started following you' NOT NULL,
+    message   TEXT DEFAULT 'started following you' NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     read_at TIMESTAMP NULL,
 

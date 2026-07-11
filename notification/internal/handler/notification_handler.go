@@ -53,3 +53,11 @@ func (notificationHanlder *NotificationHanlder) Stream(c *gin.Context) {
 			return true
 		})
 }
+
+
+
+
+func (notificationHanlder *NotificationHanlder) GetUserNotifications(c *gin.Context) {
+
+	
+}
