@@ -14,6 +14,7 @@ import (
 
 	"github.com/abelmalu/golang-posts/notification/config"
 	"github.com/abelmalu/golang-posts/notification/internal/handler"
+	"github.com/abelmalu/golang-posts/notification/internal/kafka"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 )
@@ -74,11 +75,15 @@ func initDB(config *config.Config) (*sql.DB, error) {
 
 func (app *App) Run() {
 
-	
-
 	notificationHandler := handler.NewNotificationHandler(logger)
 
-  router :=	InitRoute(notificationHandler)
+	router := InitRoute(notificationHandler)
+
+	brokers := []string{"localhost:9092"}
+	followedtopic := "followed"
+	userCreatedTopic := "userCreated"
+
+	go kafka.StartConsumer(brokers,followedtopic,userCreatedTopic,)
 
 	if err := router.Run(":8083"); err != nil {
 
@@ -87,14 +92,11 @@ func (app *App) Run() {
 
 }
 
-func InitRoute(handler *handler.NotificationHanlder, ) *gin.Engine {
-
+func InitRoute(handler *handler.NotificationHanlder) *gin.Engine {
 
 	router := gin.New()
 	//router.GET("/api/notification/stream",handler.Stream)
-	 router.Handle(http.MethodGet, "/api/notification/stream/", handler.Stream)
-
-
+	router.Handle(http.MethodGet, "/api/notification/stream/", handler.Stream)
 
 	return router
 

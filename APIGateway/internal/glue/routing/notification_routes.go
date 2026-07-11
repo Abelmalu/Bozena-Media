@@ -5,7 +5,7 @@ import (
 
 	"github.com/abelmalu/golang-posts/APIGateway/internal/glue"
 	"github.com/abelmalu/golang-posts/APIGateway/internal/handler"
-	//"github.com/abelmalu/golang-posts/APIGateway/internal/middleware"
+	"github.com/abelmalu/golang-posts/APIGateway/internal/middleware"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -22,7 +22,7 @@ func InitNotificationRoutes(router *gin.RouterGroup, handler *handler.Notificati
 			Handler: handler.Stream,
 			Middlewares: [] gin.HandlerFunc{
 
-				//middleware.AuthMiddleware(logger,redisClient),
+				middleware.AuthMiddleware(logger,redisClient),
 			},
 
 		},
