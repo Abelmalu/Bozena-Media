@@ -116,7 +116,6 @@ func followedConsumer(consumer sarama.Consumer, followedTopic string, notificati
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
-			cancel()
 
 			err := notificationService.CreateUserNotification(ctx, followed.FollowerID, followed.FollowingID)
 
@@ -126,6 +125,8 @@ func followedConsumer(consumer sarama.Consumer, followedTopic string, notificati
 				continue
 
 			}
+			 cancel()
+
 
 		case err := <-pc.Errors():
 

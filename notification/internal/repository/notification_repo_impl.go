@@ -102,7 +102,7 @@ func (notificationRepo *NotificationRepository) GetUserNotifications(ctx context
 	} else {
 
 		query := ` SELECT n.id,u.username,n.actor_id,n.message,n.created_at FROM notifications AS n
-				INNER JOIN users_cache AS u ON n.actor_id = u.user_id WHERE recipient_id = $1 AND  ORDER BY id DESC limit $2 `
+				INNER JOIN users_cache AS u ON n.actor_id = u.user_id WHERE recipient_id = $1  ORDER BY id DESC limit $2 `
 
 		rows, err := notificationRepo.DB.QueryContext(ctx, query, userID, (limit + 1))
 

@@ -69,7 +69,7 @@ func (notificationHanlder *NotificationHanlder) GetUserNotifications(c *gin.Cont
 		notificationHanlder.logger.Error("Error", zap.Error(err))
 
 		pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
-
+		return
 	}
 
 	limitStr := c.Query("limit")
@@ -80,7 +80,7 @@ func (notificationHanlder *NotificationHanlder) GetUserNotifications(c *gin.Cont
 		notificationHanlder.logger.Error("Error", zap.Error(err))
 
 		pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
-
+		return
 	}
 
 	cursor := c.Query("cursor")
@@ -99,8 +99,10 @@ func (notificationHanlder *NotificationHanlder) GetUserNotifications(c *gin.Cont
 			case ierrors.TypeDatabase:
 
 				pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
+				return 
 			default:
 				pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
+				return
 
 			}
 
@@ -108,6 +110,7 @@ func (notificationHanlder *NotificationHanlder) GetUserNotifications(c *gin.Cont
 
 		pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
 
+		return
 	}
 
 	pkg.SendSuccessResponse(c, resp, requestID, http.StatusOK)
