@@ -1,0 +1,5 @@
+
+ALTER TABLE users
+
+ALTER COLUMN follower_count SET DEFAULT 0,
+ALTER COLUMN following_count SET DEFAULT 0;
