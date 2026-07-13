@@ -220,3 +220,37 @@ query := `INSERT INTO notifications (actor_id,recipient_id)  VALUES($1,$2)`
 	return nil
 
 }
+
+
+func (notificationRepo *NotificationRepository)GetUser(ctx context.Context,userID int) (*dto.User,error){
+
+	var user dto.User
+
+	query := `SELECT user_id,username,name FROM users_cache WHERE user_id=$1`
+
+	if err := notificationRepo.DB.QueryRow(query,userID).Scan(&user.ID,&user.UserName,&user.Name); err != nil {
+
+	var pgErr *pgconn.PgError
+
+			if errors.As(err, &pgErr) {
+
+			return nil,ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+
+	}
+	return &user,nil
+
+
+}
+

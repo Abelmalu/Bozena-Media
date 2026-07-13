@@ -13,6 +13,8 @@ type NotificationService interface {
 	GetUserNotifications(ctx context.Context, userID int, cursor string, limit int) (*dto.PaginatedResponse, error)
 	CreateCacheUser(ctx context.Context, userID int, username, name string) error 
 	CreateUserNotification(ctx context.Context,actorID,recipientID int)  error
+	GetUser(ctx context.Context,userID int) (*dto.User,error)
+
 
 
 }

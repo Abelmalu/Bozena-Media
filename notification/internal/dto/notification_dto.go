@@ -15,3 +15,12 @@ type PaginatedResponse struct {
 	Cursor            string
 	HasNext           bool
 }
+
+
+type User struct {
+
+	ID int
+	UserName string 
+	Name string 
+
+}

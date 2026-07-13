@@ -80,4 +80,20 @@ func (notificationService *NotificationService)	CreateUserNotification(ctx conte
 }
 
 
+func (notificationService *NotificationService)GetUser(ctx context.Context,userID int) (*dto.User,error){
+
+
+		resp,err := notificationService.notificationRepo.GetUser(ctx,userID)
+
+		if err != nil {
+
+
+			return nil,err
+		}
+
+
+		return resp,nil
+	}
+
+
 
