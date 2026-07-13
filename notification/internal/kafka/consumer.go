@@ -3,11 +3,13 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"sync"
 	"time"
 
 	"github.com/IBM/sarama"
+	"github.com/abelmalu/golang-posts/notification/internal/broker"
 	"github.com/abelmalu/golang-posts/notification/internal/core"
 	"github.com/abelmalu/golang-posts/platform"
 	"go.uber.org/zap"
@@ -19,7 +21,7 @@ type follow struct {
 	FollowingID int `json:"following_id"`
 }
 
-func StartConsumer(brokers []string, userCreatedTopic, followedTopic string, notificationService core.NotificationService, logger *platform.Logger) {
+func StartConsumer(brokers []string, userCreatedTopic, followedTopic string, notificationService core.NotificationService, logger *platform.Logger,notificationBroker *broker.NotificationBroker) {
 
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
@@ -42,7 +44,7 @@ func StartConsumer(brokers []string, userCreatedTopic, followedTopic string, not
 	go func() {
 
 		defer wg.Done()
-		followedConsumer(consumer, followedTopic, notificationService, logger)
+		followedConsumer(consumer, followedTopic, notificationService, logger,notificationBroker)
 
 	}()
 
@@ -75,7 +77,7 @@ func userCreatedConsumer(consumer sarama.Consumer, userCreatedTopic string, noti
 				continue
 			}
 
-			ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
+			ctx, cancel:= context.WithTimeout(context.Background(), time.Second*2)
 
 			err = notificationService.CreateCacheUser(ctx, user.ID, user.Username, user.Name)
 			if err != nil {
@@ -83,6 +85,9 @@ func userCreatedConsumer(consumer sarama.Consumer, userCreatedTopic string, noti
 				logger.Error("Error in inserting to cache users_cache table", zap.Error(err))
 
 			}
+
+
+			cancel()
 			log.Printf("Received user registered event: ID=%v, Username=%s Name=%s,", user.ID, user.Username, user.Name)
 
 		case err := <-pc.Errors():
@@ -93,7 +98,7 @@ func userCreatedConsumer(consumer sarama.Consumer, userCreatedTopic string, noti
 
 }
 
-func followedConsumer(consumer sarama.Consumer, followedTopic string, notificationService core.NotificationService, logger *platform.Logger) {
+func followedConsumer(consumer sarama.Consumer, followedTopic string, notificationService core.NotificationService, logger *platform.Logger, notificationBroker *broker.NotificationBroker) {
 
 	pc, err := consumer.ConsumePartition(followedTopic, 0, sarama.OffsetNewest)
 	if err != nil {
@@ -126,6 +131,11 @@ func followedConsumer(consumer sarama.Consumer, followedTopic string, notificati
 
 			}
 			 cancel()
+
+			notificationMessage := fmt.Sprintf("User %d followed you!", followed.FollowerID)
+			notificationBroker.NotifyUser(followed.FollowingID, notificationMessage)
+
+			
 
 
 		case err := <-pc.Errors():

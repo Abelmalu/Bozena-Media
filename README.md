@@ -16,7 +16,7 @@ A modern, scalable social network backend built using **Microservices Architectu
 The project is built using **Clean Architecture** principles in each service to ensure scalability, testability, and a clear separation of concerns.
 
 ### 🏛️ Clean Architecture Layers
-Each service (`Auth`, `post`, `like`, `follow`, `feed`) is structured into the following layers within the `internal/` directory:
+Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`) is structured into the following layers within the `internal/` directory:
 
 - **`internal/handlers/`**: The **Delivery/Transport Layer**. It implements the gRPC server interfaces and handles incoming requests and outgoing responses.
 - **`internal/service/`**: The **Business Logic/Use Case Layer**. This contains the core logic of the application and is independent of external frameworks.
@@ -32,12 +32,13 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`) is structured into the f
 4.  **Like Service**: Manages like and unlike operations plus post like listings.
 5.  **Follow Service**: Manages follow and unfollow relationships between users, plus follower/following listings.
 6.  **Feed Service**: Builds the authenticated user feed from post and user metadata.
+7.  **Notification Service**: Connects to Kafka and pushes real-time follower notifications to the browser via Server-Sent Events (SSE).
 
 ### 🔌 Communication Map
 
-- **External (Client -> Gateway)**: REST API (HTTP/JSON)
+- **External (Client -> Gateway)**: REST API (HTTP/JSON) & Server-Sent Events (SSE)
 - **Internal (Gateway -> Services)**: gRPC (Protobuf)
-- **Internal (Service -> Service)**: gRPC (Protobuf)
+- **Internal (Service -> Service)**: gRPC and kafka
 
 ### 🔁 Request Flow
 
@@ -50,7 +51,7 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`) is structured into the f
 
 - Each service owns its own PostgreSQL database and migrations.
 - Auth, Post, Follow, and Feed all maintain user caches for username/name lookups.
-- Kafka propagates `userCreated` and post-related events to downstream services.
+- Kafka propagates `userCreated` and post-related events to downstream services, and triggers real-time pushes in the Notification Service.
 - Redis is used for refresh-token/session blacklist state and distributed token-bucket rate limiting.
 
 ---
@@ -59,6 +60,7 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`) is structured into the f
 
 - **Clean Architecture Implementation**: Strict separation of concerns for maintainability and testability.
 - **Microservices Architecture**: Decoupled services for better scalability and maintenance.
+- **Real-Time Notifications**: Server-Sent Events (SSE) stream real-time updates (like new followers) from the Notification Service directly to the frontend, proxied securely by the API Gateway.
 - **Event-Driven Architecture**: Configured with **Apache Kafka**. When users register or update their profiles, `userCreated` events are published and consumed by other services. This asynchronous messaging is also utilized for post creation logic.
 - **gRPC Integration**: High-performance internal communication using Protocol Buffers.
 - **Secure Authentication**: JWT-based stateless authentication with token refresh, secure logout using **Redis** for token blacklisting, and cross-platform support (HttpOnly cookies for Web, JSON response for Mobile).
@@ -82,6 +84,7 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`) is structured into the f
 ├── like/                 # Like management service (gRPC Server)
 ├── follow/               # Follow management service (gRPC Server)
 ├── feed/                 # Feed management service (gRPC Server)
+├── notification/         # Real-time notifications service (HTTP SSE Server)
 ├── frontend/             # React + TypeScript web client
 ├── pkg/                  # Shared utilities (JWT, etc.)
 ├── migrations/           # Database migration files
@@ -143,6 +146,12 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`) is structured into the f
    go run cmd/main.go
    ```
 
+   **Notification Service (Port 50056):**
+   ```bash
+   cd notification
+   go run cmd/main.go
+   ```
+
    **API Gateway (Port 8080):**
    ```bash
    cd APIGateway
@@ -158,7 +167,7 @@ To run the entire microservices ecosystem (including PostgreSQL and Redis) using
    **Important**: In your `.env` files, change hostnames from `localhost` to the Docker service names:
    - **Database Host**: `postgres` (e.g. `postgres://user:password@postgres:5432/blog...`)
    - **Redis Host**: `redis` (e.g. `redis:6379`)
-   - **gRPC Service Addresses** (for API Gateway): `post-service:50051`, `auth-service:50052`, `like-service:50053`, `follow-service:50054`, `feed-service:50055`
+   - **gRPC Service Addresses** (for API Gateway): `post-service:50051`, `auth-service:50052`, `like-service:50053`, `follow-service:50054`, `feed-service:50055`, `notification-service:50056`
 3. Run the stack from the root directory:
    ```bash
    docker-compose up --build
@@ -209,6 +218,13 @@ To run the entire microservices ecosystem (including PostgreSQL and Redis) using
 | :------- | :-------------------- | :--------------------------- | :------------------- |
 | `GET`    | `/api/feed/`          | Get user timeline feed       | Authenticated User   |
 
+### Notifications
+
+| Method | Endpoint                    | Description                           | Permissions          |
+| :----- | :-------------------------- | :------------------------------------ | :------------------- |
+| `GET`  | `/api/notifications/stream` | Real-time SSE stream for new followers| Authenticated User   |
+| `GET`  | `/api/notification/user`    | Get past notifications for a user     | Authenticated User   |
+
 ---
 
 ## 📅 Roadmap
@@ -216,6 +232,7 @@ To run the entire microservices ecosystem (including PostgreSQL and Redis) using
 - [x] **Likes Service**: Allow users to like and react to posts.
 - [x] **Follows Service**: Allow users to follow and unfollow other users.
 - [x] **Feeds Service**: Optimized algorithm for displaying posts.
+- [x] **Notification Service**: Real-time SSE pushes proxied via API Gateway.
 - [x] **Docker Compose**: Single command to spin up the entire ecosystem.
 - [ ] **Service Discovery**: Implement Consul or Etcd.
 

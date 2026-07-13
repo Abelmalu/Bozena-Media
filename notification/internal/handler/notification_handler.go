@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-	"time"
 
+	"github.com/abelmalu/golang-posts/notification/internal/broker"
 	"github.com/abelmalu/golang-posts/notification/internal/core"
 	ierrors "github.com/abelmalu/golang-posts/notification/internal/errors"
 	"github.com/abelmalu/golang-posts/notification/pkg"
@@ -18,44 +18,51 @@ import (
 type NotificationHanlder struct {
 	logger              *platform.Logger
 	notificationService core.NotificationService
+	notificationBroker *broker.NotificationBroker
 }
 
-func NewNotificationHandler(logger *platform.Logger, service core.NotificationService) *NotificationHanlder {
+func NewNotificationHandler(logger *platform.Logger, service core.NotificationService,notiBroker *broker.NotificationBroker) *NotificationHanlder {
 
 	return &NotificationHanlder{
 
 		logger:              logger,
 		notificationService: service,
+		notificationBroker: notiBroker,
 	}
 }
 
 func (notificationHanlder *NotificationHanlder) Stream(c *gin.Context) {
 
+	userID := c.GetHeader("X-User-ID")
+	requestID := c.GetHeader("X-Request-ID")
+	userIDInt, err := strconv.Atoi(userID)
+
+	if err != nil {
+		notificationHanlder.logger.Error("Error", zap.Error(err))
+
+		pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
+		return
+	}
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
 	c.Header("Connection", "keep-alive")
 
 	c.Stream(func(w io.Writer) bool {
 
-		time.Sleep(time.Second * 5)
+		userChan := notificationHanlder.notificationBroker.Register(userIDInt)
 
-		c.SSEvent("this", "number is u lucky number")
 
-		// select {
-		// // Handle client disconnection
-		// case <-c.Request.Context().Done():
-		// 	return false
+		select {
+		case <-c.Request.Context().Done():
+			return false
 
-		// // Handle next tick event
-		// case t := <-ticker.C:
-		// 	c.SSEvent("time-update", map[string]string{
-		// 		"time": t.Format(time.RFC3339),
-		// 		"user":"hellow",
-		// 	})
-		// 	return true
-		// }
-
-		return true
+		case msg, ok := <-userChan:
+			if !ok {
+				return false 
+			}
+			c.SSEvent("notification", msg)
+			return true
+		}
 	})
 }
 
@@ -99,7 +106,7 @@ func (notificationHanlder *NotificationHanlder) GetUserNotifications(c *gin.Cont
 			case ierrors.TypeDatabase:
 
 				pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
-				return 
+				return
 			default:
 				pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
 				return
