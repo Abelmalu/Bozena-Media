@@ -22,4 +22,5 @@ type AuthRepository interface {
 	TemporaryLockUntil(ctx context.Context, user *model.User) (*model.User, error)
 	IncreaseFollowCount(ctx context.Context, followerID, followingID int) error
 	DecreaseFollowCount(ctx context.Context, followerID, followingID int) error
+	GetUserProfile(ctx context.Context,userID int64)(*dto.UserProfileResponse,error)
 }

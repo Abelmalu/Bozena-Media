@@ -10,6 +10,8 @@ service AuthService{
     rpc Logout(google.protobuf.Empty) returns (LogoutResponse);
     rpc RefreshHandler(RefreshRequest) returns (RefreshResponse);
     rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
+    rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse);
+
 
 }
 
@@ -89,5 +91,25 @@ message SearchUserResponse {
     repeated User users = 1;
     string cursor = 2;
     bool has_next = 3;
+
+}
+
+
+message GetUserProfileRequest {
+
+    int64 user_id = 1;
+
+
+
+}
+
+message GetUserProfileResponse {
+
+    int64 id = 1;
+    string username = 2;
+    string name = 3;
+    string profile_image_url = 4;
+    
+
 
 }

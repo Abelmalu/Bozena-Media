@@ -75,7 +75,7 @@ func (authrepo *AuthRepository) Login(ctx context.Context, userName, password st
 
 	var user model.User
 	query := `SELECT * FROM users WHERE username=$1`
-	if err := authrepo.DB.QueryRowContext(ctx, query, userName).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.Role, &user.FailedLoginAttempts, &user.IsPermanentlyLocked, &user.TemporaryLockUntil, &user.FollowerCount, &user.FollowingCount); err != nil {
+	if err := authrepo.DB.QueryRowContext(ctx, query, userName).Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.Role, &user.FailedLoginAttempts, &user.IsPermanentlyLocked, &user.TemporaryLockUntil, &user.FollowerCount, &user.FollowingCount,&user.Avatar); err != nil {
 
 		var pgErr *pgconn.PgError
 
@@ -470,75 +470,103 @@ func (authRepo *AuthRepository) TemporaryLockUntil(ctx context.Context, user *mo
 
 func (authRepo *AuthRepository) IncreaseFollowCount(ctx context.Context, followerID, followingID int) error {
 
-	tx,err := authRepo.DB.BeginTx(ctx,nil)
+	tx, err := authRepo.DB.BeginTx(ctx, nil)
 
 	if err != nil {
 
-		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 	}
 
 	defer tx.Rollback()
 
 	query1 := `UPDATE users SET follower_count=follower_count+1 WHERE id=$1`
 
-	_,err = tx.ExecContext(ctx,query1,followingID)
+	_, err = tx.ExecContext(ctx, query1, followingID)
 
 	if err != nil {
 
-		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 	}
 
 	query2 := `UPDATE users SET following_count=following_count+1 WHERE id=$1`
 
-	_,err = tx.ExecContext(ctx,query2,followerID)
+	_, err = tx.ExecContext(ctx, query2, followerID)
 
 	if err != nil {
 
-		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 	}
 
 	if err := tx.Commit(); err != nil {
 
-		 return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 	}
-	
+
 	return nil
 }
 
-
 func (authRepo *AuthRepository) DecreaseFollowCount(ctx context.Context, followerID, followingID int) error {
 
-	tx,err := authRepo.DB.BeginTx(ctx,nil)
+	tx, err := authRepo.DB.BeginTx(ctx, nil)
 
 	if err != nil {
 
-		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 	}
 
 	defer tx.Rollback()
 
 	query1 := `UPDATE users SET follower_count=follower_count-1 WHERE id=$1`
 
-	_,err = tx.ExecContext(ctx,query1,followingID)
+	_, err = tx.ExecContext(ctx, query1, followingID)
 
 	if err != nil {
 
-		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 	}
 
 	query2 := `UPDATE users SET following_count=following_count-1 WHERE id=$1`
 
-	_,err = tx.ExecContext(ctx,query2,followerID)
+	_, err = tx.ExecContext(ctx, query2, followerID)
 
 	if err != nil {
 
-		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 	}
 
 	if err := tx.Commit(); err != nil {
 
-		 return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 	}
-	
+
 	return nil
+}
+
+func (authRepo *AuthRepository) GetUserProfile(ctx context.Context, userID int64) (*dto.UserProfileResponse, error) {
+
+	var user dto.UserProfileResponse
+
+	query := ` SELECT id,name,username,avatar FROM users WHERE id=$1`
+
+	if err := authRepo.DB.QueryRowContext(ctx, query, userID).Scan(&user.ID, &user.Name, &user.UserName, &user.Avatar); err != nil {
+
+		if errors.Is(err, sql.ErrNoRows) {
+
+			return nil, ierrors.NewNotFoundError(ierrors.MSGNotFound, err)
+		}
+
+		if errors.Is(err, context.Canceled) {
+
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+	}
+
+	return &user, nil
+
 }

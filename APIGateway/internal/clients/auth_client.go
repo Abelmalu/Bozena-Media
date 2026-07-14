@@ -79,3 +79,25 @@ func (ac *AuthClient) SearchUser(ctx context.Context,username,cursor string,limi
 
 	)
 }
+
+
+
+func (ac *AuthClient) GetUserProfile(ctx context.Context,userID int64)(*pb.GetUserProfileResponse,error){
+
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	return ac.client.GetUserProfile(
+		ctx,
+		&pb.GetUserProfileRequest{
+
+			UserId: userID,
+		
+			
+		},
+
+	)
+}
+
+
+

@@ -15,6 +15,8 @@ type AuthService interface {
 	SearchUser(ctx context.Context, username, cursor string, limit int) (*dto.PaginatedResponse, error)
 	IncreaseFollowCounts(ctx context.Context, followerID, followingID int) error
 	DecreaseFollowCounts(ctx context.Context, followerID, followingID int) error	
+	GetUserProfile(ctx context.Context,userID int64)(*dto.UserProfileResponse,error)
+
 	// UpdateProfile(ctx context.Context,int)
 
 }

@@ -23,6 +23,7 @@ type User struct {
 	UpdatedAt           string     `db:"updated_at"`
 	FollowerCount 		int 		`json:"follower_count" db:"follower_count"`
 	FollowingCount 		int 		`json:"following_count" db:"following_count"`
+	Avatar 				*string 	`json:"avatar" db:"avatar"`
 
 }
 

@@ -22,7 +22,8 @@ type AuthService interface {
 	Login(ctx context.Context, userName, password string) (*pb.LoginResponse, error)
 	Logout(ctx context.Context) (*pb.LogoutResponse, error)
 	RefreshHandler(context.Context, string) (*pb.RefreshResponse, error)
-	SearchUser(ctx context.Context,username,cursor string,limit int)(*pb.SearchUserResponse,error)
+	GetUserProfile(ctx context.Context, userID int64) (*pb.GetUserProfileResponse, error)
+	SearchUser(ctx context.Context, username, cursor string, limit int) (*pb.SearchUserResponse, error)
 }
 type AuthHandler struct {
 	client AuthService
@@ -41,7 +42,6 @@ func NewAuthHandler(au AuthService, logger *platform.Logger) *AuthHandler {
 func ExtractRefreshToken(c *gin.Context) (string, error) {
 
 	var req struct {
-
 		RefreshToken string `json:"refresh_token"`
 	}
 
@@ -383,11 +383,8 @@ func (authHandler *AuthHandler) SearchUser(c *gin.Context) {
 
 	if limitStr == "" {
 
-
 		limitStr = "0"
 	}
-
-
 
 	limit, err := strconv.Atoi(limitStr)
 
@@ -399,22 +396,70 @@ func (authHandler *AuthHandler) SearchUser(c *gin.Context) {
 
 	}
 
-
 	cursor := c.Query("cursor")
 
 	ctx, _ := utils.AddToOutgoingContext(c, requestID)
 
-
-	resp,err := authHandler.client.SearchUser(ctx,search,cursor,limit)
+	resp, err := authHandler.client.SearchUser(ctx, search, cursor, limit)
 
 	if err != nil {
 
-		authHandler.logger.Error("GRPC Error",zap.Error(err),zap.String("requestId",requestID))
+		authHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("requestId", requestID))
 
 		c.Error(ierrors.FromGRPC(err))
 		return
 	}
 
+	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
+}
+
+func (authHandler *AuthHandler) GetUserProfile(c *gin.Context) {
+
+	requestID, err := utils.GetRequestID(c)
+	if err != nil {
+
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+
+			authHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")), zap.String("requestID", requestID))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+		}
+
+	}
+
+	userIDStr := c.Param("id")
+	userIDValue, err := strconv.Atoi(userIDStr)
+	if err != nil {
+
+		authHandler.logger.Error("error while Atoi", zap.String("requestID", requestID))
+
+		c.Error(appErrors.NewAppError(ierrors.TypeValidation, ierrors.MSGInvalidRequestBody, err))
+		return
+
+	}
+
+	ctx, _ := utils.AddToOutgoingContext(c, requestID)
+
+	userID := int64(userIDValue)
+
+	resp, err := authHandler.client.GetUserProfile(ctx, userID)
+
+	if err != nil {
+
+		authHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
+		c.Error(ierrors.FromGRPC(err))
+
+		return
+
+	}
 
 	utils.SendSuccessResponse(c,resp,requestID,http.StatusOK)
 }

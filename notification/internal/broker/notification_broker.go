@@ -2,7 +2,6 @@ package broker
 
 import (
 	"sync"
-
 	"github.com/abelmalu/golang-posts/platform"
 	"go.uber.org/zap"
 )

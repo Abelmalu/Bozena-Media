@@ -458,3 +458,17 @@ func (authSer *AuthService) DecreaseFollowCounts(ctx context.Context, followerID
 	return nil
 
 }
+
+
+func (authSer *AuthService) GetUserProfile(ctx context.Context, userID int64) (*dto.UserProfileResponse, error) {
+
+	resp,err := authSer.repo.GetUserProfile(ctx,userID)
+
+	if err != nil {
+
+
+		return nil,err
+	}
+
+	return resp,nil
+}
