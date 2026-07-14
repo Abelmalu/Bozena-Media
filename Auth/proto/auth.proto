@@ -109,6 +109,8 @@ message GetUserProfileResponse {
     string username = 2;
     string name = 3;
     string profile_image_url = 4;
+    int64 follower_count = 5;
+    int64 following_count = 6;
     
 
 

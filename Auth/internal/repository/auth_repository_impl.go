@@ -542,13 +542,13 @@ func (authRepo *AuthRepository) DecreaseFollowCount(ctx context.Context, followe
 	return nil
 }
 
-func (authRepo *AuthRepository) GetUserProfile(ctx context.Context, userID int64) (*dto.UserProfileResponse, error) {
+func (authRepo *AuthRepository) GetUserProfile(ctx context.Context, userID int64) (*model.User, error) {
 
-	var user dto.UserProfileResponse
+	var user model.User
 
-	query := ` SELECT id,name,username,avatar FROM users WHERE id=$1`
+	query := ` SELECT id,name,username,follower_count,following_count,avatar FROM users WHERE id=$1`
 
-	if err := authRepo.DB.QueryRowContext(ctx, query, userID).Scan(&user.ID, &user.Name, &user.UserName, &user.Avatar); err != nil {
+	if err := authRepo.DB.QueryRowContext(ctx, query, userID).Scan(&user.ID, &user.Name, &user.Username,&user.FollowerCount,&user.FollowingCount, &user.Avatar); err != nil {
 
 		if errors.Is(err, sql.ErrNoRows) {
 

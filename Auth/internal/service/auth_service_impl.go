@@ -460,7 +460,7 @@ func (authSer *AuthService) DecreaseFollowCounts(ctx context.Context, followerID
 }
 
 
-func (authSer *AuthService) GetUserProfile(ctx context.Context, userID int64) (*dto.UserProfileResponse, error) {
+func (authSer *AuthService) GetUserProfile(ctx context.Context, userID int64) (*model.User, error) {
 
 	resp,err := authSer.repo.GetUserProfile(ctx,userID)
 

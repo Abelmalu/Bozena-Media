@@ -263,30 +263,27 @@ func (authHandler *AuthHandler) RefreshHandler(ctx context.Context, req *pb.Refr
 
 		authHandler.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
 
-		
+		var appErr *ierrors.AppError
 
-			var appErr *ierrors.AppError
-
-			if errors.As(err, &appErr) {
-				switch appErr.Type {
-				case ierrors.TypeValidation:
-					return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
-				case ierrors.TypeConflict:
-					return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
-				case ierrors.TypeUnauthorized:
-					return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
-				case ierrors.TypeNotFound:
-					return nil, status.Error(codes.NotFound, string(appErr.Message))
-				case ierrors.TypeTimeout:
-					return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
-				case ierrors.TypeCancelled:
-					return nil, status.Error(codes.Canceled, string(appErr.Message))
-				default:
-					return nil, status.Error(codes.Internal, "internal error")
-				}
-
+		if errors.As(err, &appErr) {
+			switch appErr.Type {
+			case ierrors.TypeValidation:
+				return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+			case ierrors.TypeConflict:
+				return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+			case ierrors.TypeUnauthorized:
+				return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+			case ierrors.TypeNotFound:
+				return nil, status.Error(codes.NotFound, string(appErr.Message))
+			case ierrors.TypeTimeout:
+				return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+			case ierrors.TypeCancelled:
+				return nil, status.Error(codes.Canceled, string(appErr.Message))
+			default:
+				return nil, status.Error(codes.Internal, "internal error")
 			}
-		
+
+		}
 
 		if errors.Is(err, context.Canceled) {
 
@@ -383,7 +380,9 @@ func (authHandler *AuthHandler) SearchUser(ctx context.Context, req *pb.SearchUs
 }
 
 func (authHandler *AuthHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfileRequest) (*pb.GetUserProfileResponse, error) {
-	requestID, err := utils.GetRequestID(ctx)
+
+
+    requestID, err := utils.GetRequestID(ctx)
 
 	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
 
@@ -435,15 +434,17 @@ func (authHandler *AuthHandler) GetUserProfile(ctx context.Context, req *pb.GetU
 	}
 
 	avatarUrl := ""
-if resp.Avatar != nil {
-    avatarUrl = *resp.Avatar
-}
+	if resp.Avatar != nil {
+		avatarUrl = *resp.Avatar
+	}
 
 	return &pb.GetUserProfileResponse{
 
-		Id:              resp.ID,
+		Id:              int64(resp.ID),
 		Name:            resp.Name,
-		Username:        resp.UserName,
+		Username:        resp.Username,
 		ProfileImageUrl: avatarUrl,
+		FollowerCount: int64(resp.FollowerCount),
+		FollowingCount: int64(resp.FollowingCount),
 	}, nil
 }

@@ -724,6 +724,8 @@ type GetUserProfileResponse struct {
 	Username        string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	Name            string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	ProfileImageUrl string                 `protobuf:"bytes,4,opt,name=profile_image_url,json=profileImageUrl,proto3" json:"profile_image_url,omitempty"`
+	FollowerCount   int64                  `protobuf:"varint,5,opt,name=follower_count,json=followerCount,proto3" json:"follower_count,omitempty"`
+	FollowingCount  int64                  `protobuf:"varint,6,opt,name=following_count,json=followingCount,proto3" json:"following_count,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -786,6 +788,20 @@ func (x *GetUserProfileResponse) GetProfileImageUrl() string {
 	return ""
 }
 
+func (x *GetUserProfileResponse) GetFollowerCount() int64 {
+	if x != nil {
+		return x.FollowerCount
+	}
+	return 0
+}
+
+func (x *GetUserProfileResponse) GetFollowingCount() int64 {
+	if x != nil {
+		return x.FollowingCount
+	}
+	return 0
+}
+
 var File_proto_auth_proto protoreflect.FileDescriptor
 
 const file_proto_auth_proto_rawDesc = "" +
@@ -835,12 +851,14 @@ const file_proto_auth_proto_rawDesc = "" +
 	"\x06cursor\x18\x02 \x01(\tR\x06cursor\x12\x19\n" +
 	"\bhas_next\x18\x03 \x01(\bR\ahasNext\"0\n" +
 	"\x15GetUserProfileRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\"\x84\x01\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\"\xd4\x01\n" +
 	"\x16GetUserProfileResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12*\n" +
-	"\x11profile_image_url\x18\x04 \x01(\tR\x0fprofileImageUrl2\xcc\x03\n" +
+	"\x11profile_image_url\x18\x04 \x01(\tR\x0fprofileImageUrl\x12%\n" +
+	"\x0efollower_count\x18\x05 \x01(\x03R\rfollowerCount\x12'\n" +
+	"\x0ffollowing_count\x18\x06 \x01(\x03R\x0efollowingCount2\xcc\x03\n" +
 	"\vAuthService\x12G\n" +
 	"\bRegister\x12\x1c.authservice.RegisterRequest\x1a\x1d.authservice.RegisterResponse\x12>\n" +
 	"\x05Login\x12\x19.authservice.LoginRequest\x1a\x1a.authservice.LoginResponse\x12=\n" +
