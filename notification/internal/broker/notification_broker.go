@@ -2,17 +2,22 @@ package broker
 
 import (
 	"sync"
+
+	"github.com/abelmalu/golang-posts/platform"
+	"go.uber.org/zap"
 )
 
 type NotificationBroker struct {
 	mu          sync.RWMutex
 	userStreams map[int]chan string
+	logger      *platform.Logger
 }
 
-func NewNotificationBroker() *NotificationBroker {
+func NewNotificationBroker(logger *platform.Logger) *NotificationBroker {
 
 	broker := &NotificationBroker{
 		userStreams: make(map[int]chan string),
+		logger: logger,
 	}
 
 	return broker
@@ -45,8 +50,14 @@ func (b *NotificationBroker) NotifyUser(userID int, message string) {
 
 	if ch, exists := b.userStreams[userID]; exists {
 		select {
+
 		case ch <- message:
+
 		default:
+
+			b.logger.Warn("Notification Dropped",zap.Int16("userID",int16(userID)))
+
+
 		}
 	}
 }

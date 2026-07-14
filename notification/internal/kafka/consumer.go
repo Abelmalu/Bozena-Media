@@ -140,7 +140,7 @@ func followedConsumer(consumer sarama.Consumer, followedTopic string, notificati
 
 			cancel()
 
-			notificationMessage := fmt.Sprintf(" %v started following you!", &user)
+			notificationMessage := fmt.Sprintf(" %v started following you!", *user)
 			notificationBroker.NotifyUser(followed.FollowingID, notificationMessage)
 
 		case err := <-pc.Errors():

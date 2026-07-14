@@ -51,6 +51,7 @@ func (notificationHanlder *NotificationHanlder) Stream(c *gin.Context) {
 
 		userChan := notificationHanlder.notificationBroker.Register(userIDInt)
 
+		defer notificationHanlder.notificationBroker.Unregister(userIDInt)
 
 		select {
 		case <-c.Request.Context().Done():

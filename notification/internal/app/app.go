@@ -78,7 +78,7 @@ func initDB(config *config.Config) (*sql.DB, error) {
 
 func (app *App) Run() {
 
-	notificationBroker := broker.NewNotificationBroker()
+	notificationBroker := broker.NewNotificationBroker(logger)
 	notificationRepo := repository.NewNotificationRepository(app.DB)
 	notificationService := service.NewNotificationService(notificationRepo)
 	notificationHandler := handler.NewNotificationHandler(logger,notificationService,notificationBroker)
