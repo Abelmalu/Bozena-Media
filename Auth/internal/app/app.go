@@ -12,12 +12,14 @@ import (
 	"github.com/abelmalu/golang-posts/Auth/config"
 	handler "github.com/abelmalu/golang-posts/Auth/internal/handlers"
 	"github.com/abelmalu/golang-posts/Auth/internal/kafka"
+	miniocl "github.com/abelmalu/golang-posts/Auth/internal/minio"
 	"github.com/abelmalu/golang-posts/Auth/internal/repository"
 	"github.com/abelmalu/golang-posts/Auth/internal/service"
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
 	"github.com/abelmalu/golang-posts/platform"
 	_ "github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -28,6 +30,7 @@ type App struct {
 	DB     *sql.DB
 	RedisClient *redis.Client
 	Kafka   sarama.SyncProducer
+	minioClient *minio.Client
 }
 
 
@@ -62,11 +65,14 @@ func NewApp() (*App, error) {
 		log.Fatalf("Couldn't make kafka connection %v",err)
 	}
 
+	minio,err := miniocl.NewMinioClient()
+
 	app := App{
 		config: config,
 		DB:     DBConPool,
 		RedisClient: redisClient,
 		Kafka: kafkaClient,
+		minioClient: minio,
 	}
 
 	return &app, nil
@@ -134,7 +140,7 @@ func (app *App) Run() {
 	
     // Dependency Injection for each layer one by one 
 	authRepo := repository.NewAuthRepository(app.DB)
-	authService := service.NewAuthService(authRepo,app.RedisClient,app.Kafka,logger)
+	authService := service.NewAuthService(authRepo,app.RedisClient,app.Kafka,logger,app.minioClient)
 	authHandler := handler.NewAuthHandler(authService,logger)
 	brokers := []string{"localhost:9092"}
 	followedTopic := "followed"

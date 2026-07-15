@@ -20,12 +20,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_Register_FullMethodName       = "/authservice.AuthService/Register"
-	AuthService_Login_FullMethodName          = "/authservice.AuthService/Login"
-	AuthService_Logout_FullMethodName         = "/authservice.AuthService/Logout"
-	AuthService_RefreshHandler_FullMethodName = "/authservice.AuthService/RefreshHandler"
-	AuthService_SearchUser_FullMethodName     = "/authservice.AuthService/SearchUser"
-	AuthService_GetUserProfile_FullMethodName = "/authservice.AuthService/GetUserProfile"
+	AuthService_Register_FullMethodName          = "/authservice.AuthService/Register"
+	AuthService_Login_FullMethodName             = "/authservice.AuthService/Login"
+	AuthService_Logout_FullMethodName            = "/authservice.AuthService/Logout"
+	AuthService_RefreshHandler_FullMethodName    = "/authservice.AuthService/RefreshHandler"
+	AuthService_SearchUser_FullMethodName        = "/authservice.AuthService/SearchUser"
+	AuthService_GetUserProfile_FullMethodName    = "/authservice.AuthService/GetUserProfile"
+	AuthService_GenerateUploadURL_FullMethodName = "/authservice.AuthService/GenerateUploadURL"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -38,6 +39,7 @@ type AuthServiceClient interface {
 	RefreshHandler(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*RefreshResponse, error)
 	SearchUser(ctx context.Context, in *SearchUserRequest, opts ...grpc.CallOption) (*SearchUserResponse, error)
 	GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...grpc.CallOption) (*GetUserProfileResponse, error)
+	GenerateUploadURL(ctx context.Context, in *GenerateUploadURLRequest, opts ...grpc.CallOption) (*GenerateUploadURLResponse, error)
 }
 
 type authServiceClient struct {
@@ -108,6 +110,16 @@ func (c *authServiceClient) GetUserProfile(ctx context.Context, in *GetUserProfi
 	return out, nil
 }
 
+func (c *authServiceClient) GenerateUploadURL(ctx context.Context, in *GenerateUploadURLRequest, opts ...grpc.CallOption) (*GenerateUploadURLResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenerateUploadURLResponse)
+	err := c.cc.Invoke(ctx, AuthService_GenerateUploadURL_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -118,6 +130,7 @@ type AuthServiceServer interface {
 	RefreshHandler(context.Context, *RefreshRequest) (*RefreshResponse, error)
 	SearchUser(context.Context, *SearchUserRequest) (*SearchUserResponse, error)
 	GetUserProfile(context.Context, *GetUserProfileRequest) (*GetUserProfileResponse, error)
+	GenerateUploadURL(context.Context, *GenerateUploadURLRequest) (*GenerateUploadURLResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -145,6 +158,9 @@ func (UnimplementedAuthServiceServer) SearchUser(context.Context, *SearchUserReq
 }
 func (UnimplementedAuthServiceServer) GetUserProfile(context.Context, *GetUserProfileRequest) (*GetUserProfileResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUserProfile not implemented")
+}
+func (UnimplementedAuthServiceServer) GenerateUploadURL(context.Context, *GenerateUploadURLRequest) (*GenerateUploadURLResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GenerateUploadURL not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -275,6 +291,24 @@ func _AuthService_GetUserProfile_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_GenerateUploadURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateUploadURLRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GenerateUploadURL(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GenerateUploadURL_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GenerateUploadURL(ctx, req.(*GenerateUploadURLRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -305,6 +339,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserProfile",
 			Handler:    _AuthService_GetUserProfile_Handler,
+		},
+		{
+			MethodName: "GenerateUploadURL",
+			Handler:    _AuthService_GenerateUploadURL_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

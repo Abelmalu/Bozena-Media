@@ -448,3 +448,22 @@ func (authHandler *AuthHandler) GetUserProfile(ctx context.Context, req *pb.GetU
 		FollowingCount: int64(resp.FollowingCount),
 	}, nil
 }
+
+
+func (authHandler *AuthHandler) GenerateUploadURL(ctx context.Context, req *pb.GenerateUploadURLRequest)(*pb.GenerateUploadURLResponse,error){
+
+
+ url,formData,err :=  authHandler.service.GenerateUploadURL(ctx,req.Filename,req.ContentType)
+
+ if err != nil {
+
+
+
+ }
+	return &pb.GenerateUploadURLResponse{
+
+		UploadUrl: url,
+		FormData: formData,
+	},nil
+}
+

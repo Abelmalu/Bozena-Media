@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/IBM/sarama"
@@ -15,27 +17,31 @@ import (
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 	"github.com/abelmalu/golang-posts/Auth/pkg/utils"
 	"github.com/abelmalu/golang-posts/platform"
+	"github.com/google/uuid"
+	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc/metadata"
 )
 
 type AuthService struct {
-	repo   core.AuthRepository
-	logger *platform.Logger
-	redis  *redis.Client
-	kafka  sarama.SyncProducer
+	repo        core.AuthRepository
+	logger      *platform.Logger
+	redis       *redis.Client
+	kafka       sarama.SyncProducer
+	minioClient *minio.Client
 }
 
 var maxLoginAttempt = 6
 var tempMaxLoginAttempt = 3
 
-func NewAuthService(authRepo core.AuthRepository, redisCient *redis.Client, kafkaClient sarama.SyncProducer, logger *platform.Logger) *AuthService {
+func NewAuthService(authRepo core.AuthRepository, redisCient *redis.Client, kafkaClient sarama.SyncProducer, logger *platform.Logger, minio *minio.Client) *AuthService {
 
 	return &AuthService{
-		repo:   authRepo,
-		redis:  redisCient,
-		kafka:  kafkaClient,
-		logger: logger,
+		repo:        authRepo,
+		redis:       redisCient,
+		kafka:       kafkaClient,
+		logger:      logger,
+		minioClient: minio,
 	}
 }
 func (authSer *AuthService) Register(ctx context.Context, user *model.User) (*model.User, *model.TokenPair, error) {
@@ -447,7 +453,6 @@ func (authSer *AuthService) IncreaseFollowCounts(ctx context.Context, followerID
 
 }
 
-
 func (authSer *AuthService) DecreaseFollowCounts(ctx context.Context, followerID, followingID int) error {
 
 	if err := authSer.repo.DecreaseFollowCount(ctx, followerID, followingID); err != nil {
@@ -459,16 +464,51 @@ func (authSer *AuthService) DecreaseFollowCounts(ctx context.Context, followerID
 
 }
 
-
 func (authSer *AuthService) GetUserProfile(ctx context.Context, userID int64) (*model.User, error) {
 
-	resp,err := authSer.repo.GetUserProfile(ctx,userID)
+	resp, err := authSer.repo.GetUserProfile(ctx, userID)
 
 	if err != nil {
 
-
-		return nil,err
+		return nil, err
 	}
 
-	return resp,nil
+	return resp, nil
+}
+
+func (authSer *AuthService) GenerateUploadURL(ctx context.Context, filename, contentType string) (string, map[string]string, error) {
+
+	if !dto.AllowedTypes[contentType] {
+
+		return "", nil, ierrors.NewBadRequestError("Invalid file fromat", nil)
+
+	}
+	ext := strings.ToLower(filepath.Ext(filename))
+
+	switch ext {
+	case ".jpg", ".jpeg", ".png":
+	default:
+		return "", nil, ierrors.NewBadRequestError("Invalid file fromat", nil)
+	}
+
+	objectName := fmt.Sprintf(
+		"users/%s%s",
+		uuid.New().String(),
+		ext,
+	)
+
+	policy := minio.NewPostPolicy()
+
+	_ = policy.SetBucket("bozena-media")
+	_ = policy.SetKey(objectName)
+	_ = policy.SetExpires(time.Now().UTC().Add(time.Minute * 10))
+	_ = policy.SetContentType(contentType)
+	_ = policy.SetContentLengthRange(1, 5*1024*1024) // 5 megabytes only
+
+	url, formData, err := authSer.minioClient.PresignedPostPolicy(ctx, policy)
+	if err != nil {
+		return "", nil, ierrors.NewInternalError("Error generating presigned POST policy", err)
+	}
+
+	return url.String(), formData, nil
 }

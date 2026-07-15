@@ -2,7 +2,11 @@ package dto
 
 import model "github.com/abelmalu/golang-posts/Auth/internal/models"
 
-
+var AllowedTypes = map[string]bool{
+    "image/jpeg": true,
+    "image/png":  true,
+	"image/jpg":true,
+}
 
 type PaginatedResponse struct {
 

@@ -18,6 +18,7 @@ const (
 	TypeTimeout      ErrorType = "TIMEOUT"
 	TypeCancelled    ErrorType = "CANCELLED"
 	TypeDatabase     ErrorType = "DATABASE"
+	TypeBadRequest   ErrorType = "BAD_REQUEST"
 )
 
 //constant errors 
@@ -130,6 +131,17 @@ func NewDatabaseError(message ErrorMessage, cause error) *AppError {
 	}
 }
 
+
+func NewBadRequestError(message ErrorMessage, cause error) *AppError {
+
+	return &AppError{
+		Type:    TypeBadRequest,
+		Message: message,
+		Cause:   cause,
+	}
+}
+
+
 func (e *AppError) HTTPStatus() int {
 	switch e.Type {
 	case TypeValidation:
@@ -144,6 +156,8 @@ func (e *AppError) HTTPStatus() int {
 		return http.StatusForbidden
 	case TypeTimeout:
 		return http.StatusGatewayTimeout
+	case TypeBadRequest:
+		return http.StatusBadRequest
 	default:
 		return http.StatusInternalServerError
 	}

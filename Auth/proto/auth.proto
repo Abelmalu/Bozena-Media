@@ -11,6 +11,7 @@ service AuthService{
     rpc RefreshHandler(RefreshRequest) returns (RefreshResponse);
     rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
     rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse);
+    rpc  GenerateUploadURL(GenerateUploadURLRequest) returns (GenerateUploadURLResponse);
 
 
 }
@@ -113,5 +114,21 @@ message GetUserProfileResponse {
     int64 following_count = 6;
     
 
+
+}
+
+
+
+message GenerateUploadURLRequest {
+
+  string filename = 1;
+  string content_type = 2;
+}
+
+
+message GenerateUploadURLResponse {
+
+  string upload_url = 1;
+  map<string, string> form_data = 2;
 
 }

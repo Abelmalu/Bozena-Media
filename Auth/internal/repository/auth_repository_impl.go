@@ -570,3 +570,7 @@ func (authRepo *AuthRepository) GetUserProfile(ctx context.Context, userID int64
 	return &user, nil
 
 }
+
+
+
+

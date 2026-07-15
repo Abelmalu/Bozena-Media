@@ -802,6 +802,110 @@ func (x *GetUserProfileResponse) GetFollowingCount() int64 {
 	return 0
 }
 
+type GenerateUploadURLRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
+	ContentType   string                 `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenerateUploadURLRequest) Reset() {
+	*x = GenerateUploadURLRequest{}
+	mi := &file_proto_auth_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateUploadURLRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateUploadURLRequest) ProtoMessage() {}
+
+func (x *GenerateUploadURLRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_auth_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenerateUploadURLRequest.ProtoReflect.Descriptor instead.
+func (*GenerateUploadURLRequest) Descriptor() ([]byte, []int) {
+	return file_proto_auth_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *GenerateUploadURLRequest) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+func (x *GenerateUploadURLRequest) GetContentType() string {
+	if x != nil {
+		return x.ContentType
+	}
+	return ""
+}
+
+type GenerateUploadURLResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UploadUrl     string                 `protobuf:"bytes,1,opt,name=upload_url,json=uploadUrl,proto3" json:"upload_url,omitempty"`
+	FormData      map[string]string      `protobuf:"bytes,2,rep,name=form_data,json=formData,proto3" json:"form_data,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenerateUploadURLResponse) Reset() {
+	*x = GenerateUploadURLResponse{}
+	mi := &file_proto_auth_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateUploadURLResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateUploadURLResponse) ProtoMessage() {}
+
+func (x *GenerateUploadURLResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_auth_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenerateUploadURLResponse.ProtoReflect.Descriptor instead.
+func (*GenerateUploadURLResponse) Descriptor() ([]byte, []int) {
+	return file_proto_auth_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GenerateUploadURLResponse) GetUploadUrl() string {
+	if x != nil {
+		return x.UploadUrl
+	}
+	return ""
+}
+
+func (x *GenerateUploadURLResponse) GetFormData() map[string]string {
+	if x != nil {
+		return x.FormData
+	}
+	return nil
+}
+
 var File_proto_auth_proto protoreflect.FileDescriptor
 
 const file_proto_auth_proto_rawDesc = "" +
@@ -858,7 +962,17 @@ const file_proto_auth_proto_rawDesc = "" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12*\n" +
 	"\x11profile_image_url\x18\x04 \x01(\tR\x0fprofileImageUrl\x12%\n" +
 	"\x0efollower_count\x18\x05 \x01(\x03R\rfollowerCount\x12'\n" +
-	"\x0ffollowing_count\x18\x06 \x01(\x03R\x0efollowingCount2\xcc\x03\n" +
+	"\x0ffollowing_count\x18\x06 \x01(\x03R\x0efollowingCount\"Y\n" +
+	"\x18GenerateUploadURLRequest\x12\x1a\n" +
+	"\bfilename\x18\x01 \x01(\tR\bfilename\x12!\n" +
+	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\"\xca\x01\n" +
+	"\x19GenerateUploadURLResponse\x12\x1d\n" +
+	"\n" +
+	"upload_url\x18\x01 \x01(\tR\tuploadUrl\x12Q\n" +
+	"\tform_data\x18\x02 \x03(\v24.authservice.GenerateUploadURLResponse.FormDataEntryR\bformData\x1a;\n" +
+	"\rFormDataEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012\xb0\x04\n" +
 	"\vAuthService\x12G\n" +
 	"\bRegister\x12\x1c.authservice.RegisterRequest\x1a\x1d.authservice.RegisterResponse\x12>\n" +
 	"\x05Login\x12\x19.authservice.LoginRequest\x1a\x1a.authservice.LoginResponse\x12=\n" +
@@ -866,7 +980,8 @@ const file_proto_auth_proto_rawDesc = "" +
 	"\x0eRefreshHandler\x12\x1b.authservice.RefreshRequest\x1a\x1c.authservice.RefreshResponse\x12M\n" +
 	"\n" +
 	"SearchUser\x12\x1e.authservice.SearchUserRequest\x1a\x1f.authservice.SearchUserResponse\x12Y\n" +
-	"\x0eGetUserProfile\x12\".authservice.GetUserProfileRequest\x1a#.authservice.GetUserProfileResponseB\fZ\n" +
+	"\x0eGetUserProfile\x12\".authservice.GetUserProfileRequest\x1a#.authservice.GetUserProfileResponse\x12b\n" +
+	"\x11GenerateUploadURL\x12%.authservice.GenerateUploadURLRequest\x1a&.authservice.GenerateUploadURLResponseB\fZ\n" +
 	"./proto/pbb\x06proto3"
 
 var (
@@ -881,42 +996,48 @@ func file_proto_auth_proto_rawDescGZIP() []byte {
 	return file_proto_auth_proto_rawDescData
 }
 
-var file_proto_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_proto_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_proto_auth_proto_goTypes = []any{
-	(*RegisterRequest)(nil),        // 0: authservice.RegisterRequest
-	(*RegisterResponse)(nil),       // 1: authservice.RegisterResponse
-	(*LoginRequest)(nil),           // 2: authservice.LoginRequest
-	(*LoginResponse)(nil),          // 3: authservice.LoginResponse
-	(*LogoutRequest)(nil),          // 4: authservice.LogoutRequest
-	(*LogoutResponse)(nil),         // 5: authservice.LogoutResponse
-	(*RefreshRequest)(nil),         // 6: authservice.RefreshRequest
-	(*RefreshResponse)(nil),        // 7: authservice.RefreshResponse
-	(*User)(nil),                   // 8: authservice.User
-	(*SearchUserRequest)(nil),      // 9: authservice.SearchUserRequest
-	(*SearchUserResponse)(nil),     // 10: authservice.SearchUserResponse
-	(*GetUserProfileRequest)(nil),  // 11: authservice.GetUserProfileRequest
-	(*GetUserProfileResponse)(nil), // 12: authservice.GetUserProfileResponse
-	(*emptypb.Empty)(nil),          // 13: google.protobuf.Empty
+	(*RegisterRequest)(nil),           // 0: authservice.RegisterRequest
+	(*RegisterResponse)(nil),          // 1: authservice.RegisterResponse
+	(*LoginRequest)(nil),              // 2: authservice.LoginRequest
+	(*LoginResponse)(nil),             // 3: authservice.LoginResponse
+	(*LogoutRequest)(nil),             // 4: authservice.LogoutRequest
+	(*LogoutResponse)(nil),            // 5: authservice.LogoutResponse
+	(*RefreshRequest)(nil),            // 6: authservice.RefreshRequest
+	(*RefreshResponse)(nil),           // 7: authservice.RefreshResponse
+	(*User)(nil),                      // 8: authservice.User
+	(*SearchUserRequest)(nil),         // 9: authservice.SearchUserRequest
+	(*SearchUserResponse)(nil),        // 10: authservice.SearchUserResponse
+	(*GetUserProfileRequest)(nil),     // 11: authservice.GetUserProfileRequest
+	(*GetUserProfileResponse)(nil),    // 12: authservice.GetUserProfileResponse
+	(*GenerateUploadURLRequest)(nil),  // 13: authservice.GenerateUploadURLRequest
+	(*GenerateUploadURLResponse)(nil), // 14: authservice.GenerateUploadURLResponse
+	nil,                               // 15: authservice.GenerateUploadURLResponse.FormDataEntry
+	(*emptypb.Empty)(nil),             // 16: google.protobuf.Empty
 }
 var file_proto_auth_proto_depIdxs = []int32{
 	8,  // 0: authservice.SearchUserResponse.users:type_name -> authservice.User
-	0,  // 1: authservice.AuthService.Register:input_type -> authservice.RegisterRequest
-	2,  // 2: authservice.AuthService.Login:input_type -> authservice.LoginRequest
-	13, // 3: authservice.AuthService.Logout:input_type -> google.protobuf.Empty
-	6,  // 4: authservice.AuthService.RefreshHandler:input_type -> authservice.RefreshRequest
-	9,  // 5: authservice.AuthService.SearchUser:input_type -> authservice.SearchUserRequest
-	11, // 6: authservice.AuthService.GetUserProfile:input_type -> authservice.GetUserProfileRequest
-	1,  // 7: authservice.AuthService.Register:output_type -> authservice.RegisterResponse
-	3,  // 8: authservice.AuthService.Login:output_type -> authservice.LoginResponse
-	5,  // 9: authservice.AuthService.Logout:output_type -> authservice.LogoutResponse
-	7,  // 10: authservice.AuthService.RefreshHandler:output_type -> authservice.RefreshResponse
-	10, // 11: authservice.AuthService.SearchUser:output_type -> authservice.SearchUserResponse
-	12, // 12: authservice.AuthService.GetUserProfile:output_type -> authservice.GetUserProfileResponse
-	7,  // [7:13] is the sub-list for method output_type
-	1,  // [1:7] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	15, // 1: authservice.GenerateUploadURLResponse.form_data:type_name -> authservice.GenerateUploadURLResponse.FormDataEntry
+	0,  // 2: authservice.AuthService.Register:input_type -> authservice.RegisterRequest
+	2,  // 3: authservice.AuthService.Login:input_type -> authservice.LoginRequest
+	16, // 4: authservice.AuthService.Logout:input_type -> google.protobuf.Empty
+	6,  // 5: authservice.AuthService.RefreshHandler:input_type -> authservice.RefreshRequest
+	9,  // 6: authservice.AuthService.SearchUser:input_type -> authservice.SearchUserRequest
+	11, // 7: authservice.AuthService.GetUserProfile:input_type -> authservice.GetUserProfileRequest
+	13, // 8: authservice.AuthService.GenerateUploadURL:input_type -> authservice.GenerateUploadURLRequest
+	1,  // 9: authservice.AuthService.Register:output_type -> authservice.RegisterResponse
+	3,  // 10: authservice.AuthService.Login:output_type -> authservice.LoginResponse
+	5,  // 11: authservice.AuthService.Logout:output_type -> authservice.LogoutResponse
+	7,  // 12: authservice.AuthService.RefreshHandler:output_type -> authservice.RefreshResponse
+	10, // 13: authservice.AuthService.SearchUser:output_type -> authservice.SearchUserResponse
+	12, // 14: authservice.AuthService.GetUserProfile:output_type -> authservice.GetUserProfileResponse
+	14, // 15: authservice.AuthService.GenerateUploadURL:output_type -> authservice.GenerateUploadURLResponse
+	9,  // [9:16] is the sub-list for method output_type
+	2,  // [2:9] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_proto_auth_proto_init() }
@@ -930,7 +1051,7 @@ func file_proto_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_auth_proto_rawDesc), len(file_proto_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
