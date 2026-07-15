@@ -806,6 +806,7 @@ type GenerateUploadURLRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
 	ContentType   string                 `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	UserId        int64                  `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -852,6 +853,13 @@ func (x *GenerateUploadURLRequest) GetContentType() string {
 		return x.ContentType
 	}
 	return ""
+}
+
+func (x *GenerateUploadURLRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
 }
 
 type GenerateUploadURLResponse struct {
@@ -962,10 +970,11 @@ const file_proto_auth_proto_rawDesc = "" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12*\n" +
 	"\x11profile_image_url\x18\x04 \x01(\tR\x0fprofileImageUrl\x12%\n" +
 	"\x0efollower_count\x18\x05 \x01(\x03R\rfollowerCount\x12'\n" +
-	"\x0ffollowing_count\x18\x06 \x01(\x03R\x0efollowingCount\"Y\n" +
+	"\x0ffollowing_count\x18\x06 \x01(\x03R\x0efollowingCount\"r\n" +
 	"\x18GenerateUploadURLRequest\x12\x1a\n" +
 	"\bfilename\x18\x01 \x01(\tR\bfilename\x12!\n" +
-	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\"\xca\x01\n" +
+	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\x12\x17\n" +
+	"\auser_id\x18\x03 \x01(\x03R\x06userId\"\xca\x01\n" +
 	"\x19GenerateUploadURLResponse\x12\x1d\n" +
 	"\n" +
 	"upload_url\x18\x01 \x01(\tR\tuploadUrl\x12Q\n" +

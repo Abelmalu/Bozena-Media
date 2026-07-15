@@ -476,7 +476,7 @@ func (authSer *AuthService) GetUserProfile(ctx context.Context, userID int64) (*
 	return resp, nil
 }
 
-func (authSer *AuthService) GenerateUploadURL(ctx context.Context, filename, contentType string) (string, map[string]string, error) {
+func (authSer *AuthService) GenerateUploadURL(ctx context.Context, filename, contentType string, userID int) (string, map[string]string, error) {
 
 	if !dto.AllowedTypes[contentType] {
 
@@ -505,6 +505,12 @@ func (authSer *AuthService) GenerateUploadURL(ctx context.Context, filename, con
 	_ = policy.SetContentType(contentType)
 	_ = policy.SetContentLengthRange(1, 5*1024*1024) // 5 megabytes only
 
+	_, err := authSer.repo.UpdateUserAvatar(ctx, objectName, int64(userID))
+
+	if err != nil {
+
+		return "", nil, err
+	}
 	url, formData, err := authSer.minioClient.PresignedPostPolicy(ctx, policy)
 	if err != nil {
 		return "", nil, ierrors.NewInternalError("Error generating presigned POST policy", err)

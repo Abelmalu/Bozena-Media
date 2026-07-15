@@ -123,6 +123,7 @@ message GenerateUploadURLRequest {
 
   string filename = 1;
   string content_type = 2;
+  int64  user_id = 3;
 }
 
 

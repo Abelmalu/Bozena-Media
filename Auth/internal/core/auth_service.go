@@ -16,7 +16,7 @@ type AuthService interface {
 	IncreaseFollowCounts(ctx context.Context, followerID, followingID int) error
 	DecreaseFollowCounts(ctx context.Context, followerID, followingID int) error	
 	GetUserProfile(ctx context.Context,userID int64)(*model.User,error)
-	GenerateUploadURL(ctx context.Context,filename,contentType string,)(string,map[string]string,error)
+	GenerateUploadURL(ctx context.Context,filename,contentType string,userID int)(string,map[string]string,error)
 
 	// UpdateProfile(ctx context.Context,int)
 

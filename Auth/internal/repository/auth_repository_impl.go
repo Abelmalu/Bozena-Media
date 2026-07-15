@@ -572,5 +572,32 @@ func (authRepo *AuthRepository) GetUserProfile(ctx context.Context, userID int64
 }
 
 
+func (authRepo *AuthRepository)	UpdateUserAvatar(ctx context.Context,avatar string, userID int64)(*model.User,error) {
+
+	var user model.User
+
+	query := `UPDATE users SET avatar =$1 WHERE id=$2 RETURNING id,name,username,follower_count,following_count`
+
+
+	if err := authRepo.DB.QueryRowContext(ctx,query,avatar,userID).Scan(&user.ID,&user.Name,&user.Username,&user.FollowerCount,&user.FollowingCount); err != nil {
+
+		if errors.Is(err, context.Canceled) {
+
+			return nil, ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+		}
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+
+	}
+
+	return &user,nil
+}
+
+
+
 
 
