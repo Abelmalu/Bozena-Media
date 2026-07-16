@@ -31,8 +31,8 @@ func NewAuthRepository(db *sql.DB) *AuthRepository {
 func (authRepo *AuthRepository) Register(ctx context.Context, user *model.User) (*model.User, error) {
 	var newUser model.User
 
-	query := `INSERT INTO users(name,username,email,password) VALUES($1,$2,$3,$4) RETURNING id,role,name,username`
-	if err := authRepo.DB.QueryRowContext(ctx, query, user.Name, user.Username, user.Email, user.Password).Scan(&newUser.ID, &newUser.Role, &newUser.Name, &newUser.Username); err != nil {
+	query := `INSERT INTO users(name,username,email,password) VALUES($1,$2,$3,$4) RETURNING id,role,name,username,follower_count,following_count,avatar`
+	if err := authRepo.DB.QueryRowContext(ctx, query, user.Name, user.Username, user.Email, user.Password).Scan(&newUser.ID, &newUser.Role, &newUser.Name, &newUser.Username,&newUser.FollowerCount,&newUser.FollowingCount,&newUser.Avatar); err != nil {
 		// Change *pq.Error to *pgconn.PgError
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {

@@ -31,6 +31,8 @@ message RegisterResponse{
     string access_token = 5;
     string refresh_token = 6;
     string profile_image_url = 7;
+        int64 follower_count = 8;
+    int64 following_count = 9;
   
     
 }

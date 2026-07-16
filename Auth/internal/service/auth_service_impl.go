@@ -124,6 +124,23 @@ func (authSer *AuthService) Register(ctx context.Context, user *model.User) (*mo
 		return nil, nil, err
 	}
 
+		objectName := ""
+	if createdUser.Avatar != nil {
+
+		objectName = *createdUser.Avatar
+
+		url, err := authSer.minioClient.PresignedGetObject(ctx, "bozena-media", objectName, time.Hour, nil)
+
+		if err != nil {
+
+			return nil, nil, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
+		}
+
+		urlStr := url.String()
+		createdUser.Avatar = &urlStr
+
+	}
+
 	return createdUser, tokens, nil
 }
 

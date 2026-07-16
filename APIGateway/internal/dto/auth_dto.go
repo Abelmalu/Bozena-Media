@@ -4,8 +4,13 @@ package dto
 
 type RegisterResponse struct {
 
-	AccessToken string `json:"access_token"`
+AccessToken string `json:"access_token"`
 	RefreshToken string `json:"refresh_token,omitempty"`
+	UserName 	string  `json:"username"`
+	FollowerCount int 	`json:"follower_count"`
+	FollowingCount int 	`json:"following_count"`
+	ID 				int `json:"id"`
+	ProfileImageUrl string `json:"avatar_url"`
 	
 
 }

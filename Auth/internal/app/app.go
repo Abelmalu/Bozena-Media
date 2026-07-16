@@ -26,17 +26,16 @@ import (
 )
 
 type App struct {
-	config *config.Config
-	DB     *sql.DB
+	config      *config.Config
+	DB          *sql.DB
 	RedisClient *redis.Client
-	Kafka   sarama.SyncProducer
+	Kafka       sarama.SyncProducer
 	minioClient *minio.Client
 }
 
+var logger = platform.InitZapLogger()
 
-	var logger = platform.InitZapLogger()
-
-// NewApp creates the application instance  
+// NewApp creates the application instance
 func NewApp() (*App, error) {
 
 	config, err := config.LoadConfig()
@@ -53,25 +52,24 @@ func NewApp() (*App, error) {
 
 	}
 
-	redisClient := initRedis("127.0.0.1:6379","",0,logger)
+	redisClient := initRedis("127.0.0.1:6379", "", 0, logger)
 
+	// initializing the kafka client
 
-	// initializing the kafka client 
-
-	kafkaClient,err := kafka.InitKafkaProducer(logger)
+	kafkaClient, err := kafka.InitKafkaProducer(logger)
 
 	if err != nil {
 
-		log.Fatalf("Couldn't make kafka connection %v",err)
+		log.Fatalf("Couldn't make kafka connection %v", err)
 	}
 
-	minio,err := miniocl.NewMinioClient()
+	minio, err := miniocl.NewMinioClient()
 
 	app := App{
-		config: config,
-		DB:     DBConPool,
+		config:      config,
+		DB:          DBConPool,
 		RedisClient: redisClient,
-		Kafka: kafkaClient,
+		Kafka:       kafkaClient,
 		minioClient: minio,
 	}
 
@@ -103,19 +101,18 @@ func initDB(config *config.Config) (*sql.DB, error) {
 	}
 	logger.Info("Database connected successfully!")
 
-
 	return DBConPool, nil
 }
 
-//initRedis initializes redis client for the application
-func initRedis(address,password string,db int,logger *platform.Logger) (*redis.Client){
+// initRedis initializes redis client for the application
+func initRedis(address, password string, db int, logger *platform.Logger) *redis.Client {
 	ctx := context.Background()
 
 	redisClient := redis.NewClient(
 		&redis.Options{
-			Addr: address,
+			Addr:     address,
 			Password: password,
-			DB: db,
+			DB:       db,
 		},
 	)
 
@@ -124,10 +121,9 @@ func initRedis(address,password string,db int,logger *platform.Logger) (*redis.C
 		log.Fatalf("Could not connect to Redis: %v", err)
 	}
 
-	logger.Info("Redis connected successfully!",zap.String("Response",pong))
+	logger.Info("Redis connected successfully!", zap.String("Response", pong))
 
 	return redisClient
-
 
 }
 
@@ -137,19 +133,16 @@ func (app *App) Run() {
 	lis, _ := net.Listen("tcp", ":50052")
 	s := grpc.NewServer()
 
-	
-    // Dependency Injection for each layer one by one 
+	// Dependency Injection for each layer one by one
 	authRepo := repository.NewAuthRepository(app.DB)
-	authService := service.NewAuthService(authRepo,app.RedisClient,app.Kafka,logger,app.minioClient)
-	authHandler := handler.NewAuthHandler(authService,logger)
+	authService := service.NewAuthService(authRepo, app.RedisClient, app.Kafka, logger, app.minioClient)
+	authHandler := handler.NewAuthHandler(authService, logger)
 	brokers := []string{"localhost:9092"}
 	followedTopic := "followed"
 	unfollowTopic := "unfollowed"
-	
 
-	go kafka.StartConsumer(brokers,followedTopic,unfollowTopic,authService,logger)
+	go kafka.StartConsumer(brokers, followedTopic, unfollowTopic, authService, logger)
 	pb.RegisterAuthServiceServer(s, authHandler)
 	s.Serve(lis)
-	
 
 }

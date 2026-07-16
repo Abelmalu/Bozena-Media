@@ -101,12 +101,22 @@ func (authHandler *AuthHandler) Register(ctx context.Context, req *pb.RegisterRe
 
 	}
 
+	avatar := ""
+	if createdUser.Avatar == nil {
+
+		createdUser.Avatar = &avatar
+	}
+
 	return &pb.RegisterResponse{
-		Name:         createdUser.Name,
-		Username:     createdUser.Username,
-		Email:        createdUser.Email,
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
+		Name:            createdUser.Name,
+		Username:        createdUser.Username,
+		Email:           createdUser.Email,
+		AccessToken:     tokens.AccessToken,
+		RefreshToken:    tokens.RefreshToken,
+		FollowerCount:int64(createdUser.FollowerCount),
+		FollowingCount: int64(createdUser.FollowingCount),
+		ProfileImageUrl: *createdUser.Avatar,
+		Id: int64(createdUser.ID),
 	}, nil
 
 }
@@ -164,20 +174,19 @@ func (authHandler *AuthHandler) Login(ctx context.Context, req *pb.LoginRequest)
 
 	}
 
-
 	avatar := ""
 	if user.Avatar == nil {
 
 		user.Avatar = &avatar
 	}
 	return &pb.LoginResponse{
-		Id:             int64(user.ID),
-		Username:       user.Username,
-		AccessToken:    tokens.AccessToken,
-		RefreshToken:   tokens.RefreshToken,
-		FollowerCount:  int64(user.FollowerCount),
-		FollowingCount: int64(user.FollowingCount),
-		ProfileImageUrl:*(user.Avatar),
+		Id:              int64(user.ID),
+		Username:        user.Username,
+		AccessToken:     tokens.AccessToken,
+		RefreshToken:    tokens.RefreshToken,
+		FollowerCount:   int64(user.FollowerCount),
+		FollowingCount:  int64(user.FollowingCount),
+		ProfileImageUrl: *(user.Avatar),
 	}, nil
 }
 func (authHandler *AuthHandler) Logout(ctx context.Context, req *emptypb.Empty) (*pb.LogoutResponse, error) {

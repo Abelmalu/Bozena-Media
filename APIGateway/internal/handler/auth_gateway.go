@@ -120,13 +120,23 @@ func (authHandler *AuthHandler) Register(c *gin.Context) {
 		})
 
 		registerResponse.AccessToken = resp.AccessToken
+		registerResponse.UserName = resp.Username
+		registerResponse.FollowerCount = int(resp.FollowerCount)
+		registerResponse.FollowingCount = int(resp.FollowingCount)
+		registerResponse.ID = int(resp.Id)
+		registerResponse.ProfileImageUrl =resp.ProfileImageUrl 
 
 	case "mobile":
 		registerResponse.AccessToken = resp.AccessToken
 		registerResponse.RefreshToken = resp.RefreshToken
+		registerResponse.UserName = resp.Username
+		registerResponse.FollowerCount = int(resp.FollowerCount)
+		registerResponse.FollowingCount = int(resp.FollowingCount)
+		registerResponse.ID = int(resp.Id)
+		registerResponse.ProfileImageUrl =resp.ProfileImageUrl 
 	}
 
-	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
+	utils.SendSuccessResponse(c, registerResponse, requestID, http.StatusOK)
 
 }
 

@@ -99,6 +99,8 @@ type RegisterResponse struct {
 	AccessToken     string                 `protobuf:"bytes,5,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
 	RefreshToken    string                 `protobuf:"bytes,6,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	ProfileImageUrl string                 `protobuf:"bytes,7,opt,name=profile_image_url,json=profileImageUrl,proto3" json:"profile_image_url,omitempty"`
+	FollowerCount   int64                  `protobuf:"varint,8,opt,name=follower_count,json=followerCount,proto3" json:"follower_count,omitempty"`
+	FollowingCount  int64                  `protobuf:"varint,9,opt,name=following_count,json=followingCount,proto3" json:"following_count,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -180,6 +182,20 @@ func (x *RegisterResponse) GetProfileImageUrl() string {
 		return x.ProfileImageUrl
 	}
 	return ""
+}
+
+func (x *RegisterResponse) GetFollowerCount() int64 {
+	if x != nil {
+		return x.FollowerCount
+	}
+	return 0
+}
+
+func (x *RegisterResponse) GetFollowingCount() int64 {
+	if x != nil {
+		return x.FollowingCount
+	}
+	return 0
 }
 
 type LoginRequest struct {
@@ -939,7 +955,7 @@ const file_proto_auth_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12\x1a\n" +
-	"\bpassword\x18\x04 \x01(\tR\bpassword\"\xdc\x01\n" +
+	"\bpassword\x18\x04 \x01(\tR\bpassword\"\xac\x02\n" +
 	"\x10RegisterResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
@@ -947,7 +963,9 @@ const file_proto_auth_proto_rawDesc = "" +
 	"\x05email\x18\x04 \x01(\tR\x05email\x12!\n" +
 	"\faccess_token\x18\x05 \x01(\tR\vaccessToken\x12#\n" +
 	"\rrefresh_token\x18\x06 \x01(\tR\frefreshToken\x12*\n" +
-	"\x11profile_image_url\x18\a \x01(\tR\x0fprofileImageUrl\"F\n" +
+	"\x11profile_image_url\x18\a \x01(\tR\x0fprofileImageUrl\x12%\n" +
+	"\x0efollower_count\x18\b \x01(\x03R\rfollowerCount\x12'\n" +
+	"\x0ffollowing_count\x18\t \x01(\x03R\x0efollowingCount\"F\n" +
 	"\fLoginRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"\x99\x02\n" +
