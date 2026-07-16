@@ -164,6 +164,12 @@ func (authHandler *AuthHandler) Login(ctx context.Context, req *pb.LoginRequest)
 
 	}
 
+
+	avatar := ""
+	if user.Avatar == nil {
+
+		user.Avatar = &avatar
+	}
 	return &pb.LoginResponse{
 		Id:             int64(user.ID),
 		Username:       user.Username,
@@ -171,6 +177,7 @@ func (authHandler *AuthHandler) Login(ctx context.Context, req *pb.LoginRequest)
 		RefreshToken:   tokens.RefreshToken,
 		FollowerCount:  int64(user.FollowerCount),
 		FollowingCount: int64(user.FollowingCount),
+		ProfileImageUrl:*(user.Avatar),
 	}, nil
 }
 func (authHandler *AuthHandler) Logout(ctx context.Context, req *emptypb.Empty) (*pb.LogoutResponse, error) {

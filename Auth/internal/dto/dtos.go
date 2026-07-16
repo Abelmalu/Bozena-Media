@@ -6,6 +6,7 @@ var AllowedTypes = map[string]bool{
     "image/jpeg": true,
     "image/png":  true,
 	"image/jpg":true,
+	"image/avif":true,
 }
 
 type PaginatedResponse struct {

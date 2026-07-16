@@ -19,6 +19,7 @@ type LoginResponse struct {
 	FollowerCount int 	`json:"follower_count"`
 	FollowingCount int 	`json:"following_count"`
 	ID 				int `json:"id"`
+	ProfileImageUrl string `json:"avatar_url"`
 
 
 }

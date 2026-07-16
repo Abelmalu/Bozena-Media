@@ -282,6 +282,23 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 		return nil, nil, err
 	}
 
+	objectName := ""
+	if fetchedUser.Avatar != nil {
+
+		objectName = *fetchedUser.Avatar
+
+		url, err := authSer.minioClient.PresignedGetObject(ctx, "bozena-media", objectName, time.Hour, nil)
+
+		if err != nil {
+
+			return nil, nil, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
+		}
+
+		urlStr := url.String()
+		fetchedUser.Avatar = &urlStr
+
+	}
+
 	return fetchedUser, tokens, nil
 
 }
@@ -486,7 +503,7 @@ func (authSer *AuthService) GenerateUploadURL(ctx context.Context, filename, con
 	ext := strings.ToLower(filepath.Ext(filename))
 
 	switch ext {
-	case ".jpg", ".jpeg", ".png":
+	case ".jpg", ".jpeg", ".png", ".avif":
 	default:
 		return "", nil, ierrors.NewBadRequestError("Invalid file fromat", nil)
 	}

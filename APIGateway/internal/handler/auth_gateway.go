@@ -189,6 +189,7 @@ func (authHandler *AuthHandler) Login(c *gin.Context) {
 		loginResponse.FollowerCount = int(resp.FollowerCount)
 		loginResponse.FollowingCount = int(resp.FollowingCount)
 		loginResponse.ID = int(resp.Id)
+		loginResponse.ProfileImageUrl =resp.ProfileImageUrl 
 
 	case "mobile":
 		loginResponse.AccessToken = resp.AccessToken
@@ -197,6 +198,8 @@ func (authHandler *AuthHandler) Login(c *gin.Context) {
 		loginResponse.FollowerCount = int(resp.FollowerCount)
 		loginResponse.FollowingCount = int(resp.FollowingCount)
 		loginResponse.ID = int(resp.Id)
+		loginResponse.ProfileImageUrl =resp.ProfileImageUrl 
+
 	}
 
 	utils.SendSuccessResponse(c, loginResponse, requestID, http.StatusOK)
