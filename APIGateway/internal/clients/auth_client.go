@@ -6,7 +6,7 @@ import (
 
 	"github.com/abelmalu/golang-posts/Auth/proto/pb"
 	"google.golang.org/grpc"
-     "google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type AuthClient struct {
@@ -20,51 +20,50 @@ func NewAuthClient(conn *grpc.ClientConn) *AuthClient {
 	}
 }
 
-func (ac *AuthClient) Register(ctx context.Context,userName,name,email,password string)(*pb.RegisterResponse,error){
-ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+func (ac *AuthClient) Register(ctx context.Context, userName, name, email, password string) (*pb.RegisterResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-return ac.client.Register(ctx,&pb.RegisterRequest{
-	Name:name,
-	Username: userName,
-	Email: email,
-	Password: password,
-})
+	return ac.client.Register(ctx, &pb.RegisterRequest{
+		Name:     name,
+		Username: userName,
+		Email:    email,
+		Password: password,
+	})
 
 }
 
-func (ac *AuthClient) Login(ctx context.Context,userName,password string)(*pb.LoginResponse,error){
+func (ac *AuthClient) Login(ctx context.Context, userName, password string) (*pb.LoginResponse, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-return ac.client.Login(ctx,&pb.LoginRequest{
-	Username: userName,
-	Password: password,
-})
+	return ac.client.Login(ctx, &pb.LoginRequest{
+		Username: userName,
+		Password: password,
+	})
 
 }
 
-func (ac *AuthClient) Logout(ctx context.Context) (*pb.LogoutResponse, error){
+func (ac *AuthClient) Logout(ctx context.Context) (*pb.LogoutResponse, error) {
 
-ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-return ac.client.Logout(ctx,&emptypb.Empty{})
+	return ac.client.Logout(ctx, &emptypb.Empty{})
 
 }
 
-func (ac *AuthClient) RefreshHandler(ctx context.Context,refreshToken string)(*pb.RefreshResponse,error){
-    ctx,cancel := context.WithTimeout(ctx, 2 * time.Second)
+func (ac *AuthClient) RefreshHandler(ctx context.Context, refreshToken string) (*pb.RefreshResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	return ac.client.RefreshHandler(ctx,&pb.RefreshRequest{
+	return ac.client.RefreshHandler(ctx, &pb.RefreshRequest{
 		RefreshToken: refreshToken,
 	})
 }
 
-
-func (ac *AuthClient) SearchUser(ctx context.Context,username,cursor string,limit int)(*pb.SearchUserResponse,error){
+func (ac *AuthClient) SearchUser(ctx context.Context, username, cursor string, limit int) (*pb.SearchUserResponse, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
@@ -73,16 +72,13 @@ func (ac *AuthClient) SearchUser(ctx context.Context,username,cursor string,limi
 		ctx,
 		&pb.SearchUserRequest{
 			Username: username,
-			Cursor: cursor,
-			Limit: int64(limit),
+			Cursor:   cursor,
+			Limit:    int64(limit),
 		},
-
 	)
 }
 
-
-
-func (ac *AuthClient) GetUserProfile(ctx context.Context,userID int64)(*pb.GetUserProfileResponse,error){
+func (ac *AuthClient) GetUserProfile(ctx context.Context, userID int64) (*pb.GetUserProfileResponse, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
@@ -92,12 +88,24 @@ func (ac *AuthClient) GetUserProfile(ctx context.Context,userID int64)(*pb.GetUs
 		&pb.GetUserProfileRequest{
 
 			UserId: userID,
-		
-			
 		},
-
 	)
 }
 
+func (ac *AuthClient) GenerateProfileUploadURL(ctx context.Context, userID int, fileName, contentType string) (*pb.GenerateUploadURLResponse, error) {
 
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
 
+	return ac.client.GenerateUploadURL(
+		ctx,
+
+		&pb.GenerateUploadURLRequest{
+
+			UserId:      int64(userID),
+			Filename:    fileName,
+			ContentType: contentType,
+		},
+	)
+
+}

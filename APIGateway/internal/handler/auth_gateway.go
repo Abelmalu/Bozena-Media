@@ -24,6 +24,7 @@ type AuthService interface {
 	RefreshHandler(context.Context, string) (*pb.RefreshResponse, error)
 	GetUserProfile(ctx context.Context, userID int64) (*pb.GetUserProfileResponse, error)
 	SearchUser(ctx context.Context, username, cursor string, limit int) (*pb.SearchUserResponse, error)
+	GenerateProfileUploadURL(ctx context.Context, userID int, fileName, ContentType string) (*pb.GenerateUploadURLResponse, error)
 }
 type AuthHandler struct {
 	client AuthService
@@ -461,5 +462,75 @@ func (authHandler *AuthHandler) GetUserProfile(c *gin.Context) {
 
 	}
 
-	utils.SendSuccessResponse(c,resp,requestID,http.StatusOK)
+	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
+}
+
+func (authHandler *AuthHandler) GenerateProfileUploadURL(c *gin.Context) {
+
+	requestID, err := utils.GetRequestID(c)
+	if err != nil {
+
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+
+			authHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+		}
+
+	}
+	userID, err := utils.GetUserID(c)
+
+	if err != nil {
+
+		if errors.Is(err, ierrors.ErrUserIDNotFoundInContext) {
+
+			authHandler.logger.Error("couldn't couldn't find userID in the context", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			authHandler.logger.Error("couldn't assert the user ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+
+		}
+
+	}
+
+	var req struct {
+		FileName    string `json:"file_name"`
+		ContentType string `json:"content_type"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+
+		authHandler.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
+		c.Error(appErrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
+		return
+
+	}
+	ctx, _ := utils.AddToOutgoingContext(c, requestID)
+
+	resp, err := authHandler.client.GenerateProfileUploadURL(ctx, userID, req.FileName, req.ContentType)
+
+	if err != nil {
+
+		authHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
+		c.Error(ierrors.FromGRPC(err))
+
+		return
+	}
+
+	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
+
 }

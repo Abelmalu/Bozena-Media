@@ -1,5 +1,3 @@
-#:schema https://json.schemastore.org/any.json
-
 root = "."
 testdata_dir = "testdata"
 tmp_dir = "tmp"
@@ -9,7 +7,6 @@ tmp_dir = "tmp"
   bin = "./tmp/main"
   cmd = "go build -o ./tmp/main ./cmd/gateway/main.go"
   delay = 1000
-  entrypoint = ["./tmp/main"]
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]
   exclude_file = []
   exclude_regex = ["_test.go"]

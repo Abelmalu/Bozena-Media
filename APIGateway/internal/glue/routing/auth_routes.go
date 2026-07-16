@@ -57,6 +57,15 @@ func InitAuthRoute(router *gin.RouterGroup, handler *handler.AuthHandler,logger 
 				middleware.AuthMiddleware(logger,redisClient),
 			},
 		},
+
+		{
+			Method:  http.MethodPost,
+			Path:    "/profile/upload",
+			Handler: handler.GenerateProfileUploadURL,
+			Middlewares: [] gin.HandlerFunc{
+				middleware.AuthMiddleware(logger,redisClient),
+			},
+		},
 	}
 
 	glue.RegisterRoutes(router,routes)
