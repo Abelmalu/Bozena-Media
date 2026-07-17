@@ -11,6 +11,8 @@ service PostService{
     rpc DeletePost(DeletePostRequest) returns (DeletePostResponse);
     rpc ListPosts(ListPostsRequest) returns (ListPostsResponse);
     rpc GetUserPosts(GetUserPostRequest) returns (GetUserPostResponse);
+    rpc  GenerateUploadURL(GenerateUploadURLRequest) returns (GenerateUploadURLResponse);
+
 }
 
 message Post{
@@ -18,12 +20,16 @@ message Post{
     string title = 2;
     string content = 3;
     int64 user_id = 4;
+    string post_image_url = 5;
+
 }
 
 message CreatePostRequest{
     int64 user_id = 1;
     string title = 2;
     string content = 3;
+    string post_image_url = 4;
+
     
 
 }
@@ -32,6 +38,7 @@ message CreatePostResponse {
     string post_id = 1;
     string title = 2;
     string content = 3;
+    string post_image_url = 4;
 
 }
 
@@ -39,12 +46,16 @@ message UpdatePostRequest{
     int64 post_id = 1;
     string title = 2;
     string content = 3;
+    string post_image_url = 4;
+
 
 }
 
 message UpdatePostResponse{
     string status = 1;
     string message = 2;
+    string post_image_url = 3;
+
 
 }
 
@@ -83,5 +94,21 @@ message GetUserPostResponse {
   string cursor = 2;
   bool has_next = 3;
 
+
+}
+
+
+message GenerateUploadURLRequest {
+
+  string filename = 1;
+  string content_type = 2;
+  int64  user_id = 3;
+}
+
+
+message GenerateUploadURLResponse {
+
+  string upload_url = 1;
+  map<string, string> form_data = 2;
 
 }

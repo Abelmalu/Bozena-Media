@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PostService_CreatePost_FullMethodName   = "/postservice.PostService/CreatePost"
-	PostService_UpdatePost_FullMethodName   = "/postservice.PostService/UpdatePost"
-	PostService_DeletePost_FullMethodName   = "/postservice.PostService/DeletePost"
-	PostService_ListPosts_FullMethodName    = "/postservice.PostService/ListPosts"
-	PostService_GetUserPosts_FullMethodName = "/postservice.PostService/GetUserPosts"
+	PostService_CreatePost_FullMethodName        = "/postservice.PostService/CreatePost"
+	PostService_UpdatePost_FullMethodName        = "/postservice.PostService/UpdatePost"
+	PostService_DeletePost_FullMethodName        = "/postservice.PostService/DeletePost"
+	PostService_ListPosts_FullMethodName         = "/postservice.PostService/ListPosts"
+	PostService_GetUserPosts_FullMethodName      = "/postservice.PostService/GetUserPosts"
+	PostService_GenerateUploadURL_FullMethodName = "/postservice.PostService/GenerateUploadURL"
 )
 
 // PostServiceClient is the client API for PostService service.
@@ -35,6 +36,7 @@ type PostServiceClient interface {
 	DeletePost(ctx context.Context, in *DeletePostRequest, opts ...grpc.CallOption) (*DeletePostResponse, error)
 	ListPosts(ctx context.Context, in *ListPostsRequest, opts ...grpc.CallOption) (*ListPostsResponse, error)
 	GetUserPosts(ctx context.Context, in *GetUserPostRequest, opts ...grpc.CallOption) (*GetUserPostResponse, error)
+	GenerateUploadURL(ctx context.Context, in *GenerateUploadURLRequest, opts ...grpc.CallOption) (*GenerateUploadURLResponse, error)
 }
 
 type postServiceClient struct {
@@ -95,6 +97,16 @@ func (c *postServiceClient) GetUserPosts(ctx context.Context, in *GetUserPostReq
 	return out, nil
 }
 
+func (c *postServiceClient) GenerateUploadURL(ctx context.Context, in *GenerateUploadURLRequest, opts ...grpc.CallOption) (*GenerateUploadURLResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenerateUploadURLResponse)
+	err := c.cc.Invoke(ctx, PostService_GenerateUploadURL_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PostServiceServer is the server API for PostService service.
 // All implementations must embed UnimplementedPostServiceServer
 // for forward compatibility.
@@ -104,6 +116,7 @@ type PostServiceServer interface {
 	DeletePost(context.Context, *DeletePostRequest) (*DeletePostResponse, error)
 	ListPosts(context.Context, *ListPostsRequest) (*ListPostsResponse, error)
 	GetUserPosts(context.Context, *GetUserPostRequest) (*GetUserPostResponse, error)
+	GenerateUploadURL(context.Context, *GenerateUploadURLRequest) (*GenerateUploadURLResponse, error)
 	mustEmbedUnimplementedPostServiceServer()
 }
 
@@ -128,6 +141,9 @@ func (UnimplementedPostServiceServer) ListPosts(context.Context, *ListPostsReque
 }
 func (UnimplementedPostServiceServer) GetUserPosts(context.Context, *GetUserPostRequest) (*GetUserPostResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUserPosts not implemented")
+}
+func (UnimplementedPostServiceServer) GenerateUploadURL(context.Context, *GenerateUploadURLRequest) (*GenerateUploadURLResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GenerateUploadURL not implemented")
 }
 func (UnimplementedPostServiceServer) mustEmbedUnimplementedPostServiceServer() {}
 func (UnimplementedPostServiceServer) testEmbeddedByValue()                     {}
@@ -240,6 +256,24 @@ func _PostService_GetUserPosts_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PostService_GenerateUploadURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateUploadURLRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).GenerateUploadURL(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PostService_GenerateUploadURL_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).GenerateUploadURL(ctx, req.(*GenerateUploadURLRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PostService_ServiceDesc is the grpc.ServiceDesc for PostService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -266,6 +300,10 @@ var PostService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserPosts",
 			Handler:    _PostService_GetUserPosts_Handler,
+		},
+		{
+			MethodName: "GenerateUploadURL",
+			Handler:    _PostService_GenerateUploadURL_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

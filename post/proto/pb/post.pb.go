@@ -27,6 +27,7 @@ type Post struct {
 	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	Content       string                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
 	UserId        int64                  `protobuf:"varint,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	PostImageUrl  string                 `protobuf:"bytes,5,opt,name=post_image_url,json=postImageUrl,proto3" json:"post_image_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -89,11 +90,19 @@ func (x *Post) GetUserId() int64 {
 	return 0
 }
 
+func (x *Post) GetPostImageUrl() string {
+	if x != nil {
+		return x.PostImageUrl
+	}
+	return ""
+}
+
 type CreatePostRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	Content       string                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	PostImageUrl  string                 `protobuf:"bytes,4,opt,name=post_image_url,json=postImageUrl,proto3" json:"post_image_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -149,11 +158,19 @@ func (x *CreatePostRequest) GetContent() string {
 	return ""
 }
 
+func (x *CreatePostRequest) GetPostImageUrl() string {
+	if x != nil {
+		return x.PostImageUrl
+	}
+	return ""
+}
+
 type CreatePostResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PostId        string                 `protobuf:"bytes,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
 	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	Content       string                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	PostImageUrl  string                 `protobuf:"bytes,4,opt,name=post_image_url,json=postImageUrl,proto3" json:"post_image_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -209,11 +226,19 @@ func (x *CreatePostResponse) GetContent() string {
 	return ""
 }
 
+func (x *CreatePostResponse) GetPostImageUrl() string {
+	if x != nil {
+		return x.PostImageUrl
+	}
+	return ""
+}
+
 type UpdatePostRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PostId        int64                  `protobuf:"varint,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
 	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	Content       string                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	PostImageUrl  string                 `protobuf:"bytes,4,opt,name=post_image_url,json=postImageUrl,proto3" json:"post_image_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -269,10 +294,18 @@ func (x *UpdatePostRequest) GetContent() string {
 	return ""
 }
 
+func (x *UpdatePostRequest) GetPostImageUrl() string {
+	if x != nil {
+		return x.PostImageUrl
+	}
+	return ""
+}
+
 type UpdatePostResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
 	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	PostImageUrl  string                 `protobuf:"bytes,3,opt,name=post_image_url,json=postImageUrl,proto3" json:"post_image_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -317,6 +350,13 @@ func (x *UpdatePostResponse) GetStatus() string {
 func (x *UpdatePostResponse) GetMessage() string {
 	if x != nil {
 		return x.Message
+	}
+	return ""
+}
+
+func (x *UpdatePostResponse) GetPostImageUrl() string {
+	if x != nil {
+		return x.PostImageUrl
 	}
 	return ""
 }
@@ -617,31 +657,148 @@ func (x *GetUserPostResponse) GetHasNext() bool {
 	return false
 }
 
+type GenerateUploadURLRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
+	ContentType   string                 `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	UserId        int64                  `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenerateUploadURLRequest) Reset() {
+	*x = GenerateUploadURLRequest{}
+	mi := &file_proto_post_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateUploadURLRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateUploadURLRequest) ProtoMessage() {}
+
+func (x *GenerateUploadURLRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_post_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenerateUploadURLRequest.ProtoReflect.Descriptor instead.
+func (*GenerateUploadURLRequest) Descriptor() ([]byte, []int) {
+	return file_proto_post_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GenerateUploadURLRequest) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+func (x *GenerateUploadURLRequest) GetContentType() string {
+	if x != nil {
+		return x.ContentType
+	}
+	return ""
+}
+
+func (x *GenerateUploadURLRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type GenerateUploadURLResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UploadUrl     string                 `protobuf:"bytes,1,opt,name=upload_url,json=uploadUrl,proto3" json:"upload_url,omitempty"`
+	FormData      map[string]string      `protobuf:"bytes,2,rep,name=form_data,json=formData,proto3" json:"form_data,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenerateUploadURLResponse) Reset() {
+	*x = GenerateUploadURLResponse{}
+	mi := &file_proto_post_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateUploadURLResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateUploadURLResponse) ProtoMessage() {}
+
+func (x *GenerateUploadURLResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_post_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenerateUploadURLResponse.ProtoReflect.Descriptor instead.
+func (*GenerateUploadURLResponse) Descriptor() ([]byte, []int) {
+	return file_proto_post_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *GenerateUploadURLResponse) GetUploadUrl() string {
+	if x != nil {
+		return x.UploadUrl
+	}
+	return ""
+}
+
+func (x *GenerateUploadURLResponse) GetFormData() map[string]string {
+	if x != nil {
+		return x.FormData
+	}
+	return nil
+}
+
 var File_proto_post_proto protoreflect.FileDescriptor
 
 const file_proto_post_proto_rawDesc = "" +
 	"\n" +
-	"\x10proto/post.proto\x12\vpostservice\"_\n" +
+	"\x10proto/post.proto\x12\vpostservice\"\x85\x01\n" +
 	"\x04Post\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x18\n" +
 	"\acontent\x18\x03 \x01(\tR\acontent\x12\x17\n" +
-	"\auser_id\x18\x04 \x01(\x03R\x06userId\"\\\n" +
+	"\auser_id\x18\x04 \x01(\x03R\x06userId\x12$\n" +
+	"\x0epost_image_url\x18\x05 \x01(\tR\fpostImageUrl\"\x82\x01\n" +
 	"\x11CreatePostRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x18\n" +
-	"\acontent\x18\x03 \x01(\tR\acontent\"]\n" +
+	"\acontent\x18\x03 \x01(\tR\acontent\x12$\n" +
+	"\x0epost_image_url\x18\x04 \x01(\tR\fpostImageUrl\"\x83\x01\n" +
 	"\x12CreatePostResponse\x12\x17\n" +
 	"\apost_id\x18\x01 \x01(\tR\x06postId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x18\n" +
-	"\acontent\x18\x03 \x01(\tR\acontent\"\\\n" +
+	"\acontent\x18\x03 \x01(\tR\acontent\x12$\n" +
+	"\x0epost_image_url\x18\x04 \x01(\tR\fpostImageUrl\"\x82\x01\n" +
 	"\x11UpdatePostRequest\x12\x17\n" +
 	"\apost_id\x18\x01 \x01(\x03R\x06postId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x18\n" +
-	"\acontent\x18\x03 \x01(\tR\acontent\"F\n" +
+	"\acontent\x18\x03 \x01(\tR\acontent\x12$\n" +
+	"\x0epost_image_url\x18\x04 \x01(\tR\fpostImageUrl\"l\n" +
 	"\x12UpdatePostResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\",\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12$\n" +
+	"\x0epost_image_url\x18\x03 \x01(\tR\fpostImageUrl\",\n" +
 	"\x11DeletePostRequest\x12\x17\n" +
 	"\apost_id\x18\x01 \x01(\x03R\x06postId\"F\n" +
 	"\x12DeletePostResponse\x12\x16\n" +
@@ -657,7 +814,18 @@ const file_proto_post_proto_rawDesc = "" +
 	"\x13GetUserPostResponse\x12'\n" +
 	"\x05posts\x18\x01 \x03(\v2\x11.postservice.PostR\x05posts\x12\x16\n" +
 	"\x06cursor\x18\x02 \x01(\tR\x06cursor\x12\x19\n" +
-	"\bhas_next\x18\x03 \x01(\bR\ahasNext2\x99\x03\n" +
+	"\bhas_next\x18\x03 \x01(\bR\ahasNext\"r\n" +
+	"\x18GenerateUploadURLRequest\x12\x1a\n" +
+	"\bfilename\x18\x01 \x01(\tR\bfilename\x12!\n" +
+	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\x12\x17\n" +
+	"\auser_id\x18\x03 \x01(\x03R\x06userId\"\xca\x01\n" +
+	"\x19GenerateUploadURLResponse\x12\x1d\n" +
+	"\n" +
+	"upload_url\x18\x01 \x01(\tR\tuploadUrl\x12Q\n" +
+	"\tform_data\x18\x02 \x03(\v24.postservice.GenerateUploadURLResponse.FormDataEntryR\bformData\x1a;\n" +
+	"\rFormDataEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012\xfd\x03\n" +
 	"\vPostService\x12M\n" +
 	"\n" +
 	"CreatePost\x12\x1e.postservice.CreatePostRequest\x1a\x1f.postservice.CreatePostResponse\x12M\n" +
@@ -666,7 +834,8 @@ const file_proto_post_proto_rawDesc = "" +
 	"\n" +
 	"DeletePost\x12\x1e.postservice.DeletePostRequest\x1a\x1f.postservice.DeletePostResponse\x12J\n" +
 	"\tListPosts\x12\x1d.postservice.ListPostsRequest\x1a\x1e.postservice.ListPostsResponse\x12Q\n" +
-	"\fGetUserPosts\x12\x1f.postservice.GetUserPostRequest\x1a .postservice.GetUserPostResponseB\fZ\n" +
+	"\fGetUserPosts\x12\x1f.postservice.GetUserPostRequest\x1a .postservice.GetUserPostResponse\x12b\n" +
+	"\x11GenerateUploadURL\x12%.postservice.GenerateUploadURLRequest\x1a&.postservice.GenerateUploadURLResponseB\fZ\n" +
 	"./proto/pbb\x06proto3"
 
 var (
@@ -681,38 +850,44 @@ func file_proto_post_proto_rawDescGZIP() []byte {
 	return file_proto_post_proto_rawDescData
 }
 
-var file_proto_post_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_proto_post_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_proto_post_proto_goTypes = []any{
-	(*Post)(nil),                // 0: postservice.Post
-	(*CreatePostRequest)(nil),   // 1: postservice.CreatePostRequest
-	(*CreatePostResponse)(nil),  // 2: postservice.CreatePostResponse
-	(*UpdatePostRequest)(nil),   // 3: postservice.UpdatePostRequest
-	(*UpdatePostResponse)(nil),  // 4: postservice.UpdatePostResponse
-	(*DeletePostRequest)(nil),   // 5: postservice.DeletePostRequest
-	(*DeletePostResponse)(nil),  // 6: postservice.DeletePostResponse
-	(*ListPostsRequest)(nil),    // 7: postservice.ListPostsRequest
-	(*ListPostsResponse)(nil),   // 8: postservice.ListPostsResponse
-	(*GetUserPostRequest)(nil),  // 9: postservice.GetUserPostRequest
-	(*GetUserPostResponse)(nil), // 10: postservice.GetUserPostResponse
+	(*Post)(nil),                      // 0: postservice.Post
+	(*CreatePostRequest)(nil),         // 1: postservice.CreatePostRequest
+	(*CreatePostResponse)(nil),        // 2: postservice.CreatePostResponse
+	(*UpdatePostRequest)(nil),         // 3: postservice.UpdatePostRequest
+	(*UpdatePostResponse)(nil),        // 4: postservice.UpdatePostResponse
+	(*DeletePostRequest)(nil),         // 5: postservice.DeletePostRequest
+	(*DeletePostResponse)(nil),        // 6: postservice.DeletePostResponse
+	(*ListPostsRequest)(nil),          // 7: postservice.ListPostsRequest
+	(*ListPostsResponse)(nil),         // 8: postservice.ListPostsResponse
+	(*GetUserPostRequest)(nil),        // 9: postservice.GetUserPostRequest
+	(*GetUserPostResponse)(nil),       // 10: postservice.GetUserPostResponse
+	(*GenerateUploadURLRequest)(nil),  // 11: postservice.GenerateUploadURLRequest
+	(*GenerateUploadURLResponse)(nil), // 12: postservice.GenerateUploadURLResponse
+	nil,                               // 13: postservice.GenerateUploadURLResponse.FormDataEntry
 }
 var file_proto_post_proto_depIdxs = []int32{
 	0,  // 0: postservice.ListPostsResponse.posts:type_name -> postservice.Post
 	0,  // 1: postservice.GetUserPostResponse.posts:type_name -> postservice.Post
-	1,  // 2: postservice.PostService.CreatePost:input_type -> postservice.CreatePostRequest
-	3,  // 3: postservice.PostService.UpdatePost:input_type -> postservice.UpdatePostRequest
-	5,  // 4: postservice.PostService.DeletePost:input_type -> postservice.DeletePostRequest
-	7,  // 5: postservice.PostService.ListPosts:input_type -> postservice.ListPostsRequest
-	9,  // 6: postservice.PostService.GetUserPosts:input_type -> postservice.GetUserPostRequest
-	2,  // 7: postservice.PostService.CreatePost:output_type -> postservice.CreatePostResponse
-	4,  // 8: postservice.PostService.UpdatePost:output_type -> postservice.UpdatePostResponse
-	6,  // 9: postservice.PostService.DeletePost:output_type -> postservice.DeletePostResponse
-	8,  // 10: postservice.PostService.ListPosts:output_type -> postservice.ListPostsResponse
-	10, // 11: postservice.PostService.GetUserPosts:output_type -> postservice.GetUserPostResponse
-	7,  // [7:12] is the sub-list for method output_type
-	2,  // [2:7] is the sub-list for method input_type
-	2,  // [2:2] is the sub-list for extension type_name
-	2,  // [2:2] is the sub-list for extension extendee
-	0,  // [0:2] is the sub-list for field type_name
+	13, // 2: postservice.GenerateUploadURLResponse.form_data:type_name -> postservice.GenerateUploadURLResponse.FormDataEntry
+	1,  // 3: postservice.PostService.CreatePost:input_type -> postservice.CreatePostRequest
+	3,  // 4: postservice.PostService.UpdatePost:input_type -> postservice.UpdatePostRequest
+	5,  // 5: postservice.PostService.DeletePost:input_type -> postservice.DeletePostRequest
+	7,  // 6: postservice.PostService.ListPosts:input_type -> postservice.ListPostsRequest
+	9,  // 7: postservice.PostService.GetUserPosts:input_type -> postservice.GetUserPostRequest
+	11, // 8: postservice.PostService.GenerateUploadURL:input_type -> postservice.GenerateUploadURLRequest
+	2,  // 9: postservice.PostService.CreatePost:output_type -> postservice.CreatePostResponse
+	4,  // 10: postservice.PostService.UpdatePost:output_type -> postservice.UpdatePostResponse
+	6,  // 11: postservice.PostService.DeletePost:output_type -> postservice.DeletePostResponse
+	8,  // 12: postservice.PostService.ListPosts:output_type -> postservice.ListPostsResponse
+	10, // 13: postservice.PostService.GetUserPosts:output_type -> postservice.GetUserPostResponse
+	12, // 14: postservice.PostService.GenerateUploadURL:output_type -> postservice.GenerateUploadURLResponse
+	9,  // [9:15] is the sub-list for method output_type
+	3,  // [3:9] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_proto_post_proto_init() }
@@ -726,7 +901,7 @@ func file_proto_post_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_post_proto_rawDesc), len(file_proto_post_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

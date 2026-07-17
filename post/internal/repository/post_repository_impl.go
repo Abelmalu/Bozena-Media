@@ -27,9 +27,9 @@ func NewPostRepository(DB *sql.DB) *PostRepository {
 
 func (PostRepository *PostRepository) CreatePost(ctx context.Context, post *models.Post) (*models.Post, error) {
 
-	query := `INSERT INTO posts (title,content,user_id) VALUES($1,$2,$3) RETURNING id`
+	query := `INSERT INTO posts (title,content,user_id,image) VALUES($1,$2,$3,$4) RETURNING id`
 
-	err := PostRepository.DB.QueryRowContext(ctx, query, post.Title, post.Content, post.UserID).Scan(
+	err := PostRepository.DB.QueryRowContext(ctx, query, post.Title, post.Content, post.UserID,post.Image).Scan(
 		&post.ID,
 	)
 	var appErr *pgconn.PgError

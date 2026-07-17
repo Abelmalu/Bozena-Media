@@ -13,6 +13,7 @@ type Post struct {
 	Title   string `json:"title"  db:"title" validate:"min=3,max=30,required"`
 	Content string `json:"content" db:"content" validate:"min=5,required"`
 	UserID  int    `json:"user_id" db:"user_id" validate:"required"`
+	Image   *string `json:"image"  db:"image"`
 }
 
 //likes model

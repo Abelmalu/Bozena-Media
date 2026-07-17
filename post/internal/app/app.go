@@ -11,6 +11,7 @@ import (
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/abelmalu/golang-posts/post/config"
 	"github.com/abelmalu/golang-posts/post/internal/handlers"
+	miniocl "github.com/abelmalu/golang-posts/post/internal/handlers/minio"
 	"github.com/abelmalu/golang-posts/post/internal/interceptors"
 	"github.com/abelmalu/golang-posts/post/internal/kafka"
 	"github.com/abelmalu/golang-posts/post/internal/repository"
@@ -18,6 +19,7 @@ import (
 	"github.com/abelmalu/golang-posts/post/proto/pb"
 	_ "github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/minio/minio-go/v7"
 	"google.golang.org/grpc"
 )
 
@@ -25,6 +27,7 @@ type App struct {
 	config *config.Config
 	DB     *sql.DB
 	KafkaClient sarama.SyncProducer
+	minioClient *minio.Client
 }
 
 var logger = platform.InitZapLogger()
@@ -55,11 +58,21 @@ func NewApp() (*App, error) {
 		log.Fatalf("Couldn't make kafka connection %v",err)
 	}
 
+	minioClient,err := miniocl.NewMinioClient()
+
+	if err != nil {
+
+		log.Fatalf("Couldn't make minio connection %v",err)
+
+
+	}
+
 
 	app := App{
 		config: config,
 		DB:     DBConPool,
 		KafkaClient: kafkaClient,
+		minioClient: minioClient,
 	}
 
 	return &app, nil
@@ -106,7 +119,7 @@ func (app *App) Run() {
 	)
 
 	postRepo := repository.NewPostRepository(app.DB)
-	postService := service.NewPostService(postRepo,app.KafkaClient)
+	postService := service.NewPostService(postRepo,app.KafkaClient,app.minioClient)
 	postHandler := handlers.NewPostHandler(postService, logger)
 
 	pb.RegisterPostServiceServer(s, postHandler)

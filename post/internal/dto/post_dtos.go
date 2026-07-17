@@ -7,7 +7,12 @@ import (
 	"github.com/abelmalu/golang-posts/post/internal/models"
 	"github.com/go-playground/validator/v10"
 )
-
+var AllowedTypes = map[string]bool{
+    "image/jpeg": true,
+    "image/png":  true,
+	"image/jpg":true,
+	"image/avif":true,
+}
 
 type UpdatePostRequest struct{
 	Title   string `json:"title"  db:"title" validate:"min=3,max=30,required"`

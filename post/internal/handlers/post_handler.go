@@ -376,3 +376,65 @@ func (postHandler *PostHandler) DeletePost(ctx context.Context, req *pb.DeletePo
 	}, nil
 
 }
+
+
+
+func (postHandler *PostHandler) GenerateUploadURL(ctx context.Context, req *pb.GenerateUploadURLRequest) (*pb.GenerateUploadURLResponse, error) {
+	requestID, err := utils.GetRequestID(ctx)
+
+	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
+
+		return nil, status.Error(codes.Internal, "meta data from context couldn't be found")
+
+	}
+	if errors.Is(err, ierrors.ErrRequestIDNotFound) {
+
+		return nil, status.Error(codes.InvalidArgument, "missing request ID")
+
+	}
+	url, formData, err := postHandler.service.GenerateUploadURL(ctx, req.Filename, req.ContentType, int(req.UserId))
+
+	if err != nil {
+
+		postHandler.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
+
+		var appErr *ierrors.AppError
+		if errors.As(err, &appErr) {
+			switch appErr.Type {
+			case ierrors.TypeValidation:
+				return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+			case ierrors.TypeConflict:
+				return nil, status.Error(codes.AlreadyExists, string(appErr.Message))
+			case ierrors.TypeUnauthorized:
+				return nil, status.Error(codes.Unauthenticated, string(appErr.Message))
+			case ierrors.TypeNotFound:
+				return nil, status.Error(codes.NotFound, string(appErr.Message))
+			case ierrors.TypeTimeout:
+				return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
+			case ierrors.TypeCancelled:
+				return nil, status.Error(codes.Canceled, string(appErr.Message))
+			case ierrors.TypeBadRequest:
+				return nil, status.Error(codes.InvalidArgument, string(appErr.Message))
+			default:
+				return nil, status.Error(codes.Internal, "internal error")
+			}
+
+		}
+		if errors.Is(err, context.Canceled) {
+
+			return nil, status.Error(codes.Canceled, "Request canceled")
+		}
+
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return nil, status.Error(codes.DeadlineExceeded, "Request timed out")
+		}
+
+	}
+
+	return &pb.GenerateUploadURLResponse{
+
+		UploadUrl: url,
+		FormData:  formData,
+	}, nil
+}

@@ -22,6 +22,8 @@ const (
 	TypeCancelled    ErrorType = "CANCELLED"
 	TypeDatabase     ErrorType = "DATABASE"
 	TypeKafka  		 ErrorType = "kafka"
+	TypeBadRequest   ErrorType = "BAD_REQUEST"
+
 )
 
 //constant errors 
@@ -119,6 +121,15 @@ func NewDatabaseError(message ErrorMessage, cause error) *AppError {
 
 	return &AppError{
 		Type:    TypeDatabase,
+		Message: message,
+		Cause:   cause,
+	}
+}
+
+func NewBadRequestError(message ErrorMessage, cause error) *AppError {
+
+	return &AppError{
+		Type:    TypeBadRequest,
 		Message: message,
 		Cause:   cause,
 	}
