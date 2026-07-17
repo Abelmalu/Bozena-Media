@@ -76,4 +76,20 @@ func (pc *PostClient) GetUserPosts(ctx context.Context,userID,limit int64,cursor
 
 
 
- 
+ func (pc *PostClient) GeneratePostUploadURL(ctx context.Context, userID int, fileName, contentType string) (*pb.GenerateUploadURLResponse, error) {
+
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	return pc.client.GenerateUploadURL(
+		ctx,
+
+		&pb.GenerateUploadURLRequest{
+
+			UserId:      int64(userID),
+			Filename:    fileName,
+			ContentType: contentType,
+		},
+	)
+
+}

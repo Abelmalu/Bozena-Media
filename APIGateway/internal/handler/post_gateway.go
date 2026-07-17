@@ -22,6 +22,8 @@ type PostService interface {
 	UpdatePost(ctx context.Context, postID int64, title string, content string) (*pb.UpdatePostResponse, error)
 	DeletePost(ctx context.Context, postID int64) (*pb.DeletePostResponse, error)
 	GetUserPosts(ctx context.Context, userID,limit int64,cursor string) (*pb.GetUserPostResponse, error)
+	GeneratePostUploadURL(ctx context.Context, userID int, fileName, ContentType string) (*pb.GenerateUploadURLResponse, error)
+
 }
 
 type PostHandler struct {
@@ -361,6 +363,77 @@ func (postHandler *PostHandler) ListPosts(c *gin.Context) {
 
 		postHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.FromGRPC(err))
+		return
+	}
+
+	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
+
+}
+
+
+func (postHandler *PostHandler) GeneratePostUploadURL(c *gin.Context) {
+
+	requestID, err := utils.GetRequestID(c)
+	if err != nil {
+
+		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
+
+			postHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			postHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+		}
+
+	}
+	userID, err := utils.GetUserID(c)
+
+	if err != nil {
+
+		if errors.Is(err, ierrors.ErrUserIDNotFoundInContext) {
+
+			postHandler.logger.Error("couldn't couldn't find userID in the context", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+
+		}
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
+
+			postHandler.logger.Error("couldn't assert the user ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
+			return
+
+		}
+
+	}
+
+	var req struct {
+		FileName    string `json:"file_name"`
+		ContentType string `json:"content_type"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+
+		postHandler.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
+		c.Error(appErrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
+		return
+
+	}
+	ctx, _ := appendToOutgoingContext(c, requestID)
+
+	resp, err := postHandler.postClient.GeneratePostUploadURL(ctx, userID, req.FileName, req.ContentType)
+
+	if err != nil {
+
+		postHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
+		c.Error(ierrors.FromGRPC(err))
+
 		return
 	}
 
