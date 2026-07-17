@@ -121,6 +121,32 @@ func (postService *PostService) GetUserPosts(ctx context.Context, UserID, limit 
 
 	resp, err := postService.repo.GetUserPosts(ctx, UserID, limit, cursor)
 
+	objectName := ""
+
+
+	for _,post := range resp.Posts {
+
+
+		if post.Image != nil {
+
+		objectName = *post.Image
+
+		url, err := postService.minioClient.PresignedGetObject(ctx, "bozena-media", objectName, time.Hour, nil)
+
+		if err != nil {
+
+			return nil, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
+		}
+
+		urlStr := url.String()
+		post.Image = &urlStr
+
+	}
+
+
+	}
+	
+
 	if err != nil {
 
 		return nil, err

@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"strconv"
-
 	"github.com/abelmalu/golang-posts/post/internal/dto"
 	ierrors "github.com/abelmalu/golang-posts/post/internal/errors"
 	"github.com/abelmalu/golang-posts/post/internal/models"
@@ -193,7 +192,7 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 		}
 
-		query := `SELECT id,title,content,user_id FROM posts WHERE user_id=$1 AND id < $2 ORDER BY id DESC LIMIT $3`
+		query := `SELECT id,title,content,user_id,image FROM posts WHERE user_id=$1 AND id < $2 ORDER BY id DESC LIMIT $3`
 
 		rows, err := postRepo.DB.QueryContext(ctx, query, UserID, cursorInt, (limit + 1))
 
@@ -221,7 +220,7 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 		for rows.Next() {
 			var post models.Post
 
-			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID); err != nil {
+			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID,&post.Image); err != nil {
 
 				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
@@ -245,7 +244,7 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 		}
 	} else {
 
-		query := `SELECT id,title,content,user_id FROM posts WHERE user_id=$1 ORDER BY id DESC LIMIT $2`
+		query := `SELECT id,title,content,user_id,image FROM posts WHERE user_id=$1 ORDER BY id DESC LIMIT $2`
 
 		rows, err := postRepo.DB.QueryContext(ctx, query, UserID, (limit + 1))
 
@@ -273,7 +272,7 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 		for rows.Next() {
 			var post models.Post
 
-			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID); err != nil {
+			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID,&post.Image); err != nil {
 
 				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 

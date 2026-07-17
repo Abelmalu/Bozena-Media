@@ -295,13 +295,23 @@ func (postHandler *PostHandler) GetUserPosts(ctx context.Context, req *pb.GetUse
 	
 	pbPosts := make([]*pb.Post,0,len(resp.Posts))
 
+
+
 	for _,p := range resp.Posts {
+		
+		image := ""
+
+		if p.Image == nil {
+
+			p.Image = &image
+		}
 		pbPost := &pb.Post{
 
 			Title:   p.Title,
 			Content: p.Content,
 			Id:      int64(p.ID),
 			UserId:  int64(p.UserID),
+			PostImageUrl: *p.Image,
 
 		}
 		pbPosts = append(pbPosts,pbPost)
