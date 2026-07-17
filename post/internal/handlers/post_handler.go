@@ -35,6 +35,7 @@ func (postHandler *PostHandler) CreatePost(ctx context.Context, req *pb.CreatePo
 		Title:   req.Title,
 		Content: req.Content,
 		UserID:  int(req.UserId),
+		Image: &req.PostImageUrl,
 	}
 	validationErrStr := post.Validate()
 

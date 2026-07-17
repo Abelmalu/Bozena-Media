@@ -40,6 +40,13 @@ func (postService *PostService) CreatePost(ctx context.Context, post *models.Pos
 
 	}
 
+
+	if *post.Image == "" {
+
+		return nil, ierrors.NewValidationError(ierrors.ErrorMessage("image URL is required"), nil, nil)
+
+	}
+
 	createdPost, err := postService.repo.CreatePost(ctx, post)
 
 	if err != nil {
@@ -161,7 +168,7 @@ func (postService *PostService) GenerateUploadURL(ctx context.Context, filename,
 	}
 
 	objectName := fmt.Sprintf(
-		"users/%s%s",
+		"posts/%s%s",
 		uuid.New().String(),
 		ext,
 	)
@@ -172,7 +179,7 @@ func (postService *PostService) GenerateUploadURL(ctx context.Context, filename,
 	_ = policy.SetKey(objectName)
 	_ = policy.SetExpires(time.Now().UTC().Add(time.Minute * 10))
 	_ = policy.SetContentType(contentType)
-	_ = policy.SetContentLengthRange(1, 5*1024*1024) // 5 megabytes only
+	_ = policy.SetContentLengthRange(1, 5*1024*1024) // 1-5 megabytes only
 
 	
 	url, formData, err := postService.minioClient.PresignedPostPolicy(ctx, policy)

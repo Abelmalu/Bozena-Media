@@ -19,7 +19,7 @@ func NewPostClient(conn *grpc.ClientConn) *PostClient {
 	}
 }
 
-func (pc *PostClient) CreatePost(ctx context.Context, userID int64, title, content string) (*pb.CreatePostResponse, error) {
+func (pc *PostClient) CreatePost(ctx context.Context, userID int64, title, content,objectName string) (*pb.CreatePostResponse, error) {
 	
 ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
@@ -27,6 +27,7 @@ ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		UserId:  userID,
 		Title:   title,
 		Content: content,
+		PostImageUrl: objectName,
 	})
 }
 

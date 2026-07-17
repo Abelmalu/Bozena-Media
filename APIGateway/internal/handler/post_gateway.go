@@ -17,7 +17,7 @@ import (
 )
 
 type PostService interface {
-	CreatePost(ctx context.Context, userID int64, title, content string) (*pb.CreatePostResponse, error)
+	CreatePost(ctx context.Context, userID int64, title, content,ObjectName string) (*pb.CreatePostResponse, error)
 	ListPosts(ctx context.Context) (*pb.ListPostsResponse, error)
 	UpdatePost(ctx context.Context, postID int64, title string, content string) (*pb.UpdatePostResponse, error)
 	DeletePost(ctx context.Context, postID int64) (*pb.DeletePostResponse, error)
@@ -68,6 +68,7 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 	var req struct {
 		Title   string `json:"title"`
 		Content string `json:"content"`
+		ObjectName string `json:"object_name"`
 	}
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
@@ -123,7 +124,7 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 		return
 	}
 
-	resp, err := postHandler.postClient.CreatePost(ctx, userID, req.Title, req.Content)
+	resp, err := postHandler.postClient.CreatePost(ctx, userID, req.Title, req.Content,req.ObjectName)
 	if err != nil {
 		postHandler.logger.Error("GRPC Error", zap.Error(err))
 		c.Error(appErrors.FromGRPC(err))
