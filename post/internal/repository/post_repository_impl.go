@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"strconv"
+
 	"github.com/abelmalu/golang-posts/post/internal/dto"
 	ierrors "github.com/abelmalu/golang-posts/post/internal/errors"
 	"github.com/abelmalu/golang-posts/post/internal/models"
@@ -28,7 +29,7 @@ func (PostRepository *PostRepository) CreatePost(ctx context.Context, post *mode
 
 	query := `INSERT INTO posts (title,content,user_id,image) VALUES($1,$2,$3,$4) RETURNING id`
 
-	err := PostRepository.DB.QueryRowContext(ctx, query, post.Title, post.Content, post.UserID,post.Image).Scan(
+	err := PostRepository.DB.QueryRowContext(ctx, query, post.Title, post.Content, post.UserID, post.Image).Scan(
 		&post.ID,
 	)
 	var appErr *pgconn.PgError
@@ -220,7 +221,7 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 		for rows.Next() {
 			var post models.Post
 
-			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID,&post.Image); err != nil {
+			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.Image); err != nil {
 
 				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
@@ -272,7 +273,7 @@ func (postRepo *PostRepository) GetUserPosts(ctx context.Context, UserID int64, 
 		for rows.Next() {
 			var post models.Post
 
-			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID,&post.Image); err != nil {
+			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.Image); err != nil {
 
 				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
@@ -308,7 +309,7 @@ func (postRepo *PostRepository) CreateCacheUser(ctx context.Context, userID int,
 
 	query := `INSERT INTO users_cache (user_id,username,name)  VALUES($1,$2,$3)`
 
-	_, err := postRepo.DB.ExecContext(ctx, query, userID, username,name)
+	_, err := postRepo.DB.ExecContext(ctx, query, userID, username, name)
 
 	var pgErr *pgconn.PgError
 	if err != nil {
@@ -329,6 +330,33 @@ func (postRepo *PostRepository) CreateCacheUser(ctx context.Context, userID int,
 		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 	}
-    
+
 	return nil
+}
+
+func (postRepo *PostRepository) IncreaseLikeCount(ctx context.Context, postID int) error {
+
+	query := `UPDATE posts SET like_count = like_count +1 where post_id = $1`
+
+	_, err := postRepo.DB.ExecContext(ctx, query, postID)
+
+	if err != nil {
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+	}
+	return err
+
+}
+func (postRepo *PostRepository) DecreaseLikeCount(ctx context.Context, postID int) error {
+
+		query := `UPDATE posts SET like_count = like_count -1 where post_id = $1`
+
+	_, err := postRepo.DB.ExecContext(ctx, query, postID)
+
+	if err != nil {
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+	}
+	return err
+
 }

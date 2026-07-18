@@ -125,10 +125,13 @@ func (app *App) Run() {
 	pb.RegisterPostServiceServer(s, postHandler)
 
 	brokers := []string{"localhost:9092"}
-	topic := "userCreated"
+	userCreatedtopic := "userCreated"
+
+	 postLikedTopic := "liked"
+	  postUnlikedTopic := "unliked"
 
 	// Run consumer in the background
-	go kafka.StartConsumer(brokers, topic, postService, logger)
+	go kafka.StartConsumer(brokers, userCreatedtopic,postLikedTopic,postUnlikedTopic, postService, logger)
 
 	// start the grpc server
 	s.Serve(lis)

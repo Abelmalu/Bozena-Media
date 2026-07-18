@@ -15,5 +15,8 @@ type PostService interface {
 	GetUserPosts(ctx context.Context,UserID,limit int64,cursor string)(*dto.PaginatedResponse, error)
 	CreateCacheUser(ctx context.Context,userID int ,username,name string)(error)
 	GenerateUploadURL(ctx context.Context, filename, contentType string, userID int) (string, map[string]string, error)
+	IncreaseLikeCount(ctx context.Context,postID int) error
+	DecreaseLikeCount(ctx context.Context,postID int) error
+
 	
 }

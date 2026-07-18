@@ -216,3 +216,25 @@ func (postService *PostService) GenerateUploadURL(ctx context.Context, filename,
 
 	return url.String(), formData, nil
 }
+
+
+
+func (postService *PostService)IncreaseLikeCount(ctx context.Context,postID int) error {
+
+	if err := postService.IncreaseLikeCount(ctx,postID); err != nil {
+
+		return err
+	}
+
+	return nil
+}
+func (postService *PostService)	DecreaseLikeCount(ctx context.Context,postID int) error {
+
+
+	if err := postService.DecreaseLikeCount(ctx,postID); err != nil {
+
+		return err
+	}
+
+	return nil
+}

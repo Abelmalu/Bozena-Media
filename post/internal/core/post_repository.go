@@ -15,4 +15,6 @@ type PostRepository interface {
 	ListPosts(ctx context.Context) ([]models.Post, error)
 	GetUserPosts(ctx context.Context,UserID int64,limit int64,cursor string)(*dto.PaginatedResponse, error)
 	CreateCacheUser(ctx context.Context,userID int ,username,name string)(error)
+	IncreaseLikeCount(ctx context.Context,postID int) error
+	DecreaseLikeCount(ctx context.Context,postID int) error
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/IBM/sarama"
@@ -29,20 +28,16 @@ func StartConsumer(brokers []string, followedTopic, unfollowedTopic string, auth
 		log.Fatalf("Error creating master consumer: %v", err)
 	}
 
-	wg := sync.WaitGroup{}
 
-	wg.Add(2)
 
 	go func() {
 
-		defer wg.Done()
 
 		followedConsumer(consumer, followedTopic, authService, logger)
 	}()
 
 	go func() {
 
-		defer wg.Done()
 
 		unfollowedConsumer(consumer, unfollowedTopic, authService, logger)
 
@@ -110,7 +105,6 @@ func unfollowedConsumer(consumer sarama.Consumer, unfollowedTopic string, authSe
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cancel()
 
 			err := authService.DecreaseFollowCounts(ctx, followed.FollowerID, followed.FollowingID)
 
@@ -118,6 +112,9 @@ func unfollowedConsumer(consumer sarama.Consumer, unfollowedTopic string, authSe
 
 				logger.Error("Error when decreasing follow count", zap.Error(err))
 			}
+
+			 cancel()
+
 
 		case err := <-pc.Errors():
 			logger.Error("Post consumer error: %v", zap.Error(err))
