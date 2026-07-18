@@ -29,13 +29,13 @@ func NewFeedHandler(service core.FeedService, logger *platform.Logger) *FeedHand
 
 }
 
-func (feedHandler *FeedHandler) GetUserFeed(ctx context.Context, req *pb.GetUserFeedRequest) (*pb.GetUserFeedResponse, error) {
+func (fh *FeedHandler) GetUserFeed(ctx context.Context, req *pb.GetUserFeedRequest) (*pb.GetUserFeedResponse, error) {
 
-	resp, err := feedHandler.feedService.GetUserFeed(ctx, req.Cursor,int(req.UserId),int(req.Limit))
+	resp, err := fh.feedService.GetUserFeed(ctx, req.Cursor, int(req.UserId), int(req.Limit))
 
 	if err != nil {
 
-		feedHandler.logger.Error("Fedd Service error", zap.Error(err))
+		fh.logger.Error("Fedd Service error", zap.Error(err))
 
 		var appErr *ierrors.AppError
 
@@ -87,7 +87,7 @@ func (feedHandler *FeedHandler) GetUserFeed(ctx context.Context, req *pb.GetUser
 
 	return &pb.GetUserFeedResponse{
 		Userfeeds: pbUserFeeds,
-		Cursor: resp.Cursor,
+		Cursor:    resp.Cursor,
 	}, nil
 
 }

@@ -84,19 +84,16 @@ func (app *App) Run() {
 
 	feedRepo := repository.NewFeedRepository(app.DB)
 	feedService := service.NewFeedService(feedRepo)
-	feedHandler := handler.NewFeedHandler(feedService, logger)
+	fh := handler.NewFeedHandler(feedService, logger)
 
-	pb.RegisterFeedServiceServer(s, feedHandler)
-
-
+	pb.RegisterFeedServiceServer(s, fh)
 
 	brokers := []string{"localhost:9092"}
 	Usertopic := "userCreated"
 	postTopic := "postCreated"
 
-
 	// Run consumer in the background
-	go kafka.StartConsumer(brokers, Usertopic,postTopic, feedService, logger)
+	go kafka.StartConsumer(brokers, Usertopic, postTopic, feedService, logger)
 
 	s.Serve(lis)
 

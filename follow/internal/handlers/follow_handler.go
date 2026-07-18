@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+
 	"github.com/abelmalu/golang-posts/follow/internal/core"
 	dto "github.com/abelmalu/golang-posts/follow/internal/dtos"
 	ierrors "github.com/abelmalu/golang-posts/follow/internal/errors"
@@ -28,16 +29,16 @@ func NewFollowHandler(followService core.FollowService, logger *platform.Logger)
 	}
 }
 
-func (followHandler *FollowHandler) ToggleFollow(ctx context.Context, req *pb.FollowRequest) (*pb.FollowResponse, error) {
+func (fh *FollowHandler) ToggleFollow(ctx context.Context, req *pb.FollowRequest) (*pb.FollowResponse, error) {
 	requestID, err := utils.GetRequestID(ctx)
 
 	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
-		followHandler.logger.Error("meta data not found",zap.Error(err),zap.String("requestID",requestID))
+		fh.logger.Error("meta data not found", zap.Error(err), zap.String("requestID", requestID))
 		return nil, status.Error(codes.Internal, "something went wrong")
 
 	}
 	if errors.Is(err, ierrors.ErrRequestIDNotFound) {
-		followHandler.logger.Error("requestID not found",zap.Error(err),zap.String("requestID",requestID))
+		fh.logger.Error("requestID not found", zap.Error(err), zap.String("requestID", requestID))
 
 		return nil, status.Error(codes.InvalidArgument, "something went wrong")
 
@@ -51,16 +52,16 @@ func (followHandler *FollowHandler) ToggleFollow(ctx context.Context, req *pb.Fo
 
 	if validationErrStr != "" {
 
-		followHandler.logger.Error("Follow service", zap.Error(err), zap.String("requestID", requestID))
+		fh.logger.Error("Follow service", zap.Error(err), zap.String("requestID", requestID))
 
 		return nil, status.Error(codes.InvalidArgument, validationErrStr)
 
 	}
 
-	resp, err := followHandler.followService.ToggleFollow(ctx, *followRequest.Follow, int(req.FollowerId), int(req.FollowingId))
+	resp, err := fh.followService.ToggleFollow(ctx, *followRequest.Follow, int(req.FollowerId), int(req.FollowingId))
 
 	if err != nil {
-		followHandler.logger.Error("Follow service", zap.Error(err), zap.String("requestID", requestID))
+		fh.logger.Error("Follow service", zap.Error(err), zap.String("requestID", requestID))
 		var appErr *ierrors.AppError
 
 		if errors.As(err, &appErr) {
@@ -100,31 +101,30 @@ func (followHandler *FollowHandler) ToggleFollow(ctx context.Context, req *pb.Fo
 	}, nil
 }
 
+func (fh *FollowHandler) GetUserFollowers(ctx context.Context, req *pb.GetUserFollowersRequest) (*pb.GetUserFollowersResponse, error) {
 
-func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *pb.GetUserFollowersRequest)(*pb.GetUserFollowersResponse,error){
-
-   requestID, err := utils.GetRequestID(ctx)
+	requestID, err := utils.GetRequestID(ctx)
 
 	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
-		followHandler.logger.Error("meta data not found",zap.Error(err),zap.String("requestID",requestID))
+		fh.logger.Error("meta data not found", zap.Error(err), zap.String("requestID", requestID))
 		return nil, status.Error(codes.Internal, "something went wrong")
 
 	}
 	if errors.Is(err, ierrors.ErrRequestIDNotFound) {
-		followHandler.logger.Error("requestID not found",zap.Error(err),zap.String("requestID",requestID))
+		fh.logger.Error("requestID not found", zap.Error(err), zap.String("requestID", requestID))
 
 		return nil, status.Error(codes.InvalidArgument, "something went wrong")
 
 	}
 
 	limit := utils.ValidatePaginationLimit(int(req.Limit))
-	resp,err := followHandler.followService.GetUserFollowers(ctx,int(req.FollowingId),limit,req.Cursor)
+	resp, err := fh.followService.GetUserFollowers(ctx, int(req.FollowingId), limit, req.Cursor)
 
 	if err != nil {
-		followHandler.logger.Error("Follow Service Error",zap.Error(err),zap.String("requestID",requestID))
+		fh.logger.Error("Follow Service Error", zap.Error(err), zap.String("requestID", requestID))
 		var appErr *ierrors.AppError
 
-		if errors.As(err,&appErr){
+		if errors.As(err, &appErr) {
 
 			switch appErr.Type {
 			case ierrors.TypeValidation:
@@ -142,8 +142,8 @@ func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *p
 
 			default:
 				return nil, status.Error(codes.Internal, "internal error")
-			
-		}
+
+			}
 
 		}
 
@@ -155,56 +155,43 @@ func (followHandler *FollowHandler) GetUserFollowers(ctx context.Context, req *p
 
 			return nil, status.Error(codes.DeadlineExceeded, "Request timeout")
 
-		
-
 		}
 
 	}
 
+	pbFollowers := make([]*pb.User, 0, len(resp.Followers))
 
-	pbFollowers := make([]*pb.User,0,len(resp.Followers))
-
-
-	for _,follower := range resp.Followers {
+	for _, follower := range resp.Followers {
 
 		pbFollower := &pb.User{
-			Name: (follower.Name),
+			Name:     (follower.Name),
 			Username: (follower.Username),
-			UserId:int64(follower.ID),
-
-
+			UserId:   int64(follower.ID),
 		}
 
 		pbFollowers = append(pbFollowers, pbFollower)
 
-
-
 	}
-	
 
 	return &pb.GetUserFollowersResponse{
 		Followers: pbFollowers,
-		Cursor:resp.Cursor,
-		HasNext: resp.HasNext,
+		Cursor:    resp.Cursor,
+		HasNext:   resp.HasNext,
+	}, nil
 
+}
 
-	},nil
+func (fh *FollowHandler) GetUserFollowings(ctx context.Context, req *pb.GetUserFollowingsRequest) (*pb.GetUserFollowingsResponse, error) {
 
-	}
-
-
-
-func (followHandler *FollowHandler) GetUserFollowings(ctx context.Context, req *pb.GetUserFollowingsRequest)(*pb.GetUserFollowingsResponse,error) {
-
-  requestID, err := utils.GetRequestID(ctx)
+	requestID, err := utils.GetRequestID(ctx)
 
 	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
-		followHandler.logger.Error("meta data not found",zap.Error(err),zap.String("requestID",requestID))
+		fh.logger.Error("meta data not found", zap.Error(err), zap.String("requestID", requestID))
 		return nil, status.Error(codes.Internal, "something went wrong")
 
 	}
 	if errors.Is(err, ierrors.ErrRequestIDNotFound) {
-		followHandler.logger.Error("requestID not found",zap.Error(err),zap.String("requestID",requestID))
+		fh.logger.Error("requestID not found", zap.Error(err), zap.String("requestID", requestID))
 
 		return nil, status.Error(codes.InvalidArgument, "something went wrong")
 
@@ -212,15 +199,14 @@ func (followHandler *FollowHandler) GetUserFollowings(ctx context.Context, req *
 
 	limit := utils.ValidatePaginationLimit(int(req.Limit))
 
-
-	resp,err := followHandler.followService.GetUserUserFollowings(ctx,int(req.FollowerId),limit,req.Cursor)
+	resp, err := fh.followService.GetUserUserFollowings(ctx, int(req.FollowerId), limit, req.Cursor)
 
 	if err != nil {
-		followHandler.logger.Error("Follow Service Error",zap.Error(err),zap.String("requestID",requestID))
+		fh.logger.Error("Follow Service Error", zap.Error(err), zap.String("requestID", requestID))
 
 		var appErr *ierrors.AppError
 
-		if errors.As(err,&appErr){
+		if errors.As(err, &appErr) {
 
 			switch appErr.Type {
 			case ierrors.TypeValidation:
@@ -238,8 +224,8 @@ func (followHandler *FollowHandler) GetUserFollowings(ctx context.Context, req *
 
 			default:
 				return nil, status.Error(codes.Internal, "internal error")
-			
-		}
+
+			}
 
 		}
 
@@ -251,33 +237,27 @@ func (followHandler *FollowHandler) GetUserFollowings(ctx context.Context, req *
 
 			return nil, status.Error(codes.DeadlineExceeded, "Request timeout")
 
-		
-
 		}
-
 
 	}
 
+	pbFollowings := make([]*pb.User, 0, len(resp.Followings))
 
-	pbFollowings := make([]*pb.User,0,len(resp.Followings))
-
-	for _,following := range resp.Followings {
+	for _, following := range resp.Followings {
 
 		pbfollowing := &pb.User{
-			Name: following.Name,
+			Name:     following.Name,
 			Username: following.Username,
 		}
 
 		pbFollowings = append(pbFollowings, pbfollowing)
 
-
 	}
 
-return &pb.GetUserFollowingsResponse{
-			Followings:pbFollowings,
-			HasNext:resp.HasNext,
-			Cursor:resp.Cursor,
+	return &pb.GetUserFollowingsResponse{
+		Followings: pbFollowings,
+		HasNext:    resp.HasNext,
+		Cursor:     resp.Cursor,
+	}, nil
 
-},nil
-	
 }

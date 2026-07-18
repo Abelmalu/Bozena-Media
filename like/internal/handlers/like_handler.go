@@ -31,7 +31,7 @@ func NewLikeHandler(likeService core.LikeService, logger *platform.Logger) *Like
 	}
 }
 
-func (likeHandler *LikeHandler) ToggleLike(ctx context.Context, req *pb.LikeRequest) (*pb.LikeResponse, error) {
+func (lh *LikeHandler) ToggleLike(ctx context.Context, req *pb.LikeRequest) (*pb.LikeResponse, error) {
 	requestID, err := utils.GetRequestID(ctx)
 
 	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
@@ -80,11 +80,11 @@ func (likeHandler *LikeHandler) ToggleLike(ctx context.Context, req *pb.LikeRequ
 	}
 
 	var appErr *ierrors.AppError
-	likeResp, err := likeHandler.likeService.ToggleLike(ctx, req.State, userID, postID)
+	likeResp, err := lh.likeService.ToggleLike(ctx, req.State, userID, postID)
 
 	if err != nil {
 
-		likeHandler.logger.Error("Like service error", zap.Error(err), zap.String("requestID", requestID))
+		lh.logger.Error("Like service error", zap.Error(err), zap.String("requestID", requestID))
 
 		if errors.As(err, &appErr) {
 
@@ -126,7 +126,7 @@ func (likeHandler *LikeHandler) ToggleLike(ctx context.Context, req *pb.LikeRequ
 
 }
 
-func (likeHandler *LikeHandler)	GetPostLikes(ctx context.Context, req *pb.GetPostLikesRequest) (*pb.GetPostLikesResponse, error) {
+func (lh *LikeHandler) GetPostLikes(ctx context.Context, req *pb.GetPostLikesRequest) (*pb.GetPostLikesResponse, error) {
 
 	requestID, err := utils.GetRequestID(ctx)
 
@@ -140,13 +140,12 @@ func (likeHandler *LikeHandler)	GetPostLikes(ctx context.Context, req *pb.GetPos
 		return nil, status.Error(codes.InvalidArgument, "something went wrong")
 
 	}
-	resp,err := likeHandler.likeService.GetPostLikes(ctx,int(req.PostId),int(req.Limit),req.Cursor)
-
+	resp, err := lh.likeService.GetPostLikes(ctx, int(req.PostId), int(req.Limit), req.Cursor)
 
 	if err != nil {
 
-		likeHandler.logger.Error("Like service error", zap.Error(err), zap.String("requestID", requestID))
-		
+		lh.logger.Error("Like service error", zap.Error(err), zap.String("requestID", requestID))
+
 		var appErr *ierrors.AppError
 		if errors.As(err, &appErr) {
 
@@ -182,14 +181,12 @@ func (likeHandler *LikeHandler)	GetPostLikes(ctx context.Context, req *pb.GetPos
 
 	}
 
-	pbUsersLiked := make([]*pb.User,0,len(resp.UsersLiked))
+	pbUsersLiked := make([]*pb.User, 0, len(resp.UsersLiked))
 
-
-	for _,userLiked := range resp.UsersLiked {
-
+	for _, userLiked := range resp.UsersLiked {
 
 		pbUser := &pb.User{
-			Name: userLiked.Name,
+			Name:     userLiked.Name,
 			Username: userLiked.Username,
 		}
 
@@ -197,11 +194,9 @@ func (likeHandler *LikeHandler)	GetPostLikes(ctx context.Context, req *pb.GetPos
 	}
 
 	return &pb.GetPostLikesResponse{
-		Users: pbUsersLiked,
+		Users:   pbUsersLiked,
 		HasNext: resp.HasNext,
-		Cursor: resp.Cursor,
+		Cursor:  resp.Cursor,
+	}, nil
 
-	},nil
-	
 }
-

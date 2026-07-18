@@ -61,7 +61,7 @@ func ExtractRefreshToken(c *gin.Context) (string, error) {
 	return "", errors.New("Refresh Token not found")
 }
 
-func (authHandler *AuthHandler) Register(c *gin.Context) {
+func (ah *AuthHandler) Register(c *gin.Context) {
 
 	var req struct {
 		Name     string `json:"name"`
@@ -74,7 +74,7 @@ func (authHandler *AuthHandler) Register(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			authHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			ah.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -82,7 +82,7 @@ func (authHandler *AuthHandler) Register(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
@@ -90,17 +90,17 @@ func (authHandler *AuthHandler) Register(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		authHandler.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
 		return
 	}
 	// call getClienType to get the client type and inject it into the grpc metadata
 	ctx, clientType := utils.AddToOutgoingContext(c, requestID)
 
-	resp, err := authHandler.client.Register(ctx, req.UserName, req.Name, req.Email, req.Password)
+	resp, err := ah.client.Register(ctx, req.UserName, req.Name, req.Email, req.Password)
 	if err != nil {
 
-		authHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
@@ -124,7 +124,7 @@ func (authHandler *AuthHandler) Register(c *gin.Context) {
 		registerResponse.FollowerCount = int(resp.FollowerCount)
 		registerResponse.FollowingCount = int(resp.FollowingCount)
 		registerResponse.ID = int(resp.Id)
-		registerResponse.ProfileImageUrl =resp.ProfileImageUrl 
+		registerResponse.ProfileImageUrl = resp.ProfileImageUrl
 
 	case "mobile":
 		registerResponse.AccessToken = resp.AccessToken
@@ -133,14 +133,14 @@ func (authHandler *AuthHandler) Register(c *gin.Context) {
 		registerResponse.FollowerCount = int(resp.FollowerCount)
 		registerResponse.FollowingCount = int(resp.FollowingCount)
 		registerResponse.ID = int(resp.Id)
-		registerResponse.ProfileImageUrl =resp.ProfileImageUrl 
+		registerResponse.ProfileImageUrl = resp.ProfileImageUrl
 	}
 
 	utils.SendSuccessResponse(c, registerResponse, requestID, http.StatusOK)
 
 }
 
-func (authHandler *AuthHandler) Login(c *gin.Context) {
+func (ah *AuthHandler) Login(c *gin.Context) {
 	var req struct {
 		UserName string `json:"username"`
 		Password string `json:"password"`
@@ -151,7 +151,7 @@ func (authHandler *AuthHandler) Login(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			authHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			ah.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -159,24 +159,24 @@ func (authHandler *AuthHandler) Login(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
 
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		authHandler.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
 		return
 	}
 
 	ctx, clientType := utils.AddToOutgoingContext(c, requestID)
 
-	resp, err := authHandler.client.Login(ctx, req.UserName, req.Password)
+	resp, err := ah.client.Login(ctx, req.UserName, req.Password)
 
 	if err != nil {
-		authHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("request ID", requestID))
+		ah.logger.Error("GRPC Error", zap.Error(err), zap.String("request ID", requestID))
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
@@ -199,7 +199,7 @@ func (authHandler *AuthHandler) Login(c *gin.Context) {
 		loginResponse.FollowerCount = int(resp.FollowerCount)
 		loginResponse.FollowingCount = int(resp.FollowingCount)
 		loginResponse.ID = int(resp.Id)
-		loginResponse.ProfileImageUrl =resp.ProfileImageUrl 
+		loginResponse.ProfileImageUrl = resp.ProfileImageUrl
 
 	case "mobile":
 		loginResponse.AccessToken = resp.AccessToken
@@ -208,7 +208,7 @@ func (authHandler *AuthHandler) Login(c *gin.Context) {
 		loginResponse.FollowerCount = int(resp.FollowerCount)
 		loginResponse.FollowingCount = int(resp.FollowingCount)
 		loginResponse.ID = int(resp.Id)
-		loginResponse.ProfileImageUrl =resp.ProfileImageUrl 
+		loginResponse.ProfileImageUrl = resp.ProfileImageUrl
 
 	}
 
@@ -216,13 +216,13 @@ func (authHandler *AuthHandler) Login(c *gin.Context) {
 
 }
 
-func (authHandler *AuthHandler) Logout(c *gin.Context) {
+func (ah *AuthHandler) Logout(c *gin.Context) {
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			authHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			ah.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -230,7 +230,7 @@ func (authHandler *AuthHandler) Logout(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
@@ -242,7 +242,7 @@ func (authHandler *AuthHandler) Logout(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrJTINotFoundInContext) {
 
-			authHandler.logger.Error("couldn't get JTI from context", zap.Error(errors.New("couldn't find JTI")))
+			ah.logger.Error("couldn't get JTI from context", zap.Error(errors.New("couldn't find JTI")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -251,7 +251,7 @@ func (authHandler *AuthHandler) Logout(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			authHandler.logger.Error("couldn't assert the JTI to string", zap.String("type", "something went wrong"))
+			ah.logger.Error("couldn't assert the JTI to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
@@ -263,7 +263,7 @@ func (authHandler *AuthHandler) Logout(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrExpTimeNotFoundInContext) {
 
-			authHandler.logger.Error("couldn't get expirtaion time from context", zap.Error(errors.New("couldn't find expiration time")))
+			ah.logger.Error("couldn't get expirtaion time from context", zap.Error(errors.New("couldn't find expiration time")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -272,7 +272,7 @@ func (authHandler *AuthHandler) Logout(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
@@ -282,7 +282,7 @@ func (authHandler *AuthHandler) Logout(c *gin.Context) {
 
 	refreshToken, err := ExtractRefreshToken(c)
 	if err != nil {
-		authHandler.logger.Error("refresh token extracting error", zap.Error(err), zap.String("request ID", requestID))
+		ah.logger.Error("refresh token extracting error", zap.Error(err), zap.String("request ID", requestID))
 		c.Error(appErrors.NewAppError(appErrors.TypeUnauthorized, ierrors.MSGRefreshTokenNotFound, err))
 		return
 	}
@@ -294,10 +294,10 @@ func (authHandler *AuthHandler) Logout(c *gin.Context) {
 		"expTime", expTimeStr,
 	)
 	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
-	resp, err := authHandler.client.Logout(ctx)
+	resp, err := ah.client.Logout(ctx)
 	if err != nil {
 
-		authHandler.logger.Error("GRPC Error", zap.Error(err))
+		ah.logger.Error("GRPC Error", zap.Error(err))
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
@@ -305,14 +305,14 @@ func (authHandler *AuthHandler) Logout(c *gin.Context) {
 	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
 }
 
-func (authHandler *AuthHandler) RefreshHandler(c *gin.Context) {
+func (ah *AuthHandler) RefreshHandler(c *gin.Context) {
 
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			authHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			ah.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -320,7 +320,7 @@ func (authHandler *AuthHandler) RefreshHandler(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
@@ -330,16 +330,16 @@ func (authHandler *AuthHandler) RefreshHandler(c *gin.Context) {
 	// extracting the refresh token from the request for both mobile and web clients
 	refreshToken, err := ExtractRefreshToken(c)
 	if err != nil {
-		authHandler.logger.Error("refresh token extracting error ", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("refresh token extracting error ", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.NewAppError(appErrors.TypeUnauthorized, "Refresh token not found", err))
 		return
 	}
 
 	ctx, clientType := utils.AddToOutgoingContext(c, requestID)
 
-	resp, err := authHandler.client.RefreshHandler(ctx, refreshToken)
+	resp, err := ah.client.RefreshHandler(ctx, refreshToken)
 	if err != nil {
-		authHandler.logger.Error("GRPC Error ", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("GRPC Error ", zap.Error(err), zap.String("requestID", requestID))
 
 		c.Error(appErrors.FromGRPC(err))
 		return
@@ -370,13 +370,13 @@ func (authHandler *AuthHandler) RefreshHandler(c *gin.Context) {
 
 }
 
-func (authHandler *AuthHandler) SearchUser(c *gin.Context) {
+func (ah *AuthHandler) SearchUser(c *gin.Context) {
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			authHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")), zap.String("requestID", requestID))
+			ah.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")), zap.String("requestID", requestID))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -384,7 +384,7 @@ func (authHandler *AuthHandler) SearchUser(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
@@ -404,7 +404,7 @@ func (authHandler *AuthHandler) SearchUser(c *gin.Context) {
 
 	if err != nil {
 
-		authHandler.logger.Error("couldn't change limit to string", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("couldn't change limit to string", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 		return
 
@@ -414,11 +414,11 @@ func (authHandler *AuthHandler) SearchUser(c *gin.Context) {
 
 	ctx, _ := utils.AddToOutgoingContext(c, requestID)
 
-	resp, err := authHandler.client.SearchUser(ctx, search, cursor, limit)
+	resp, err := ah.client.SearchUser(ctx, search, cursor, limit)
 
 	if err != nil {
 
-		authHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("requestId", requestID))
+		ah.logger.Error("GRPC Error", zap.Error(err), zap.String("requestId", requestID))
 
 		c.Error(ierrors.FromGRPC(err))
 		return
@@ -427,14 +427,14 @@ func (authHandler *AuthHandler) SearchUser(c *gin.Context) {
 	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
 }
 
-func (authHandler *AuthHandler) GetUserProfile(c *gin.Context) {
+func (ah *AuthHandler) GetUserProfile(c *gin.Context) {
 
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			authHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")), zap.String("requestID", requestID))
+			ah.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")), zap.String("requestID", requestID))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -442,7 +442,7 @@ func (authHandler *AuthHandler) GetUserProfile(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
@@ -453,7 +453,7 @@ func (authHandler *AuthHandler) GetUserProfile(c *gin.Context) {
 	userIDValue, err := strconv.Atoi(userIDStr)
 	if err != nil {
 
-		authHandler.logger.Error("error while Atoi", zap.String("requestID", requestID))
+		ah.logger.Error("error while Atoi", zap.String("requestID", requestID))
 
 		c.Error(appErrors.NewAppError(ierrors.TypeValidation, ierrors.MSGInvalidRequestBody, err))
 		return
@@ -464,11 +464,11 @@ func (authHandler *AuthHandler) GetUserProfile(c *gin.Context) {
 
 	userID := int64(userIDValue)
 
-	resp, err := authHandler.client.GetUserProfile(ctx, userID)
+	resp, err := ah.client.GetUserProfile(ctx, userID)
 
 	if err != nil {
 
-		authHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(ierrors.FromGRPC(err))
 
 		return
@@ -478,14 +478,14 @@ func (authHandler *AuthHandler) GetUserProfile(c *gin.Context) {
 	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
 }
 
-func (authHandler *AuthHandler) GenerateProfileUploadURL(c *gin.Context) {
+func (ah *AuthHandler) GenerateProfileUploadURL(c *gin.Context) {
 
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			authHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			ah.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -493,7 +493,7 @@ func (authHandler *AuthHandler) GenerateProfileUploadURL(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			authHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			ah.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
@@ -505,14 +505,14 @@ func (authHandler *AuthHandler) GenerateProfileUploadURL(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrUserIDNotFoundInContext) {
 
-			authHandler.logger.Error("couldn't couldn't find userID in the context", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			ah.logger.Error("couldn't couldn't find userID in the context", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			authHandler.logger.Error("couldn't assert the user ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			ah.logger.Error("couldn't assert the user ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 
@@ -527,18 +527,18 @@ func (authHandler *AuthHandler) GenerateProfileUploadURL(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 
-		authHandler.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
 		return
 
 	}
 	ctx, _ := utils.AddToOutgoingContext(c, requestID)
 
-	resp, err := authHandler.client.GenerateProfileUploadURL(ctx, userID, req.FileName, req.ContentType)
+	resp, err := ah.client.GenerateProfileUploadURL(ctx, userID, req.FileName, req.ContentType)
 
 	if err != nil {
 
-		authHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(ierrors.FromGRPC(err))
 
 		return

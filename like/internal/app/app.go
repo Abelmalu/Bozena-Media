@@ -81,17 +81,16 @@ func (app *App) Run() {
 
 	likeRepository := repository.NewLikeRepository(app.DB)
 	likeService := service.NewLikeRepository(likeRepository)
-	likeHandler := handler.NewLikeHandler(likeService, logger)
+	lh := handler.NewLikeHandler(likeService, logger)
 
-	pb.RegisterLikeServiceServer(s, likeHandler)
+	pb.RegisterLikeServiceServer(s, lh)
 
 	brokers := []string{"localhost:9092"}
 	Usertopic := "userCreated"
 	postTopic := "postCreated"
 
-
 	// Run consumer in the background
-	go kafka.StartConsumer(brokers, Usertopic,postTopic, likeService, logger)
+	go kafka.StartConsumer(brokers, Usertopic, postTopic, likeService, logger)
 
 	s.Serve(lis)
 

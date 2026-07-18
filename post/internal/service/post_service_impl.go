@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
 	"github.com/IBM/sarama"
+	"github.com/abelmalu/golang-posts/post/internal/cleanup"
 	"github.com/abelmalu/golang-posts/post/internal/core"
 	"github.com/abelmalu/golang-posts/post/internal/dto"
 	ierrors "github.com/abelmalu/golang-posts/post/internal/errors"
@@ -18,30 +18,34 @@ import (
 )
 
 type PostService struct {
-	repo        core.PostRepository
-	kafka       sarama.SyncProducer
-	minioClient *minio.Client
+	repo           core.PostRepository
+	kafka          sarama.SyncProducer
+	minioClient    *minio.Client
+	cleanupService *cleanup.CleanUpService
 }
 
-func NewPostService(repository core.PostRepository, kafkaClient sarama.SyncProducer, minioClient *minio.Client) *PostService {
+func NewPostService(repository core.PostRepository, kafkaClient sarama.SyncProducer, minioClient *minio.Client, cleanup *cleanup.CleanUpService) *PostService {
 
 	return &PostService{
-		repo:        repository,
-		kafka:       kafkaClient,
-		minioClient: minioClient,
+		repo:           repository,
+		kafka:          kafkaClient,
+		minioClient:    minioClient,
+		cleanupService: cleanup,
 	}
 }
 
 func (postService *PostService) CreatePost(ctx context.Context, post *models.Post) (*models.Post, error) {
 
 	if post.Title == "" {
+		postService.cleanupService.DeleteObject("bozena-media", *post.Image)
 
 		return nil, ierrors.NewValidationError(ierrors.MSGTitleIsRrequired, nil, nil)
 
 	}
 
-
 	if *post.Image == "" {
+
+		postService.cleanupService.DeleteObject("bozena-media", *post.Image)
 
 		return nil, ierrors.NewValidationError(ierrors.ErrorMessage("image URL is required"), nil, nil)
 
@@ -50,6 +54,8 @@ func (postService *PostService) CreatePost(ctx context.Context, post *models.Pos
 	createdPost, err := postService.repo.CreatePost(ctx, post)
 
 	if err != nil {
+
+		postService.cleanupService.DeleteObject("bozena-media", *post.Image)
 
 		return nil, err
 	}
@@ -123,29 +129,25 @@ func (postService *PostService) GetUserPosts(ctx context.Context, UserID, limit 
 
 	objectName := ""
 
-
-	for _,post := range resp.Posts {
-
+	for _, post := range resp.Posts {
 
 		if post.Image != nil {
 
-		objectName = *post.Image
+			objectName = *post.Image
 
-		url, err := postService.minioClient.PresignedGetObject(ctx, "bozena-media", objectName, time.Hour, nil)
+			url, err := postService.minioClient.PresignedGetObject(ctx, "bozena-media", objectName, time.Hour, nil)
 
-		if err != nil {
+			if err != nil {
 
-			return nil, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
+				return nil, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
+			}
+
+			urlStr := url.String()
+			post.Image = &urlStr
+
 		}
 
-		urlStr := url.String()
-		post.Image = &urlStr
-
 	}
-
-
-	}
-	
 
 	if err != nil {
 
@@ -207,7 +209,6 @@ func (postService *PostService) GenerateUploadURL(ctx context.Context, filename,
 	_ = policy.SetContentType(contentType)
 	_ = policy.SetContentLengthRange(1, 5*1024*1024) // 1-5 megabytes only
 
-	
 	url, formData, err := postService.minioClient.PresignedPostPolicy(ctx, policy)
 	if err != nil {
 		return "", nil, ierrors.NewInternalError("Error generating presigned POST policy", err)

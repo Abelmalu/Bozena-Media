@@ -18,27 +18,27 @@ import (
 type NotificationHanlder struct {
 	logger              *platform.Logger
 	notificationService core.NotificationService
-	notificationBroker *broker.NotificationBroker
+	notificationBroker  *broker.NotificationBroker
 }
 
-func NewNotificationHandler(logger *platform.Logger, service core.NotificationService,notiBroker *broker.NotificationBroker) *NotificationHanlder {
+func NewNotificationHandler(logger *platform.Logger, service core.NotificationService, notiBroker *broker.NotificationBroker) *NotificationHanlder {
 
 	return &NotificationHanlder{
 
 		logger:              logger,
 		notificationService: service,
-		notificationBroker: notiBroker,
+		notificationBroker:  notiBroker,
 	}
 }
 
-func (notificationHanlder *NotificationHanlder) Stream(c *gin.Context) {
+func (nh *NotificationHanlder) Stream(c *gin.Context) {
 
 	userID := c.GetHeader("X-User-ID")
 	requestID := c.GetHeader("X-Request-ID")
 	userIDInt, err := strconv.Atoi(userID)
 
 	if err != nil {
-		notificationHanlder.logger.Error("Error", zap.Error(err))
+		nh.logger.Error("Error", zap.Error(err))
 
 		pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
 		return
@@ -49,9 +49,9 @@ func (notificationHanlder *NotificationHanlder) Stream(c *gin.Context) {
 
 	c.Stream(func(w io.Writer) bool {
 
-		userChan := notificationHanlder.notificationBroker.Register(userIDInt)
+		userChan := nh.notificationBroker.Register(userIDInt)
 
-		defer notificationHanlder.notificationBroker.Unregister(userIDInt)
+		defer nh.notificationBroker.Unregister(userIDInt)
 
 		select {
 		case <-c.Request.Context().Done():
@@ -59,7 +59,7 @@ func (notificationHanlder *NotificationHanlder) Stream(c *gin.Context) {
 
 		case msg, ok := <-userChan:
 			if !ok {
-				return false 
+				return false
 			}
 			c.SSEvent("notification", msg)
 			return true
@@ -67,14 +67,14 @@ func (notificationHanlder *NotificationHanlder) Stream(c *gin.Context) {
 	})
 }
 
-func (notificationHanlder *NotificationHanlder) GetUserNotifications(c *gin.Context) {
+func (nh *NotificationHanlder) GetUserNotifications(c *gin.Context) {
 
 	userID := c.GetHeader("X-User-ID")
 	requestID := c.GetHeader("X-Request-ID")
 	userIDInt, err := strconv.Atoi(userID)
 
 	if err != nil {
-		notificationHanlder.logger.Error("Error", zap.Error(err))
+		nh.logger.Error("Error", zap.Error(err))
 
 		pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
 		return
@@ -85,7 +85,7 @@ func (notificationHanlder *NotificationHanlder) GetUserNotifications(c *gin.Cont
 
 	if err != nil {
 
-		notificationHanlder.logger.Error("Error", zap.Error(err))
+		nh.logger.Error("Error", zap.Error(err))
 
 		pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
 		return
@@ -93,11 +93,11 @@ func (notificationHanlder *NotificationHanlder) GetUserNotifications(c *gin.Cont
 
 	cursor := c.Query("cursor")
 
-	resp, err := notificationHanlder.notificationService.GetUserNotifications(c.Request.Context(), userIDInt, cursor, limit)
+	resp, err := nh.notificationService.GetUserNotifications(c.Request.Context(), userIDInt, cursor, limit)
 
 	if err != nil {
 
-		notificationHanlder.logger.Error("Error", zap.Error(err))
+		nh.logger.Error("Error", zap.Error(err))
 
 		var appErr *ierrors.AppError
 

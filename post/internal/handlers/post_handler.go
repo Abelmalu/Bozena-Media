@@ -3,7 +3,9 @@ package handlers
 import (
 	"context"
 	"errors"
+
 	"github.com/abelmalu/golang-posts/platform"
+	"github.com/abelmalu/golang-posts/post/internal/cleanup"
 	"github.com/abelmalu/golang-posts/post/internal/core"
 	"github.com/abelmalu/golang-posts/post/internal/dto"
 	ierrors "github.com/abelmalu/golang-posts/post/internal/errors"
@@ -18,29 +20,33 @@ import (
 // the PostHandler will implement the PostServiceServer
 type PostHandler struct {
 	pb.UnimplementedPostServiceServer
-	service core.PostService
-	logger  *platform.Logger
+	service        core.PostService
+	logger         *platform.Logger
+	cleanupService *cleanup.CleanUpService
 }
 
-func NewPostHandler(service core.PostService, logger *platform.Logger) *PostHandler {
+	
+func NewPostHandler(service core.PostService, logger *platform.Logger,cleanupService *cleanup.CleanUpService) *PostHandler {
 	return &PostHandler{
 		service: service,
 		logger:  logger,
+		cleanupService: cleanupService,
 	}
 }
 
-func (postHandler *PostHandler) CreatePost(ctx context.Context, req *pb.CreatePostRequest) (*pb.CreatePostResponse, error) {
+func (ph *PostHandler) CreatePost(ctx context.Context, req *pb.CreatePostRequest) (*pb.CreatePostResponse, error) {
 
 	post := models.Post{
 		Title:   req.Title,
 		Content: req.Content,
 		UserID:  int(req.UserId),
-		Image: &req.PostImageUrl,
+		Image:   &req.PostImageUrl,
 	}
 	validationErrStr := post.Validate()
 
 	if validationErrStr != "" {
 
+		ph.cleanupService.DeleteObject("bozena-media", *post.Image)
 		return nil, status.Error(codes.InvalidArgument, validationErrStr)
 	}
 	var appErr *ierrors.AppError
@@ -57,10 +63,10 @@ func (postHandler *PostHandler) CreatePost(ctx context.Context, req *pb.CreatePo
 
 	}
 
-	createdPost, err := postHandler.service.CreatePost(ctx, &post)
+	createdPost, err := ph.service.CreatePost(ctx, &post)
 
 	if err != nil {
-		postHandler.logger.Error("Post Service Error", zap.Error(err), zap.String("requestID", requestID))
+		ph.logger.Error("Post Service Error", zap.Error(err), zap.String("requestID", requestID))
 
 		if errors.As(err, &appErr) {
 			switch appErr.Type {
@@ -102,7 +108,7 @@ func (postHandler *PostHandler) CreatePost(ctx context.Context, req *pb.CreatePo
 
 }
 
-func (postHandler *PostHandler) ListPosts(ctx context.Context, req *pb.ListPostsRequest) (*pb.ListPostsResponse, error) {
+func (ph *PostHandler) ListPosts(ctx context.Context, req *pb.ListPostsRequest) (*pb.ListPostsResponse, error) {
 	var appErr *ierrors.AppError
 	requestID, err := utils.GetRequestID(ctx)
 
@@ -116,11 +122,11 @@ func (postHandler *PostHandler) ListPosts(ctx context.Context, req *pb.ListPosts
 		return nil, status.Error(codes.InvalidArgument, "missing request ID")
 
 	}
-	posts, err := postHandler.service.ListPosts(ctx)
+	posts, err := ph.service.ListPosts(ctx)
 
 	if err != nil {
 
-		postHandler.logger.Error("Post Service Error", zap.Error(err), zap.String("requestID", requestID))
+		ph.logger.Error("Post Service Error", zap.Error(err), zap.String("requestID", requestID))
 
 		if errors.As(err, &appErr) {
 			switch appErr.Type {
@@ -168,11 +174,10 @@ func (postHandler *PostHandler) ListPosts(ctx context.Context, req *pb.ListPosts
 	}, nil
 }
 
-func (postHandler *PostHandler) UpdatePost(ctx context.Context, req *pb.UpdatePostRequest) (*pb.UpdatePostResponse, error) {
+func (ph *PostHandler) UpdatePost(ctx context.Context, req *pb.UpdatePostRequest) (*pb.UpdatePostResponse, error) {
 	post := dto.UpdatePostRequest{
 		Title:   req.Title,
 		Content: req.Content,
-	
 	}
 	validationErrStr := post.Validate()
 
@@ -195,10 +200,10 @@ func (postHandler *PostHandler) UpdatePost(ctx context.Context, req *pb.UpdatePo
 
 	}
 
-	_, err = postHandler.service.UpdatePost(ctx, postID, post.Title, post.Content)
+	_, err = ph.service.UpdatePost(ctx, postID, post.Title, post.Content)
 
 	if err != nil {
-		postHandler.logger.Error("Post service error", zap.Error(err), zap.String("requestID", requestID))
+		ph.logger.Error("Post service error", zap.Error(err), zap.String("requestID", requestID))
 		if errors.As(err, &appErr) {
 			switch appErr.Type {
 			case ierrors.TypeValidation:
@@ -238,16 +243,16 @@ func (postHandler *PostHandler) UpdatePost(ctx context.Context, req *pb.UpdatePo
 
 }
 
-func (postHandler *PostHandler) GetUserPosts(ctx context.Context, req *pb.GetUserPostRequest) (*pb.GetUserPostResponse, error) {
+func (ph *PostHandler) GetUserPosts(ctx context.Context, req *pb.GetUserPostRequest) (*pb.GetUserPostResponse, error) {
 	requestID, err := utils.GetRequestID(ctx)
 
 	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
-		postHandler.logger.Error("meta data not found",zap.Error(err))
+		ph.logger.Error("meta data not found", zap.Error(err))
 		return nil, status.Error(codes.Internal, "something went wrong")
 
 	}
 	if errors.Is(err, ierrors.ErrRequestIDNotFound) {
-		postHandler.logger.Error("requestID not found",zap.Error(err))
+		ph.logger.Error("requestID not found", zap.Error(err))
 
 		return nil, status.Error(codes.InvalidArgument, "something went wrong")
 
@@ -255,11 +260,11 @@ func (postHandler *PostHandler) GetUserPosts(ctx context.Context, req *pb.GetUse
 
 	limit := utils.ValidatePaginationLimit(int(req.Limit))
 
-    resp,err := postHandler.service.GetUserPosts(ctx,req.UserId,int64(limit),req.Cursor)
+	resp, err := ph.service.GetUserPosts(ctx, req.UserId, int64(limit), req.Cursor)
 
 	var appErr *ierrors.AppError
 	if err != nil {
-		postHandler.logger.Error("Post service error", zap.Error(err), zap.String("requestID", requestID))
+		ph.logger.Error("Post service error", zap.Error(err), zap.String("requestID", requestID))
 
 		if errors.As(err, &appErr) {
 			switch appErr.Type {
@@ -292,13 +297,11 @@ func (postHandler *PostHandler) GetUserPosts(ctx context.Context, req *pb.GetUse
 		}
 
 	}
-	
-	pbPosts := make([]*pb.Post,0,len(resp.Posts))
 
+	pbPosts := make([]*pb.Post, 0, len(resp.Posts))
 
+	for _, p := range resp.Posts {
 
-	for _,p := range resp.Posts {
-		
 		image := ""
 
 		if p.Image == nil {
@@ -307,26 +310,24 @@ func (postHandler *PostHandler) GetUserPosts(ctx context.Context, req *pb.GetUse
 		}
 		pbPost := &pb.Post{
 
-			Title:   p.Title,
-			Content: p.Content,
-			Id:      int64(p.ID),
-			UserId:  int64(p.UserID),
+			Title:        p.Title,
+			Content:      p.Content,
+			Id:           int64(p.ID),
+			UserId:       int64(p.UserID),
 			PostImageUrl: *p.Image,
-
 		}
-		pbPosts = append(pbPosts,pbPost)
+		pbPosts = append(pbPosts, pbPost)
 
 	}
-	
-	
+
 	return &pb.GetUserPostResponse{
-		Posts:pbPosts,
+		Posts:   pbPosts,
 		Cursor:  resp.Cursor,
 		HasNext: resp.HasNext,
 	}, nil
 }
 
-func (postHandler *PostHandler) DeletePost(ctx context.Context, req *pb.DeletePostRequest) (*pb.DeletePostResponse, error) {
+func (ph *PostHandler) DeletePost(ctx context.Context, req *pb.DeletePostRequest) (*pb.DeletePostResponse, error) {
 	var appErr *ierrors.AppError
 
 	requestID, err := utils.GetRequestID(ctx)
@@ -342,10 +343,10 @@ func (postHandler *PostHandler) DeletePost(ctx context.Context, req *pb.DeletePo
 
 	}
 
-	err = postHandler.service.DeletePost(ctx, int(req.PostId))
+	err = ph.service.DeletePost(ctx, int(req.PostId))
 	if err != nil {
 
-		postHandler.logger.Error("Post service error", zap.Error(err), zap.String("requestID", requestID))
+		ph.logger.Error("Post service error", zap.Error(err), zap.String("requestID", requestID))
 
 		if errors.As(err, &appErr) {
 
@@ -388,9 +389,7 @@ func (postHandler *PostHandler) DeletePost(ctx context.Context, req *pb.DeletePo
 
 }
 
-
-
-func (postHandler *PostHandler) GenerateUploadURL(ctx context.Context, req *pb.GenerateUploadURLRequest) (*pb.GenerateUploadURLResponse, error) {
+func (ph *PostHandler) GenerateUploadURL(ctx context.Context, req *pb.GenerateUploadURLRequest) (*pb.GenerateUploadURLResponse, error) {
 	requestID, err := utils.GetRequestID(ctx)
 
 	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
@@ -403,11 +402,11 @@ func (postHandler *PostHandler) GenerateUploadURL(ctx context.Context, req *pb.G
 		return nil, status.Error(codes.InvalidArgument, "missing request ID")
 
 	}
-	url, formData, err := postHandler.service.GenerateUploadURL(ctx, req.Filename, req.ContentType, int(req.UserId))
+	url, formData, err := ph.service.GenerateUploadURL(ctx, req.Filename, req.ContentType, int(req.UserId))
 
 	if err != nil {
 
-		postHandler.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
+		ph.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
 
 		var appErr *ierrors.AppError
 		if errors.As(err, &appErr) {

@@ -36,7 +36,7 @@ func NewAuthHandler(authServ core.AuthService, logger *platform.Logger) *AuthHan
 }
 
 // Register registers a new user into the system
-func (authHandler *AuthHandler) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+func (ah *AuthHandler) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 
 	user := model.User{
 		Name:     req.Name,
@@ -64,9 +64,9 @@ func (authHandler *AuthHandler) Register(ctx context.Context, req *pb.RegisterRe
 
 	}
 
-	createdUser, tokens, err := authHandler.service.Register(ctx, &user)
+	createdUser, tokens, err := ah.service.Register(ctx, &user)
 	if err != nil {
-		authHandler.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
 
 		var appErr *ierrors.AppError
 		if errors.As(err, &appErr) {
@@ -113,15 +113,15 @@ func (authHandler *AuthHandler) Register(ctx context.Context, req *pb.RegisterRe
 		Email:           createdUser.Email,
 		AccessToken:     tokens.AccessToken,
 		RefreshToken:    tokens.RefreshToken,
-		FollowerCount:int64(createdUser.FollowerCount),
-		FollowingCount: int64(createdUser.FollowingCount),
+		FollowerCount:   int64(createdUser.FollowerCount),
+		FollowingCount:  int64(createdUser.FollowingCount),
 		ProfileImageUrl: *createdUser.Avatar,
-		Id: int64(createdUser.ID),
+		Id:              int64(createdUser.ID),
 	}, nil
 
 }
 
-func (authHandler *AuthHandler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+func (ah *AuthHandler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 
 	requestID, err := utils.GetRequestID(ctx)
 
@@ -136,11 +136,11 @@ func (authHandler *AuthHandler) Login(ctx context.Context, req *pb.LoginRequest)
 
 	}
 
-	user, tokens, err := authHandler.service.Login(ctx, req.Username, req.Password)
+	user, tokens, err := ah.service.Login(ctx, req.Username, req.Password)
 
 	if err != nil {
 
-		authHandler.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
 
 		var appErr *ierrors.AppError
 		if errors.As(err, &appErr) {
@@ -189,7 +189,7 @@ func (authHandler *AuthHandler) Login(ctx context.Context, req *pb.LoginRequest)
 		ProfileImageUrl: *(user.Avatar),
 	}, nil
 }
-func (authHandler *AuthHandler) Logout(ctx context.Context, req *emptypb.Empty) (*pb.LogoutResponse, error) {
+func (ah *AuthHandler) Logout(ctx context.Context, req *emptypb.Empty) (*pb.LogoutResponse, error) {
 	var refreshToken string
 	var requestID string
 	md, exists := metadata.FromIncomingContext(ctx)
@@ -215,11 +215,11 @@ func (authHandler *AuthHandler) Logout(ctx context.Context, req *emptypb.Empty) 
 
 	}
 
-	err := authHandler.service.Logout(ctx, refreshToken)
+	err := ah.service.Logout(ctx, refreshToken)
 
 	if err != nil {
 
-		authHandler.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
 
 		var appErr *ierrors.AppError
 		if errors.As(err, &appErr) {
@@ -258,7 +258,7 @@ func (authHandler *AuthHandler) Logout(ctx context.Context, req *emptypb.Empty) 
 
 }
 
-func (authHandler *AuthHandler) RefreshHandler(ctx context.Context, req *pb.RefreshRequest) (*pb.RefreshResponse, error) {
+func (ah *AuthHandler) RefreshHandler(ctx context.Context, req *pb.RefreshRequest) (*pb.RefreshResponse, error) {
 
 	requestID, err := utils.GetRequestID(ctx)
 
@@ -273,11 +273,11 @@ func (authHandler *AuthHandler) RefreshHandler(ctx context.Context, req *pb.Refr
 
 	}
 
-	tokens, err := authHandler.service.RefreshHandler(ctx, req.RefreshToken)
+	tokens, err := ah.service.RefreshHandler(ctx, req.RefreshToken)
 
 	if err != nil {
 
-		authHandler.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
 
 		var appErr *ierrors.AppError
 
@@ -319,7 +319,7 @@ func (authHandler *AuthHandler) RefreshHandler(ctx context.Context, req *pb.Refr
 
 }
 
-func (authHandler *AuthHandler) SearchUser(ctx context.Context, req *pb.SearchUserRequest) (*pb.SearchUserResponse, error) {
+func (ah *AuthHandler) SearchUser(ctx context.Context, req *pb.SearchUserRequest) (*pb.SearchUserResponse, error) {
 
 	requestID, err := utils.GetRequestID(ctx)
 
@@ -334,11 +334,11 @@ func (authHandler *AuthHandler) SearchUser(ctx context.Context, req *pb.SearchUs
 
 	}
 
-	resp, err := authHandler.service.SearchUser(ctx, req.Username, req.Cursor, int(req.Limit))
+	resp, err := ah.service.SearchUser(ctx, req.Username, req.Cursor, int(req.Limit))
 
 	if err != nil {
 
-		authHandler.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
 
 		var appErr *ierrors.AppError
 		if errors.As(err, &appErr) {
@@ -395,7 +395,7 @@ func (authHandler *AuthHandler) SearchUser(ctx context.Context, req *pb.SearchUs
 	}, nil
 }
 
-func (authHandler *AuthHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfileRequest) (*pb.GetUserProfileResponse, error) {
+func (ah *AuthHandler) GetUserProfile(ctx context.Context, req *pb.GetUserProfileRequest) (*pb.GetUserProfileResponse, error) {
 
 	requestID, err := utils.GetRequestID(ctx)
 
@@ -410,11 +410,11 @@ func (authHandler *AuthHandler) GetUserProfile(ctx context.Context, req *pb.GetU
 
 	}
 
-	resp, err := authHandler.service.GetUserProfile(ctx, req.UserId)
+	resp, err := ah.service.GetUserProfile(ctx, req.UserId)
 
 	if err != nil {
 
-		authHandler.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
 
 		var appErr *ierrors.AppError
 		if errors.As(err, &appErr) {
@@ -464,7 +464,7 @@ func (authHandler *AuthHandler) GetUserProfile(ctx context.Context, req *pb.GetU
 	}, nil
 }
 
-func (authHandler *AuthHandler) GenerateUploadURL(ctx context.Context, req *pb.GenerateUploadURLRequest) (*pb.GenerateUploadURLResponse, error) {
+func (ah *AuthHandler) GenerateUploadURL(ctx context.Context, req *pb.GenerateUploadURLRequest) (*pb.GenerateUploadURLResponse, error) {
 	requestID, err := utils.GetRequestID(ctx)
 
 	if errors.Is(err, ierrors.ErrMetaDataNotFound) {
@@ -477,11 +477,11 @@ func (authHandler *AuthHandler) GenerateUploadURL(ctx context.Context, req *pb.G
 		return nil, status.Error(codes.InvalidArgument, "missing request ID")
 
 	}
-	url, formData, err := authHandler.service.GenerateUploadURL(ctx, req.Filename, req.ContentType, int(req.UserId))
+	url, formData, err := ah.service.GenerateUploadURL(ctx, req.Filename, req.ContentType, int(req.UserId))
 
 	if err != nil {
 
-		authHandler.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
+		ah.logger.Error("[Auth Service]", zap.Error(err), zap.String("requestID", requestID))
 
 		var appErr *ierrors.AppError
 		if errors.As(err, &appErr) {

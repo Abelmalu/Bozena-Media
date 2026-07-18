@@ -5,32 +5,24 @@ import (
 	"github.com/abelmalu/golang-posts/platform"
 )
 
-
-type Handler struct{
-
-	authHandler *handler.AuthHandler 
-	postHandler *handler.PostHandler
-	likeHandler *handler.LikeHandler
-	followHandler *handler.FollowHandler
-	feedHandler *handler.FeedHandler
-	notificationHandler * handler.NotificationHanlder
-
+type Handler struct {
+	ah                  *handler.AuthHandler
+	ps                  *handler.PostHandler
+	lh                  *handler.LikeHandler
+	fh                  *handler.FollowHandler
+	fd                  *handler.FeedHandler
+	notificationHandler *handler.NotificationHanlder
 }
 
-func InitHandler(client Client,logger *platform.Logger ) *Handler{
-
+func InitHandler(client Client, logger *platform.Logger) *Handler {
 
 	return &Handler{
-		authHandler: handler.NewAuthHandler(client.authClient,logger),
-		postHandler: handler.NewPostHandler(client.postClient,logger),
-		likeHandler: handler.NewLikeHandler(client.likeClient,logger),
-		followHandler: handler.NewFollowHandler(client.followClient,logger),
-		feedHandler: handler.NewFeedHandler(client.feedClient,logger),
+		ah:                  handler.NewAuthHandler(client.authClient, logger),
+		ps:                  handler.NewPostHandler(client.postClient, logger),
+		lh:                  handler.NewLikeHandler(client.likeClient, logger),
+		fh:                  handler.NewFollowHandler(client.followClient, logger),
+		fd:                  handler.NewFeedHandler(client.feedClient, logger),
 		notificationHandler: handler.NewNotificationHandler(logger),
 	}
-
-
-	
-
 
 }

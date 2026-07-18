@@ -136,13 +136,13 @@ func (app *App) Run() {
 	// Dependency Injection for each layer one by one
 	authRepo := repository.NewAuthRepository(app.DB)
 	authService := service.NewAuthService(authRepo, app.RedisClient, app.Kafka, logger, app.minioClient)
-	authHandler := handler.NewAuthHandler(authService, logger)
+	ah := handler.NewAuthHandler(authService, logger)
 	brokers := []string{"localhost:9092"}
 	followedTopic := "followed"
 	unfollowTopic := "unfollowed"
 
 	go kafka.StartConsumer(brokers, followedTopic, unfollowTopic, authService, logger)
-	pb.RegisterAuthServiceServer(s, authHandler)
+	pb.RegisterAuthServiceServer(s, ah)
 	s.Serve(lis)
 
 }

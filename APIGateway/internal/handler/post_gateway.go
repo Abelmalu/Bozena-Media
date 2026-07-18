@@ -17,13 +17,12 @@ import (
 )
 
 type PostService interface {
-	CreatePost(ctx context.Context, userID int64, title, content,ObjectName string) (*pb.CreatePostResponse, error)
+	CreatePost(ctx context.Context, userID int64, title, content, ObjectName string) (*pb.CreatePostResponse, error)
 	ListPosts(ctx context.Context) (*pb.ListPostsResponse, error)
 	UpdatePost(ctx context.Context, postID int64, title string, content string) (*pb.UpdatePostResponse, error)
 	DeletePost(ctx context.Context, postID int64) (*pb.DeletePostResponse, error)
-	GetUserPosts(ctx context.Context, userID,limit int64,cursor string) (*pb.GetUserPostResponse, error)
+	GetUserPosts(ctx context.Context, userID, limit int64, cursor string) (*pb.GetUserPostResponse, error)
 	GeneratePostUploadURL(ctx context.Context, userID int, fileName, ContentType string) (*pb.GenerateUploadURLResponse, error)
-
 }
 
 type PostHandler struct {
@@ -63,11 +62,11 @@ func appendToOutgoingContext(c *gin.Context, requestID string) (context.Context,
 	return ctx, nil
 }
 
-func (postHandler *PostHandler) CreatePost(c *gin.Context) {
+func (ps *PostHandler) CreatePost(c *gin.Context) {
 
 	var req struct {
-		Title   string `json:"title"`
-		Content string `json:"content"`
+		Title      string `json:"title"`
+		Content    string `json:"content"`
 		ObjectName string `json:"object_name"`
 	}
 	requestID, err := utils.GetRequestID(c)
@@ -75,7 +74,7 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			postHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			ps.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -83,7 +82,7 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			postHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			ps.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
@@ -95,14 +94,14 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrUserIDNotFoundInContext) {
 
-			postHandler.logger.Error("couldn't couldn't find userID in the context", zap.String("type", "something went wrong"))
+			ps.logger.Error("couldn't couldn't find userID in the context", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			postHandler.logger.Error("couldn't assert the user ID to string", zap.String("type", "something went wrong"))
+			ps.logger.Error("couldn't assert the user ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 
@@ -111,7 +110,7 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		postHandler.logger.Error("Error while unmarshaling json", zap.String("requestID", requestID))
+		ps.logger.Error("Error while unmarshaling json", zap.String("requestID", requestID))
 		c.Error(appErrors.NewValidationError(appErrors.MSGInvalidRequestBody, nil, err))
 		return
 	}
@@ -119,14 +118,14 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 	userID := int64(userIDInt)
 	ctx, err := appendToOutgoingContext(c, requestID)
 	if err != nil {
-		postHandler.logger.Error("failed to get userID from context", zap.Error(err))
+		ps.logger.Error("failed to get userID from context", zap.Error(err))
 		c.Error(appErrors.NewInternalError(ierrors.MSGUnauthorizedAccess, err))
 		return
 	}
 
-	resp, err := postHandler.postClient.CreatePost(ctx, userID, req.Title, req.Content,req.ObjectName)
+	resp, err := ps.postClient.CreatePost(ctx, userID, req.Title, req.Content, req.ObjectName)
 	if err != nil {
-		postHandler.logger.Error("GRPC Error", zap.Error(err))
+		ps.logger.Error("GRPC Error", zap.Error(err))
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
@@ -134,7 +133,7 @@ func (postHandler *PostHandler) CreatePost(c *gin.Context) {
 	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
 }
 
-func (postHandler *PostHandler) UpdatePost(c *gin.Context) {
+func (ps *PostHandler) UpdatePost(c *gin.Context) {
 
 	var input struct {
 		Title   string `json:"title" db:"title"`
@@ -145,7 +144,7 @@ func (postHandler *PostHandler) UpdatePost(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			postHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			ps.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -153,7 +152,7 @@ func (postHandler *PostHandler) UpdatePost(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			postHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			ps.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 
@@ -165,7 +164,7 @@ func (postHandler *PostHandler) UpdatePost(c *gin.Context) {
 	postIDValue, err := strconv.Atoi(postIDStr)
 	if err != nil {
 
-		postHandler.logger.Error("error while Atoi", zap.String("requestID", requestID))
+		ps.logger.Error("error while Atoi", zap.String("requestID", requestID))
 
 		c.Error(appErrors.NewAppError(ierrors.TypeValidation, ierrors.MSGInvalidRequestBody, err))
 		return
@@ -175,7 +174,7 @@ func (postHandler *PostHandler) UpdatePost(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 
-		postHandler.logger.Error(string(ierrors.MSGInvalidRequestBody), zap.Error(err), zap.String("requestID", requestID))
+		ps.logger.Error(string(ierrors.MSGInvalidRequestBody), zap.Error(err), zap.String("requestID", requestID))
 
 		c.Error(ierrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
 		return
@@ -184,15 +183,15 @@ func (postHandler *PostHandler) UpdatePost(c *gin.Context) {
 	ctx, err := appendToOutgoingContext(c, requestID)
 	if err != nil {
 
-		postHandler.logger.Error("failed to get userID from context", zap.Error(err))
+		ps.logger.Error("failed to get userID from context", zap.Error(err))
 		c.Error(appErrors.NewInternalError(ierrors.MSGUnauthorizedAccess, err))
 		return
 	}
 
-	resp, err := postHandler.postClient.UpdatePost(ctx, postID, input.Title, input.Content)
+	resp, err := ps.postClient.UpdatePost(ctx, postID, input.Title, input.Content)
 	if err != nil {
 
-		postHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
+		ps.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
@@ -200,14 +199,14 @@ func (postHandler *PostHandler) UpdatePost(c *gin.Context) {
 	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
 
 }
-func (postHandler *PostHandler) DeletePost(c *gin.Context) {
+func (ps *PostHandler) DeletePost(c *gin.Context) {
 
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			postHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			ps.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -215,7 +214,7 @@ func (postHandler *PostHandler) DeletePost(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			postHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			ps.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 
@@ -227,7 +226,7 @@ func (postHandler *PostHandler) DeletePost(c *gin.Context) {
 
 	if err != nil {
 
-		postHandler.logger.Error("error while Atoi", zap.String("requestID", requestID))
+		ps.logger.Error("error while Atoi", zap.String("requestID", requestID))
 
 		c.Error(appErrors.NewAppError(ierrors.TypeValidation, ierrors.MSGInvalidRequestBody, err))
 
@@ -238,16 +237,16 @@ func (postHandler *PostHandler) DeletePost(c *gin.Context) {
 	ctx, err := appendToOutgoingContext(c, requestID)
 	if err != nil {
 
-		postHandler.logger.Error("failed to get userID from context", zap.Error(err))
+		ps.logger.Error("failed to get userID from context", zap.Error(err))
 		c.Error(appErrors.NewInternalError(ierrors.MSGUnauthorizedAccess, err))
 		return
 	}
 
-	resp, err := postHandler.postClient.DeletePost(ctx, int64(postID))
+	resp, err := ps.postClient.DeletePost(ctx, int64(postID))
 
 	if err != nil {
 
-		postHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
+		ps.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
@@ -256,13 +255,13 @@ func (postHandler *PostHandler) DeletePost(c *gin.Context) {
 
 }
 
-func (postHandler *PostHandler) GetUserPosts(c *gin.Context) {
+func (ps *PostHandler) GetUserPosts(c *gin.Context) {
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			postHandler.logger.Error("couldn't get request ID from context", zap.Error(err))
+			ps.logger.Error("couldn't get request ID from context", zap.Error(err))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -270,7 +269,7 @@ func (postHandler *PostHandler) GetUserPosts(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			postHandler.logger.Error("couldn't assert the request ID to string", zap.String("requestID", requestID))
+			ps.logger.Error("couldn't assert the request ID to string", zap.String("requestID", requestID))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 
@@ -282,38 +281,34 @@ func (postHandler *PostHandler) GetUserPosts(c *gin.Context) {
 
 	if err != nil {
 
-		postHandler.logger.Error("Error while strConv id param", zap.Error(err))
+		ps.logger.Error("Error while strConv id param", zap.Error(err))
 		c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 		return
 	}
-    
+
 	limitStr := c.Query("limit")
-	
+
 	if limitStr == "" {
 
-		limitStr= "0"
+		limitStr = "0"
 	}
 	limit, err := strconv.Atoi(limitStr)
 
-
-
 	if err != nil {
 
-		postHandler.logger.Error("Error while strConv limit query param", zap.Error(err),zap.String("requestID",requestID))
+		ps.logger.Error("Error while strConv limit query param", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 		return
 	}
 
 	cursor := c.Query("cursor")
 
-	
+	ctx, _ := addToOutgoingContext(c, "", requestID)
 
-	ctx,_ := addToOutgoingContext(c,"",requestID)
-
-	resp, err := postHandler.postClient.GetUserPosts(ctx, int64(userID),int64(limit),cursor)
+	resp, err := ps.postClient.GetUserPosts(ctx, int64(userID), int64(limit), cursor)
 	if err != nil {
 
-		postHandler.logger.Error("GRPC Error", zap.Error(err))
+		ps.logger.Error("GRPC Error", zap.Error(err))
 
 		c.Error(ierrors.FromGRPC(err))
 		return
@@ -323,13 +318,13 @@ func (postHandler *PostHandler) GetUserPosts(c *gin.Context) {
 
 }
 
-func (postHandler *PostHandler) ListPosts(c *gin.Context) {
+func (ps *PostHandler) ListPosts(c *gin.Context) {
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			postHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			ps.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -337,7 +332,7 @@ func (postHandler *PostHandler) ListPosts(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			postHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			ps.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
@@ -353,16 +348,16 @@ func (postHandler *PostHandler) ListPosts(c *gin.Context) {
 	ctx, err := appendToOutgoingContext(c, requestID)
 	if err != nil {
 
-		postHandler.logger.Error("Failed to prepare request context", zap.Error(err), zap.String("requestID", requestID))
+		ps.logger.Error("Failed to prepare request context", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.NewInternalError(ierrors.MSGUnauthorizedAccess, err))
 		return
 	}
 
-	resp, err := postHandler.postClient.ListPosts(ctx)
+	resp, err := ps.postClient.ListPosts(ctx)
 
 	if err != nil {
 
-		postHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
+		ps.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.FromGRPC(err))
 		return
 	}
@@ -371,15 +366,14 @@ func (postHandler *PostHandler) ListPosts(c *gin.Context) {
 
 }
 
-
-func (postHandler *PostHandler) GeneratePostUploadURL(c *gin.Context) {
+func (ps *PostHandler) GeneratePostUploadURL(c *gin.Context) {
 
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			postHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			ps.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -387,7 +381,7 @@ func (postHandler *PostHandler) GeneratePostUploadURL(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			postHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			ps.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
@@ -399,14 +393,14 @@ func (postHandler *PostHandler) GeneratePostUploadURL(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrUserIDNotFoundInContext) {
 
-			postHandler.logger.Error("couldn't couldn't find userID in the context", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			ps.logger.Error("couldn't couldn't find userID in the context", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			postHandler.logger.Error("couldn't assert the user ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			ps.logger.Error("couldn't assert the user ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 
@@ -421,18 +415,18 @@ func (postHandler *PostHandler) GeneratePostUploadURL(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 
-		postHandler.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
+		ps.logger.Error("error while marshaling request", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(appErrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
 		return
 
 	}
 	ctx, _ := appendToOutgoingContext(c, requestID)
 
-	resp, err := postHandler.postClient.GeneratePostUploadURL(ctx, userID, req.FileName, req.ContentType)
+	resp, err := ps.postClient.GeneratePostUploadURL(ctx, userID, req.FileName, req.ContentType)
 
 	if err != nil {
 
-		postHandler.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
+		ps.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(ierrors.FromGRPC(err))
 
 		return

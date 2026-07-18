@@ -10,10 +10,11 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/abelmalu/golang-posts/post/config"
+	"github.com/abelmalu/golang-posts/post/internal/cleanup"
 	"github.com/abelmalu/golang-posts/post/internal/handlers"
-	miniocl "github.com/abelmalu/golang-posts/post/internal/handlers/minio"
 	"github.com/abelmalu/golang-posts/post/internal/interceptors"
 	"github.com/abelmalu/golang-posts/post/internal/kafka"
+	miniocl "github.com/abelmalu/golang-posts/post/internal/minio"
 	"github.com/abelmalu/golang-posts/post/internal/repository"
 	"github.com/abelmalu/golang-posts/post/internal/service"
 	"github.com/abelmalu/golang-posts/post/proto/pb"
@@ -24,8 +25,8 @@ import (
 )
 
 type App struct {
-	config *config.Config
-	DB     *sql.DB
+	config      *config.Config
+	DB          *sql.DB
 	KafkaClient sarama.SyncProducer
 	minioClient *minio.Client
 }
@@ -49,28 +50,26 @@ func NewApp() (*App, error) {
 
 	}
 
-	// initializing the kafka client 
+	// initializing the kafka client
 
-	kafkaClient,err := kafka.InitKafkaProducer(logger)
-
-	if err != nil {
-
-		log.Fatalf("Couldn't make kafka connection %v",err)
-	}
-
-	minioClient,err := miniocl.NewMinioClient()
+	kafkaClient, err := kafka.InitKafkaProducer(logger)
 
 	if err != nil {
 
-		log.Fatalf("Couldn't make minio connection %v",err)
-
-
+		log.Fatalf("Couldn't make kafka connection %v", err)
 	}
 
+	minioClient, err := miniocl.NewMinioClient()
+
+	if err != nil {
+
+		log.Fatalf("Couldn't make minio connection %v", err)
+
+	}
 
 	app := App{
-		config: config,
-		DB:     DBConPool,
+		config:      config,
+		DB:          DBConPool,
 		KafkaClient: kafkaClient,
 		minioClient: minioClient,
 	}
@@ -118,9 +117,10 @@ func (app *App) Run() {
 		),
 	)
 
+	cleanupService := cleanup.NewCleanUpService(app.minioClient,logger)
 	postRepo := repository.NewPostRepository(app.DB)
-	postService := service.NewPostService(postRepo,app.KafkaClient,app.minioClient)
-	postHandler := handlers.NewPostHandler(postService, logger)
+	postService := service.NewPostService(postRepo, app.KafkaClient, app.minioClient,cleanupService)
+	postHandler := handlers.NewPostHandler(postService, logger,cleanupService)
 
 	pb.RegisterPostServiceServer(s, postHandler)
 

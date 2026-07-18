@@ -18,7 +18,7 @@ import (
 
 type LikeService interface {
 	ToggleLike(ctx context.Context, state bool, opts ...grpc.CallOption) (*pb.LikeResponse, error)
-	GetPostLikes(ctx context.Context,postID int,limit int,cursor string)(*pb.GetPostLikesResponse,error)
+	GetPostLikes(ctx context.Context, postID int, limit int, cursor string) (*pb.GetPostLikesResponse, error)
 }
 type LikeHandler struct {
 	logger     *platform.Logger
@@ -34,11 +34,9 @@ func NewLikeHandler(likeClient LikeService, logger *platform.Logger) *LikeHandle
 }
 
 // addUserIDToOutgoingContext this adds userID  and postID to the outgoing context
-func addToOutgoingContext(c *gin.Context,postID string,requestID string)(context.Context,error){
+func addToOutgoingContext(c *gin.Context, postID string, requestID string) (context.Context, error) {
 
-
-
-		userIDValue, exists := c.Get("userID")
+	userIDValue, exists := c.Get("userID")
 
 	if !exists {
 
@@ -54,22 +52,21 @@ func addToOutgoingContext(c *gin.Context,postID string,requestID string)(context
 	md := metadata.Pairs(
 		"user-id", userIDStr,
 		"post-id", postID,
-		"request-id",requestID,
-	
+		"request-id", requestID,
 	)
 
 	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
 
 	return ctx, nil
 }
-func (likeHandler *LikeHandler) ToggleLike(c *gin.Context) {
+func (lh *LikeHandler) ToggleLike(c *gin.Context) {
 
 	var req struct {
 		State bool `json:"like"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		likeHandler.logger.Error("Error while Unmarshaling request body", zap.Error(err))
+		lh.logger.Error("Error while Unmarshaling request body", zap.Error(err))
 		c.Error(ierrors.NewValidationError(ierrors.MSGInvalidRequestBody, nil, err))
 		return
 	}
@@ -78,14 +75,14 @@ func (likeHandler *LikeHandler) ToggleLike(c *gin.Context) {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			likeHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			lh.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			likeHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			lh.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -95,45 +92,44 @@ func (likeHandler *LikeHandler) ToggleLike(c *gin.Context) {
 	}
 
 	postID := c.Param("id")
-   
-	ctx, err := addToOutgoingContext(c, postID,requestID)
+
+	ctx, err := addToOutgoingContext(c, postID, requestID)
 	if err != nil {
 
-		if errors.Is(err,ierrors.ErrUserIDNotFoundInContext){
-				likeHandler.logger.Error("couldn't find user ID in context", zap.Error(err))
+		if errors.Is(err, ierrors.ErrUserIDNotFoundInContext) {
+			lh.logger.Error("couldn't find user ID in context", zap.Error(err))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
-			return 
+			return
 
 		}
-		if errors.Is(err,ierrors.ErrTypeAssertionFailed){
+		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-				likeHandler.logger.Error("couldn't assert the request ID to string", zap.Error(err))
+			lh.logger.Error("couldn't assert the request ID to string", zap.Error(err))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
-			return 
-			
+			return
+
 		}
 	}
-	resp,err := likeHandler.likeClient.ToggleLike(ctx, req.State)
+	resp, err := lh.likeClient.ToggleLike(ctx, req.State)
 
-	if err != nil{
+	if err != nil {
 
-		likeHandler.logger.Error("GRPC Error",zap.Error(err))
+		lh.logger.Error("GRPC Error", zap.Error(err))
 		c.Error(ierrors.FromGRPC(err))
 		return
 	}
 
-   utils.SendSuccessResponse(c,resp,requestID,http.StatusCreated)
+	utils.SendSuccessResponse(c, resp, requestID, http.StatusCreated)
 }
 
-
-func (likeHandler *LikeHandler) GetPostLikes(c *gin.Context){
+func (lh *LikeHandler) GetPostLikes(c *gin.Context) {
 
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			likeHandler.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")), zap.String("requestID", requestID))
+			lh.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")), zap.String("requestID", requestID))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -141,7 +137,7 @@ func (likeHandler *LikeHandler) GetPostLikes(c *gin.Context){
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			likeHandler.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			lh.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
@@ -155,11 +151,11 @@ func (likeHandler *LikeHandler) GetPostLikes(c *gin.Context){
 
 	followerIDStr := c.Param("id")
 
-	postIDInt,err := strconv.Atoi(followerIDStr)
-	
+	postIDInt, err := strconv.Atoi(followerIDStr)
+
 	if err != nil {
 
-		likeHandler.logger.Error("couldn't change followingID to string", zap.Error(err),zap.String("requestID",requestID))
+		lh.logger.Error("couldn't change followingID to string", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 		return
 
@@ -171,29 +167,28 @@ func (likeHandler *LikeHandler) GetPostLikes(c *gin.Context){
 		limitStr = "0"
 	}
 
-	limit,err := strconv.Atoi(limitStr)
-
+	limit, err := strconv.Atoi(limitStr)
 
 	if err != nil {
 
-		likeHandler.logger.Error("couldn't change followingID to string", zap.Error(err),zap.String("requestID",requestID))
+		lh.logger.Error("couldn't change followingID to string", zap.Error(err), zap.String("requestID", requestID))
 		c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 		return
 
 	}
 	cursor := c.Query("cursor")
 
-	resp,err := likeHandler.likeClient.GetPostLikes(ctx,postIDInt,limit,cursor)
+	resp, err := lh.likeClient.GetPostLikes(ctx, postIDInt, limit, cursor)
 
 	if err != nil {
 
-		likeHandler.logger.Error("GRPC Error",zap.Error(err),zap.String("requestID",requestID))
+		lh.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))
 
 		c.Error(ierrors.FromGRPC(err))
 
 		return
 	}
 
-	utils.SendSuccessResponse(c,resp,requestID,http.StatusOK)
+	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
 
 }

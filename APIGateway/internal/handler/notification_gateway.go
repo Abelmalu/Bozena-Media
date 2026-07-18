@@ -29,14 +29,14 @@ func NewNotificationHandler(logger *platform.Logger) *NotificationHanlder {
 	}
 }
 
-func (notificationHanlder *NotificationHanlder) Stream(c *gin.Context) {
+func (nh *NotificationHanlder) Stream(c *gin.Context) {
 
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			notificationHanlder.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			nh.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -44,27 +44,26 @@ func (notificationHanlder *NotificationHanlder) Stream(c *gin.Context) {
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			notificationHanlder.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			nh.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
 
 	}
 
-
 	userID, err := utils.GetUserID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrUserIDNotFoundInContext) {
 
-			notificationHanlder.logger.Error("couldn't couldn't find userID in the context", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			nh.logger.Error("couldn't couldn't find userID in the context", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			notificationHanlder.logger.Error("couldn't assert the user ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			nh.logger.Error("couldn't assert the user ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 
@@ -74,25 +73,22 @@ func (notificationHanlder *NotificationHanlder) Stream(c *gin.Context) {
 
 	userIDStr := strconv.Itoa(userID)
 
-	c.Request.Header.Set("X-Request-ID",requestID)
-	c.Request.Header.Set("X-User-ID",userIDStr)
+	c.Request.Header.Set("X-Request-ID", requestID)
+	c.Request.Header.Set("X-User-ID", userIDStr)
 
-
-
-	notificationHanlder.logger.Info("proxying the request to notification service")
+	nh.logger.Info("proxying the request to notification service")
 	proxy.ServeHTTP(c.Writer, c.Request)
 
 }
 
-func (notificationHanlder *NotificationHanlder) GetUserNotifications(c *gin.Context) {
-
+func (nh *NotificationHanlder) GetUserNotifications(c *gin.Context) {
 
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrRequestIDNotFoundInContext) {
 
-			notificationHanlder.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
+			nh.logger.Error("couldn't get request ID from context", zap.Error(errors.New("couldn't find request ID")))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 
 			return
@@ -100,27 +96,26 @@ func (notificationHanlder *NotificationHanlder) GetUserNotifications(c *gin.Cont
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			notificationHanlder.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
+			nh.logger.Error("couldn't assert the request ID to string", zap.String("type", "something went wrong"))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 		}
 
 	}
 
-
 	userID, err := utils.GetUserID(c)
 	if err != nil {
 
 		if errors.Is(err, ierrors.ErrUserIDNotFoundInContext) {
 
-			notificationHanlder.logger.Error("couldn't couldn't find userID in the context", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			nh.logger.Error("couldn't couldn't find userID in the context", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 
 		}
 		if errors.Is(err, ierrors.ErrTypeAssertionFailed) {
 
-			notificationHanlder.logger.Error("couldn't assert the user ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
+			nh.logger.Error("couldn't assert the user ID to string", zap.String("type", "something went wrong"), zap.String("requestID", requestID))
 			c.Error(ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, nil))
 			return
 
@@ -130,13 +125,10 @@ func (notificationHanlder *NotificationHanlder) GetUserNotifications(c *gin.Cont
 
 	userIDStr := strconv.Itoa(userID)
 
-	c.Request.Header.Set("X-Request-ID",requestID)
-	c.Request.Header.Set("X-User-ID",userIDStr)
+	c.Request.Header.Set("X-Request-ID", requestID)
+	c.Request.Header.Set("X-User-ID", userIDStr)
 
-
-
-	notificationHanlder.logger.Info("proxying the request to notification service")
+	nh.logger.Info("proxying the request to notification service")
 	proxy.ServeHTTP(c.Writer, c.Request)
-
 
 }
