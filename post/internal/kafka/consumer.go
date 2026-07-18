@@ -64,3 +64,91 @@ func StartConsumer(brokers []string, topic string, postService core.PostService,
 		}
 	}  
 }
+
+
+func s(brokers []string, userCreatedtopic,postLikedTopic,postUnlikedTopic string) {
+
+
+	config := sarama.NewConfig()
+	config.Consumer.Return.Errors = true
+
+	consumer, err := sarama.NewConsumer(brokers, config)
+	if err != nil {
+		log.Fatalf("Error creating master consumer: %v", err)
+	}
+
+
+} 
+
+func userCreatedConsumer(consumer sarama.Consumer,userCreatedTopic string, logger *platform.Logger){
+	
+	pc, err := consumer.ConsumePartition(userCreatedTopic, 0, sarama.OffsetNewest)
+	if err != nil {
+		log.Fatalf("Error consuming post partition: %v", err)
+	}
+	defer pc.Close()
+
+	for {
+
+
+		select {
+
+		case msg := <- pc.Messages():
+
+			print(msg)
+
+		case err := <- pc.Errors():
+
+			logger.Error("post liked consumer error",zap.Error(err))
+		}
+	}
+
+}
+
+func postLikedConsumer(consumer sarama.Consumer,postLikedTopic string, logger *platform.Logger){
+
+		pc, err := consumer.ConsumePartition(postLikedTopic, 0, sarama.OffsetNewest)
+	if err != nil {
+		log.Fatalf("Error consuming post partition: %v", err)
+	}
+	defer pc.Close()
+
+	for {
+
+
+		select {
+
+		case msg := <- pc.Messages():
+
+			print(msg)
+
+		case err := <- pc.Errors():
+
+			logger.Error("post liked consumer error",zap.Error(err))
+		}
+	}
+}
+
+func postUnlikedConsumer(consumer sarama.Consumer,postUnLikedTopic string, logger *platform.Logger){
+
+		pc, err := consumer.ConsumePartition(postUnLikedTopic, 0, sarama.OffsetNewest)
+	if err != nil {
+		log.Fatalf("Error consuming post partition: %v", err)
+	}
+	defer pc.Close()
+
+	for {
+
+
+		select {
+
+		case msg := <- pc.Messages():
+
+			print(msg)
+
+		case err := <- pc.Errors():
+
+			logger.Error("post unliked consumer error",zap.Error(err))
+		}
+	}
+}

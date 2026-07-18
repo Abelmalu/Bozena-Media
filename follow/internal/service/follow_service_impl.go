@@ -3,8 +3,6 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-
 	"github.com/IBM/sarama"
 	"github.com/abelmalu/golang-posts/follow/internal/core"
 	dto "github.com/abelmalu/golang-posts/follow/internal/dtos"
@@ -55,7 +53,6 @@ func (followService *FollowService) ToggleFollow(ctx context.Context, follow boo
 			Topic: "followed",
 			Value: sarama.StringEncoder(createdUserByte),
 		}
-		fmt.Println("followed event sent to kafka")
 
 	case "unfollowed successfully":
 

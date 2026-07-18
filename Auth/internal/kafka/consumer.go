@@ -72,12 +72,13 @@ func followedConsumer(consumer sarama.Consumer, followedTopic string, authServic
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancel()
+			
 
 			if err := authService.IncreaseFollowCounts(ctx, followed.FollowerID, followed.FollowingID); err != nil {
 
 				logger.Error("Error while updating user followed event", zap.Error(err))
 			}
+			 cancel()
 
 		case err := <-pc.Errors():
 			logger.Error("Post consumer error: %v", zap.Error(err))
