@@ -336,7 +336,7 @@ func (postRepo *PostRepository) CreateCacheUser(ctx context.Context, userID int,
 
 func (postRepo *PostRepository) IncreaseLikeCount(ctx context.Context, postID int) error {
 
-	query := `UPDATE posts SET like_count = like_count +1 where post_id = $1`
+	query := `UPDATE posts SET like_count = like_count +1 where id = $1`
 
 	_, err := postRepo.DB.ExecContext(ctx, query, postID)
 
@@ -349,7 +349,7 @@ func (postRepo *PostRepository) IncreaseLikeCount(ctx context.Context, postID in
 }
 func (postRepo *PostRepository) DecreaseLikeCount(ctx context.Context, postID int) error {
 
-		query := `UPDATE posts SET like_count = like_count -1 where post_id = $1`
+		query := `UPDATE posts SET like_count = like_count -1 where id = $1`
 
 	_, err := postRepo.DB.ExecContext(ctx, query, postID)
 

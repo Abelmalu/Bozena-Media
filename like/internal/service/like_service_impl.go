@@ -16,10 +16,11 @@ type LikeService struct {
 	kafka    sarama.SyncProducer
 }
 
-func NewLikeRepository(likeRepo core.LikeRepository) *LikeService {
+func NewLikeService(likeRepo core.LikeRepository,kafkaCl sarama.SyncProducer) *LikeService {
 
 	return &LikeService{
 		likeRepo: likeRepo,
+		kafka: kafkaCl,
 	}
 }
 
@@ -74,7 +75,7 @@ func (likeService *LikeService) ToggleLike(ctx context.Context, state bool, user
 
 		return nil, ierrors.NewInternalError(ierrors.ErrorMessage("Kafka Sending Error"), err)
 	}
-		 fmt.Println("kafka sent succesfully")
+		 fmt.Println("kafka like event sent succesfully")
 
 
 	return &dto.ToggleLikeResponse{

@@ -221,7 +221,7 @@ func (postService *PostService) GenerateUploadURL(ctx context.Context, filename,
 
 func (postService *PostService)IncreaseLikeCount(ctx context.Context,postID int) error {
 
-	if err := postService.IncreaseLikeCount(ctx,postID); err != nil {
+	if err := postService.repo.IncreaseLikeCount(ctx,postID); err != nil {
 
 		return err
 	}
@@ -231,7 +231,7 @@ func (postService *PostService)IncreaseLikeCount(ctx context.Context,postID int)
 func (postService *PostService)	DecreaseLikeCount(ctx context.Context,postID int) error {
 
 
-	if err := postService.DecreaseLikeCount(ctx,postID); err != nil {
+	if err := postService.repo.DecreaseLikeCount(ctx,postID); err != nil {
 
 		return err
 	}

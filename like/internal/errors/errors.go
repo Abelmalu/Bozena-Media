@@ -30,6 +30,8 @@ var (
 	ErrRequestIDNotFound = errors.New("request id not found")
 	ErrUSerIDNotFound = errors.New("user id not found")
 	ErrPostIDNotFound = errors.New("post id not found")
+	ErrKafkaConnection = errors.New("couldn't connect to kafka server")
+
 )
 
 

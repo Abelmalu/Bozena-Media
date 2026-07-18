@@ -7,6 +7,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/IBM/sarama"
 	"github.com/abelmalu/golang-posts/like/config"
 	handler "github.com/abelmalu/golang-posts/like/internal/handlers"
 	"github.com/abelmalu/golang-posts/like/internal/kafka"
@@ -22,6 +23,7 @@ import (
 type App struct {
 	DB     *sql.DB
 	config *config.Config
+	Kafka  sarama.SyncProducer
 }
 
 var logger = platform.InitZapLogger()
@@ -39,9 +41,16 @@ func NewApp() *App {
 		log.Fatalf("Error while initiating db connection %v", err)
 	}
 
+	kafkaClient,err := kafka.InitKafkaProducer(logger)
+
+	if err != nil {
+		log.Fatalf("Error while initiating kafka connection %v", err)
+	}
+
 	return &App{
 		DB:     DBConPool,
 		config: cfg,
+		Kafka: kafkaClient,
 	}
 
 }
@@ -80,7 +89,7 @@ func (app *App) Run() {
 	logger := platform.InitZapLogger()
 
 	likeRepository := repository.NewLikeRepository(app.DB)
-	likeService := service.NewLikeRepository(likeRepository)
+	likeService := service.NewLikeService(likeRepository, app.Kafka)
 	lh := handler.NewLikeHandler(likeService, logger)
 
 	pb.RegisterLikeServiceServer(s, lh)
