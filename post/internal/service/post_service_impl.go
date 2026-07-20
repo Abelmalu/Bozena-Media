@@ -43,13 +43,6 @@ func (postService *PostService) CreatePost(ctx context.Context, post *models.Pos
 
 	}
 
-	if *post.Image == "" {
-
-		postService.cleanupService.DeleteObject("bozena-media", *post.Image)
-
-		return nil, ierrors.NewValidationError(ierrors.ErrorMessage("image URL is required"), nil, nil)
-
-	}
 
 	createdPost, err := postService.repo.CreatePost(ctx, post)
 

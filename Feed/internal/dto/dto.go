@@ -14,6 +14,8 @@ type UserFeed struct {
 	PostOwnerID int64
 	UserName string
 	Name     string
+	Image *string
+	LikeCount int
 
 }
 

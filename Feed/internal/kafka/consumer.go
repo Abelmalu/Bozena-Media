@@ -149,8 +149,7 @@ func workers(msgs <-chan *sarama.ConsumerMessage, wgs *sync.WaitGroup, feedServi
 
 		ctx, cancel:= context.WithTimeout(context.Background(), 2*time.Second)
 
-		 cancel()
-
+		
 		var post PostCreatedPayload
 		if err := json.Unmarshal(msg.Value, &post); err != nil {
 			log.Printf("Failed to unmarshal post: %v", err)
@@ -220,6 +219,8 @@ func workers(msgs <-chan *sarama.ConsumerMessage, wgs *sync.WaitGroup, feedServi
 		}()
 
 		wg.Wait()
+
+		cancel()
 
 	}
 

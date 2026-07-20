@@ -70,8 +70,17 @@ func (fh *FeedHandler) GetUserFeed(ctx context.Context, req *pb.GetUserFeedReque
 
 	}
 
+	imageURL := ""
+
+	
+
 	pbUserFeeds := make([]*pb.UserFeed, 0, len(resp.UserFeeds))
 	for _, userFeed := range resp.UserFeeds {
+
+		if userFeed.Image == nil {
+
+			userFeed.Image = &imageURL
+		}
 		pbUserFeed := &pb.UserFeed{
 			PostID:      userFeed.PostID,
 			PostTitle:   userFeed.PostTitle,
@@ -79,6 +88,9 @@ func (fh *FeedHandler) GetUserFeed(ctx context.Context, req *pb.GetUserFeedReque
 			UserName:    userFeed.UserName,
 			Name:        userFeed.Name,
 			PostOwnerID: userFeed.PostOwnerID,
+			Image: *userFeed.Image,
+			LikeCount: int64(userFeed.LikeCount),
+			
 		}
 
 		pbUserFeeds = append(pbUserFeeds, pbUserFeed)

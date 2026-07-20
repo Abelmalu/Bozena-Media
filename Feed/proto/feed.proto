@@ -27,6 +27,8 @@ message UserFeed  {
 	int64 PostOwnerID = 4;
 	string UserName = 5;
 	string Name     = 6;
+    string Image  = 7;
+    int64 LikeCount = 8;
 
 }
 
