@@ -28,6 +28,7 @@ type Post struct {
 	Content       string                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
 	UserId        int64                  `protobuf:"varint,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	PostImageUrl  string                 `protobuf:"bytes,5,opt,name=post_image_url,json=postImageUrl,proto3" json:"post_image_url,omitempty"`
+	LikeCount     int64                  `protobuf:"varint,6,opt,name=like_count,json=likeCount,proto3" json:"like_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -95,6 +96,13 @@ func (x *Post) GetPostImageUrl() string {
 		return x.PostImageUrl
 	}
 	return ""
+}
+
+func (x *Post) GetLikeCount() int64 {
+	if x != nil {
+		return x.LikeCount
+	}
+	return 0
 }
 
 type CreatePostRequest struct {
@@ -773,13 +781,15 @@ var File_proto_post_proto protoreflect.FileDescriptor
 
 const file_proto_post_proto_rawDesc = "" +
 	"\n" +
-	"\x10proto/post.proto\x12\vpostservice\"\x85\x01\n" +
+	"\x10proto/post.proto\x12\vpostservice\"\xa4\x01\n" +
 	"\x04Post\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x18\n" +
 	"\acontent\x18\x03 \x01(\tR\acontent\x12\x17\n" +
 	"\auser_id\x18\x04 \x01(\x03R\x06userId\x12$\n" +
-	"\x0epost_image_url\x18\x05 \x01(\tR\fpostImageUrl\"\x82\x01\n" +
+	"\x0epost_image_url\x18\x05 \x01(\tR\fpostImageUrl\x12\x1d\n" +
+	"\n" +
+	"like_count\x18\x06 \x01(\x03R\tlikeCount\"\x82\x01\n" +
 	"\x11CreatePostRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x18\n" +

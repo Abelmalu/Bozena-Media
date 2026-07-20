@@ -76,6 +76,7 @@ export type FollowingsResponse = {
 export type PostDraft = {
   title: string;
   content: string;
+  object_name?: string;
 };
 
 export type PostResponse = {
@@ -91,6 +92,8 @@ export type UserPost = {
   title: string;
   content: string;
   user_id: number;
+  like_count?: number;
+  likeCount?: number;
 };
 
 export type UserPostsResponse = {
@@ -108,4 +111,36 @@ export type LikesResponse = {
 export type SessionUser = {
   userId: number | null;
   role: string | null;
+};
+
+export type Notification = {
+  id: number;
+  username: string;
+  actor_id: number;
+  message: string;
+  created_at?: string;
+  is_read?: boolean;
+};
+
+// Go struct PaginatedResponse has no json tags, so fields are PascalCase
+export type NotificationsResponse = {
+  UserNotifications: Notification[] | null;
+  Cursor: string;
+  HasNext: boolean;
+};
+
+export type PresignedFormData = {
+  'Content-Type': string;
+  bucket: string;
+  key: string;
+  policy: string;
+  'x-amz-algorithm': string;
+  'x-amz-credential': string;
+  'x-amz-date': string;
+  'x-amz-signature': string;
+};
+
+export type PresignedUploadResponse = {
+  upload_url: string;
+  form_data: PresignedFormData;
 };

@@ -25,11 +25,10 @@ type PostHandler struct {
 	cleanupService *cleanup.CleanUpService
 }
 
-	
-func NewPostHandler(service core.PostService, logger *platform.Logger,cleanupService *cleanup.CleanUpService) *PostHandler {
+func NewPostHandler(service core.PostService, logger *platform.Logger, cleanupService *cleanup.CleanUpService) *PostHandler {
 	return &PostHandler{
-		service: service,
-		logger:  logger,
+		service:        service,
+		logger:         logger,
 		cleanupService: cleanupService,
 	}
 }
@@ -315,6 +314,8 @@ func (ph *PostHandler) GetUserPosts(ctx context.Context, req *pb.GetUserPostRequ
 			Id:           int64(p.ID),
 			UserId:       int64(p.UserID),
 			PostImageUrl: *p.Image,
+			LikeCount: int64(p.LikeCount),
+		
 		}
 		pbPosts = append(pbPosts, pbPost)
 

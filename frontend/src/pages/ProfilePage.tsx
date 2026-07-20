@@ -259,7 +259,16 @@ export function ProfilePage() {
                   )}
                 </div>
                 <p className="feed-content">{post.content}</p>
-                <div className="feed-byline">{isOwnProfile && username ? `By @${username}` : `Author ID #${post.user_id}`}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+                  <div className="feed-byline" style={{ margin: 0 }}>
+                    {isOwnProfile && username ? `By @${username}` : `Author ID #${post.user_id}`}
+                  </div>
+                  {((post.like_count ?? post.likeCount) ?? 0) > 0 ? (
+                    <div style={{ fontSize: '0.875rem', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      ❤️ {post.like_count ?? post.likeCount} {((post.like_count ?? post.likeCount) === 1) ? 'like' : 'likes'}
+                    </div>
+                  ) : null}
+                </div>
               </article>
             ))}
           </div>

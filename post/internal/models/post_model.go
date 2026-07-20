@@ -14,6 +14,7 @@ type Post struct {
 	Content string `json:"content" db:"content" validate:"min=5,required"`
 	UserID  int    `json:"user_id" db:"user_id" validate:"required"`
 	Image   *string `json:"image"  db:"image"`
+	LikeCount int   `json:"like_count" db:"like_count"`
 }
 
 //likes model

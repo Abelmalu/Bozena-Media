@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/IBM/sarama"
 	"github.com/abelmalu/golang-posts/like/internal/core"
@@ -75,7 +74,6 @@ func (likeService *LikeService) ToggleLike(ctx context.Context, state bool, user
 
 		return nil, ierrors.NewInternalError(ierrors.ErrorMessage("Kafka Sending Error"), err)
 	}
-		 fmt.Println("kafka like event sent succesfully")
 
 
 	return &dto.ToggleLikeResponse{

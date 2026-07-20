@@ -6,8 +6,10 @@ import type {
   FollowersResponse,
   FollowingsResponse,
   LikesResponse,
+  NotificationsResponse,
   PostDraft,
   PostResponse,
+  PresignedUploadResponse,
   SearchUserResponse,
   UserPostsResponse,
 } from '../types';
@@ -250,4 +252,57 @@ export async function deletePost(postId: number) {
   return request<{ message: string }>(`/api/posts/delete/${postId}`, {
     method: 'DELETE',
   });
+}
+
+export async function getNotifications(cursor = '', limit = 10) {
+  const params = new URLSearchParams();
+  params.set('limit', String(limit));
+  if (cursor) {
+    params.set('cursor', cursor);
+  }
+  return request<NotificationsResponse>(`/api/notification/user?${params.toString()}`);
+}
+
+export async function getProfileUploadUrl(fileName: string, contentType: string) {
+  return request<PresignedUploadResponse>('/api/auth/profile/upload', {
+    method: 'POST',
+    body: { file_name: fileName, content_type: contentType },
+  });
+}
+
+export async function getPostUploadUrl(fileName: string, contentType: string) {
+  return request<PresignedUploadResponse>('/api/posts/image/upload', {
+    method: 'POST',
+    body: { file_name: fileName, content_type: contentType },
+  });
+}
+
+/**
+ * Upload a file directly to MinIO using the presigned POST form data.
+ * Returns the public object key (e.g. "posts/uuid.jpg") to store with the record.
+ */
+export async function uploadFileToMinio(file: File, presigned: PresignedUploadResponse): Promise<string> {
+  const form = new FormData();
+  const fd = presigned.form_data;
+  form.append('bucket', fd.bucket);
+  form.append('key', fd.key);
+  form.append('Content-Type', fd['Content-Type']);
+  form.append('policy', fd.policy);
+  form.append('x-amz-algorithm', fd['x-amz-algorithm']);
+  form.append('x-amz-credential', fd['x-amz-credential']);
+  form.append('x-amz-date', fd['x-amz-date']);
+  form.append('x-amz-signature', fd['x-amz-signature']);
+  form.append('file', file);
+
+  const response = await fetch(presigned.upload_url, {
+    method: 'POST',
+    body: form,
+  });
+
+  if (!response.ok) {
+    throw new Error(`MinIO upload failed: ${response.status}`);
+  }
+
+  // Return the object key so it can be stored alongside the record
+  return fd.key;
 }

@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { FeedItem, ProfileUser } from '../types';
+import { getPostLikes } from '../lib/api';
 
 export function FeedCard({
   item,
@@ -15,6 +17,24 @@ export function FeedCard({
   onOpenLikes: () => void;
 }) {
   const canOpenProfile = ownerId > 0;
+  const [likesCount, setLikesCount] = useState<number | null>(null);
+  const postId = item.PostID ?? item.post_id ?? item.postId ?? item.id ?? 0;
+
+  useEffect(() => {
+    let active = true;
+    if (postId > 0) {
+      getPostLikes(postId, '', 100)
+        .then((res) => {
+          if (active) {
+            setLikesCount(res.users?.length ?? 0);
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      active = false;
+    };
+  }, [postId, liked]);
 
   return (
     <article className="feed-card">
@@ -38,7 +58,7 @@ export function FeedCard({
 
       <div className="feed-actions">
         <button type="button" className={`button button-soft ${liked ? 'button-soft-active' : ''}`} onClick={onLike}>
-          {liked ? 'Unlike' : 'Like'}
+          {liked ? 'Unlike' : 'Like'} {likesCount !== null && likesCount > 0 ? `(${likesCount})` : ''}
         </button>
         <button type="button" className="button button-soft" onClick={onOpenLikes}>
           Likes

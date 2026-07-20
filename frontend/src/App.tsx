@@ -9,6 +9,7 @@ import { FeedPage } from './pages/FeedPage';
 import { CreatePostPage } from './pages/CreatePostPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SearchPage } from './pages/SearchPage';
+import { NotificationsPage } from './pages/NotificationsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 function RootRedirect() {
@@ -48,6 +49,7 @@ export function App() {
         <Route path="profile" element={<ProfilePage />} />
         <Route path="profile/:id" element={<ProfilePage />} />
         <Route path="search" element={<SearchPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

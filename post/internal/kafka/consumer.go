@@ -113,7 +113,6 @@ func postLikedConsumer(consumer sarama.Consumer, postLikedTopic string, postServ
 
 				logger.Error("Error increasing like count ", zap.Error(err))
 			}
-			fmt.Println("like coutn increased")
 
 			cancel()
 

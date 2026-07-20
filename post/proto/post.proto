@@ -21,6 +21,7 @@ message Post{
     string content = 3;
     int64 user_id = 4;
     string post_image_url = 5;
+    int64 like_count = 6;
 
 }
 

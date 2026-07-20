@@ -1,8 +1,26 @@
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { connectNotificationStream } from '../lib/sse';
+import { NOTIFICATION_RECEIVED_EVENT } from '../lib/events';
 
 export function AppShell() {
-  const { signOut, sessionUser, username } = useAuth();
+  const { signOut, sessionUser, username, isAuthenticated } = useAuth();
+  const [toast, setToast] = useState('');
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Connect to SSE with Bearer token for real-time notifications
+    const controller = connectNotificationStream((data) => {
+      setToast(data);
+      // Dispatch custom event to notify other components (e.g. NotificationsPage)
+      window.dispatchEvent(new CustomEvent(NOTIFICATION_RECEIVED_EVENT, { detail: data }));
+      setTimeout(() => setToast(''), 5000);
+    });
+
+    return () => controller.abort();
+  }, [isAuthenticated]);
 
   return (
     <div className="app-shell">
@@ -35,6 +53,9 @@ export function AppShell() {
           <NavLink to="/app/search" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
             Search
           </NavLink>
+          <NavLink to="/app/notifications" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+            Notifications
+          </NavLink>
         </nav>
 
         <button type="button" className="button button-ghost" onClick={() => void signOut()}>
@@ -43,6 +64,11 @@ export function AppShell() {
       </aside>
 
       <main className="app-main">
+        {toast && (
+          <div className="toast" style={{ position: 'fixed', top: 16, right: 16, background: '#0ea5e9', color: '#fff', padding: '12px 24px', borderRadius: '8px', zIndex: 9999, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+            <strong>New Notification:</strong> {toast}
+          </div>
+        )}
         <Outlet />
       </main>
     </div>

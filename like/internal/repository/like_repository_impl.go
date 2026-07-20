@@ -28,8 +28,7 @@ func (likeRespository *LikeRespository) ToggleLike(ctx context.Context, state bo
 	if state {
 		query := `
 			INSERT INTO likes (user_id, post_id) 
-			VALUES ($1, $2) 
-			ON CONFLICT (user_id, post_id) DO NOTHING; `
+			VALUES ($1, $2); `
 
 		_, err := likeRespository.DB.ExecContext(ctx, query, userID, postID)
 
