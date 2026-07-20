@@ -1,15 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getUserFollowers, getUserFollowings, getUserPosts, toggleFollow, updatePost, deletePost } from '../lib/api';
+import {
+  getProfileUploadUrl,
+  getUserFollowers,
+  getUserFollowings,
+  getUserPosts,
+  toggleFollow,
+  updatePost,
+  deletePost,
+  uploadFileToMinio,
+} from '../lib/api';
 import type { FollowersResponse, FollowingsResponse, ProfileUser, UserPostsResponse, UserPost } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { PageFrame } from '../components/PageFrame';
 import { StatCard } from '../components/StatCard';
 import { Modal } from '../components/Modal';
+import { FEED_REFRESH_EVENT } from '../lib/events';
 
 export function ProfilePage() {
   const params = useParams();
-  const { sessionUser, username } = useAuth();
+  const { sessionUser, username, avatarUrl, updateAvatarUrl } = useAuth();
   const userId = params.id ? Number(params.id) : sessionUser.userId ?? NaN;
   const isOwnProfile = !params.id || (sessionUser.userId !== null && userId === sessionUser.userId);
   const [followers, setFollowers] = useState<FollowersResponse | null>(null);
@@ -25,7 +35,11 @@ export function ProfilePage() {
   const [editingPost, setEditingPost] = useState<UserPost | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
-
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState('');
+  const [avatarUploadStep, setAvatarUploadStep] = useState('');
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
   useEffect(() => {
     async function loadProfile() {
       setLoading(true);
@@ -151,6 +165,45 @@ export function ProfilePage() {
     }
   }
 
+  function onAvatarFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    setAvatarFile(file);
+    setAvatarError('');
+    if (file) {
+      setAvatarPreview(URL.createObjectURL(file));
+    } else {
+      setAvatarPreview('');
+    }
+  }
+
+  function clearAvatarSelection() {
+    setAvatarFile(null);
+    setAvatarPreview('');
+  }
+
+  async function handleAvatarUpload() {
+    if (!avatarFile) return;
+    setAvatarUploading(true);
+    setAvatarUploadStep('');
+    setAvatarError('');
+
+    try {
+      setAvatarUploadStep('Getting upload URL...');
+      const presigned = await getProfileUploadUrl(avatarFile.name, avatarFile.type);
+      setAvatarUploadStep('Uploading avatar...');
+      await uploadFileToMinio(avatarFile, presigned);
+      updateAvatarUrl(avatarPreview);
+      setAvatarFile(null);
+      setAvatarPreview('');
+      window.dispatchEvent(new Event(FEED_REFRESH_EVENT));
+      setAvatarUploadStep('Avatar updated');
+    } catch (err) {
+      setAvatarError(err instanceof Error ? err.message : 'Could not upload avatar');
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
+
   return (
     <PageFrame
       eyebrow="Profile"
@@ -158,6 +211,44 @@ export function ProfilePage() {
       subtitle="Counts below use exactly what the backend returned, including the current page limit."
       aside={
         <div className="stack">
+          {avatarUrl ? (
+            <div className="profile-avatar-card">
+              <img className="profile-avatar" src={avatarUrl} alt={`${username ?? 'User'} avatar`} />
+            </div>
+          ) : isOwnProfile ? (
+            <div className="profile-avatar-empty">
+              <div className="profile-avatar-fallback profile-avatar-empty-mark">?</div>
+              <div className="profile-avatar-empty-text">No profile picture yet</div>
+            </div>
+          ) : null}
+          {!avatarUrl && isOwnProfile ? (
+            <div className="profile-avatar-upload">
+              {avatarPreview ? (
+                <div className="profile-avatar-preview-wrap">
+                  <img className="profile-avatar-preview" src={avatarPreview} alt="Avatar preview" />
+                  <button type="button" className="profile-avatar-clear" onClick={clearAvatarSelection}>
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <label htmlFor="profile-avatar-input" className="profile-avatar-upload-dropzone">
+                  <span className="profile-avatar-upload-icon">+</span>
+                  <span>Upload profile photo</span>
+                </label>
+              )}
+              <input id="profile-avatar-input" type="file" accept="image/*" hidden onChange={onAvatarFileChange} />
+              {avatarFile ? (
+                <div className="profile-avatar-upload-actions">
+                  <div className="profile-avatar-upload-name">{avatarFile.name}</div>
+                  <button type="button" className="button button-soft" onClick={() => void handleAvatarUpload()} disabled={avatarUploading}>
+                    {avatarUploading ? (avatarUploadStep || 'Uploading...') : 'Save photo'}
+                  </button>
+                </div>
+              ) : null}
+              {avatarError ? <div className="form-error">{avatarError}</div> : null}
+              {avatarUploadStep ? <div className="profile-avatar-step">{avatarUploadStep}</div> : null}
+            </div>
+          ) : null}
           {!isOwnProfile && (
             <button
               type="button"
@@ -259,6 +350,16 @@ export function ProfilePage() {
                   )}
                 </div>
                 <p className="feed-content">{post.content}</p>
+                {post.post_image_url || post.image ? (
+                  <div className="feed-image-wrap">
+                    <img
+                      className="feed-image"
+                      src={post.post_image_url ?? post.image}
+                      alt={post.title ? `Post image for ${post.title}` : 'Post image'}
+                      loading="lazy"
+                    />
+                  </div>
+                ) : null}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
                   <div className="feed-byline" style={{ margin: 0 }}>
                     {isOwnProfile && username ? `By @${username}` : `Author ID #${post.user_id}`}

@@ -30,6 +30,8 @@ type PostCreatedPayload struct {
 	Title   string `json:"title"`
 	Content string `json:"content"`
 	UserID  int    `json:"user_id"`
+	Image    string `json:"image"`
+
 }
 
 func initFollowClient() pb.FollowServiceClient {
@@ -161,6 +163,7 @@ func workers(msgs <-chan *sarama.ConsumerMessage, wgs *sync.WaitGroup, feedServi
 		var post PostCreatedPayload
 		if err := json.Unmarshal(msg.Value, &post); err != nil {
 			log.Printf("Failed to unmarshal post: %v", err)
+			cancel()
 			continue
 		}
 
@@ -171,7 +174,7 @@ func workers(msgs <-chan *sarama.ConsumerMessage, wgs *sync.WaitGroup, feedServi
 		go func() {
 			defer wg.Done()
 
-			err := feedService.CreateCachePost(ctx, post.ID, post.Title, post.Content)
+			err := feedService.CreateCachePost(ctx, post.ID, post.Title, post.Content,post.Image)
 
 			if err != nil {
 				logger.Error("Error inserting to posts_cache", zap.Error(err))
@@ -231,6 +234,8 @@ func workers(msgs <-chan *sarama.ConsumerMessage, wgs *sync.WaitGroup, feedServi
 	}
 
 }
+
+
 
 func postLikedConsumer(consumer sarama.Consumer, postLikedTopic string, feedService core.FeedService, logger *platform.Logger) {
 

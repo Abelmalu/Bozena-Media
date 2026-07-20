@@ -1,5 +1,6 @@
 const ACCESS_TOKEN_KEY = 'bozena_media_access_token';
 const USERNAME_KEY = 'bozena_media_username';
+const AVATAR_URL_KEY = 'bozena_media_avatar_url';
 const LIKED_POSTS_KEY = 'bozena_media_liked_posts';
 
 export function readAccessToken() {
@@ -24,6 +25,18 @@ export function writeUsername(username: string) {
 
 export function clearUsername() {
   sessionStorage.removeItem(USERNAME_KEY);
+}
+
+export function readAvatarUrl() {
+  return sessionStorage.getItem(AVATAR_URL_KEY);
+}
+
+export function writeAvatarUrl(avatarUrl: string) {
+  sessionStorage.setItem(AVATAR_URL_KEY, avatarUrl);
+}
+
+export function clearAvatarUrl() {
+  sessionStorage.removeItem(AVATAR_URL_KEY);
 }
 
 export function readLikedPosts() {

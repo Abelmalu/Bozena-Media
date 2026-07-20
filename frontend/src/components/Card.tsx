@@ -19,6 +19,7 @@ export function FeedCard({
   const canOpenProfile = ownerId > 0;
   const [likesCount, setLikesCount] = useState<number | null>(null);
   const postId = item.PostID ?? item.post_id ?? item.postId ?? item.id ?? 0;
+  const imageUrl = item.Image ?? item.image ?? '';
 
   useEffect(() => {
     let active = true;
@@ -43,22 +44,34 @@ export function FeedCard({
           <div className="feed-meta">@{item.UserName}</div>
           <h3>{item.PostTitle}</h3>
         </div>
-        {canOpenProfile ? (
-          <Link className="pill-link" to={`/app/profile/${ownerId}`}>
-            View profile
-          </Link>
-        ) : (
-          <span className="pill-link pill-link-disabled">View profile</span>
-        )}
+        <div className="feed-card-head-right">
+          <div className="feed-like-pill" aria-label={likesCount !== null ? `${likesCount} likes` : 'Likes'}>
+            <span className="feed-like-heart">♥</span>
+            <span>{likesCount !== null ? likesCount : 0}</span>
+          </div>
+          {canOpenProfile ? (
+            <Link className="pill-link" to={`/app/profile/${ownerId}`}>
+              View profile
+            </Link>
+          ) : (
+            <span className="pill-link pill-link-disabled">View profile</span>
+          )}
+        </div>
       </div>
 
       <p className="feed-content">{item.PostContent}</p>
+
+      {imageUrl ? (
+        <div className="feed-image-wrap">
+          <img className="feed-image" src={imageUrl} alt={item.PostTitle ? `Post image for ${item.PostTitle}` : 'Post image'} loading="lazy" />
+        </div>
+      ) : null}
 
       <div className="feed-byline">{item.Name}</div>
 
       <div className="feed-actions">
         <button type="button" className={`button button-soft ${liked ? 'button-soft-active' : ''}`} onClick={onLike}>
-          {liked ? 'Unlike' : 'Like'} {likesCount !== null && likesCount > 0 ? `(${likesCount})` : ''}
+          {liked ? 'Unlike' : 'Like'}
         </button>
         <button type="button" className="button button-soft" onClick={onOpenLikes}>
           Likes

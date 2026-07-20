@@ -15,6 +15,7 @@ export type AuthPayload = {
   access_token: string;
   refresh_token?: string;
   username?: string;
+  avatar_url?: string;
   message?: string;
 };
 
@@ -39,6 +40,7 @@ export type FeedItem = {
   PostOwnerID: number;
   UserName: string;
   Name: string;
+  Image?: string;
   id?: number;
   post_id?: number;
   postId?: number;
@@ -46,6 +48,7 @@ export type FeedItem = {
   postOwnerId?: number;
   user_id?: number;
   userId?: number;
+  image?: string;
 };
 
 export type FeedResponse = {
@@ -92,6 +95,8 @@ export type UserPost = {
   title: string;
   content: string;
   user_id: number;
+  post_image_url?: string;
+  image?: string;
   like_count?: number;
   likeCount?: number;
 };

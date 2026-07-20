@@ -387,6 +387,121 @@ p {
   gap: 0.25rem;
 }
 
+.profile-avatar-card {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.4rem;
+}
+
+.profile-avatar,
+.profile-avatar-fallback {
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+.profile-avatar-small {
+  width: 56px;
+  height: 56px;
+}
+
+.profile-avatar-fallback {
+  display: grid;
+  place-items: center;
+  color: var(--accent-2);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.profile-avatar-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.profile-avatar-empty-mark {
+  width: 72px;
+  height: 72px;
+  font-size: 1.4rem;
+}
+
+.profile-avatar-empty-text {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.profile-avatar-upload {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.profile-avatar-upload-dropzone {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  cursor: pointer;
+  text-align: center;
+}
+
+.profile-avatar-upload-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(244, 184, 96, 0.14);
+  color: var(--accent-2);
+  font-weight: 800;
+}
+
+.profile-avatar-preview-wrap {
+  position: relative;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.profile-avatar-preview {
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.profile-avatar-clear {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(17, 17, 17, 0.85);
+  color: var(--text);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+}
+
+.profile-avatar-upload-actions {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.profile-avatar-upload-name,
+.profile-avatar-step {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
 .profile-subvalue {
   color: var(--muted);
   font-size: 0.9rem;
@@ -503,6 +618,48 @@ p {
   padding: 1.15rem;
   display: grid;
   gap: 0.95rem;
+}
+
+.feed-card-head-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.feed-like-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.feed-like-heart {
+  color: #ff7b7b;
+  font-size: 0.95rem;
+}
+
+.feed-image-wrap {
+  margin-top: 0.25rem;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.feed-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 420px;
+  object-fit: cover;
 }
 
 .feed-card-head {

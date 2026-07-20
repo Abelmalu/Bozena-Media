@@ -5,7 +5,7 @@ import { connectNotificationStream } from '../lib/sse';
 import { NOTIFICATION_RECEIVED_EVENT } from '../lib/events';
 
 export function AppShell() {
-  const { signOut, sessionUser, username, isAuthenticated } = useAuth();
+  const { signOut, sessionUser, username, avatarUrl, isAuthenticated } = useAuth();
   const [toast, setToast] = useState('');
 
   useEffect(() => {
@@ -34,6 +34,11 @@ export function AppShell() {
         </div>
 
         <div className="profile-card">
+          {avatarUrl ? (
+            <img className="profile-avatar profile-avatar-small" src={avatarUrl} alt={`${username ?? 'User'} avatar`} />
+          ) : sessionUser.userId ? (
+            <div className="profile-avatar-fallback">{username?.[0]?.toUpperCase() ?? 'U'}</div>
+          ) : null}
           <div className="profile-label">Signed in as</div>
           <div className="profile-value">{username ?? 'Unknown user'}</div>
           <div className="profile-subvalue">{sessionUser.userId ? `User #${sessionUser.userId}` : 'ID unavailable'}</div>

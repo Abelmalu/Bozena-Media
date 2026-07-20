@@ -171,11 +171,11 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 
 }
 
-func (feedRepository *FeedRepository) CreateCachePost(ctx context.Context, postID int, title, content string) error {
+func (feedRepository *FeedRepository) CreateCachePost(ctx context.Context, postID int, title, content,image string) error {
 
-	query := `INSERT INTO posts_cache (post_id,title,content)  VALUES($1,$2,$3)`
+	query := `INSERT INTO posts_cache (post_id,title,content,image)  VALUES($1,$2,$3,$4)`
 
-	_, err := feedRepository.DB.ExecContext(ctx, query, postID, title, content)
+	_, err := feedRepository.DB.ExecContext(ctx, query, postID, title, content,image)
 
 	var pgErr *pgconn.PgError
 	if err != nil {
@@ -260,7 +260,7 @@ func (repo *FeedRepository) InsertFeedEntries(ctx context.Context, followersID [
 
 func (feedRepo *FeedRepository) IncreaseLikeCount(ctx context.Context, postID int) error {
 
-	query := `UPDATE posts_cache SET like_count = like_count +1 where id = $1`
+	query := `UPDATE posts_cache SET like_count = like_count +1 where post_id = $1`
 
 	_, err := feedRepo.DB.ExecContext(ctx, query, postID)
 
@@ -273,7 +273,7 @@ func (feedRepo *FeedRepository) IncreaseLikeCount(ctx context.Context, postID in
 }
 func (feedRepo *FeedRepository) DecreaseLikeCount(ctx context.Context, postID int) error {
 
-		query := `UPDATE posts_cache SET like_count = like_count -1 where id = $1`
+		query := `UPDATE posts_cache SET like_count = like_count -1 where post_id = $1`
 
 	_, err := feedRepo.DB.ExecContext(ctx, query, postID)
 

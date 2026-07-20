@@ -1,11 +1,14 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
+  clearAvatarUrl,
   clearAccessToken,
   clearLikedPosts,
   clearUsername,
+  readAvatarUrl,
   readAccessToken,
   readUsername,
+  writeAvatarUrl,
   writeAccessToken,
   writeUsername,
 } from '../lib/session';
@@ -20,7 +23,9 @@ type AuthContextValue = {
   accessToken: string | null;
   sessionUser: SessionUser;
   username: string | null;
+  avatarUrl: string | null;
   isAuthenticated: boolean;
+  updateAvatarUrl: (avatarUrl: string | null) => void;
   signIn: (input: { username: string; password: string }) => Promise<void>;
   signUp: (input: { name: string; username: string; email: string; password: string }) => Promise<void>;
   signOut: () => Promise<void>;
@@ -34,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessToken, setAccessTokenState] = useState<string | null>(readAccessToken());
   const [sessionUser, setSessionUser] = useState<SessionUser>(decodeSessionUser(readAccessToken()));
   const [username, setUsername] = useState<string | null>(readUsername());
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(readAvatarUrl());
 
   useEffect(() => {
     registerAuthHooks({
@@ -47,9 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearAccessToken: () => {
         clearAccessToken();
         clearUsername();
+        clearAvatarUrl();
         clearLikedPosts();
         setAccessTokenState(null);
         setUsername(null);
+        setAvatarUrl(null);
         setSessionUser({ userId: null, role: null });
         setState('anonymous');
       },
@@ -59,8 +67,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!response.access_token) {
             clearAccessToken();
             clearUsername();
+            clearAvatarUrl();
             setAccessTokenState(null);
             setUsername(null);
+            setAvatarUrl(null);
             setSessionUser({ userId: null, role: null });
             setState('anonymous');
             return false;
@@ -71,6 +81,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             writeUsername(response.username);
             setUsername(response.username);
           }
+          if (response.avatar_url) {
+            writeAvatarUrl(response.avatar_url);
+            setAvatarUrl(response.avatar_url);
+          }
           setAccessTokenState(response.access_token);
           setSessionUser(decodeSessionUser(response.access_token));
           setState('authenticated');
@@ -78,9 +92,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch {
           clearAccessToken();
           clearUsername();
+          clearAvatarUrl();
           clearLikedPosts();
           setAccessTokenState(null);
           setUsername(null);
+          setAvatarUrl(null);
           setSessionUser({ userId: null, role: null });
           setState('anonymous');
           return false;
@@ -107,6 +123,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             writeUsername(response.username);
             setUsername(response.username);
           }
+          if (response.avatar_url) {
+            writeAvatarUrl(response.avatar_url);
+            setAvatarUrl(response.avatar_url);
+          }
           setAccessTokenState(response.access_token);
           setSessionUser(decodeSessionUser(response.access_token));
           setState('authenticated');
@@ -116,9 +136,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {
         clearAccessToken();
         clearUsername();
+        clearAvatarUrl();
         clearLikedPosts();
         setAccessTokenState(null);
         setUsername(null);
+        setAvatarUrl(null);
         setSessionUser({ userId: null, role: null });
         setState('anonymous');
       }
@@ -138,6 +160,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       writeUsername(response.username);
       setUsername(response.username);
     }
+    if (response.avatar_url) {
+      writeAvatarUrl(response.avatar_url);
+      setAvatarUrl(response.avatar_url);
+    }
     setAccessTokenState(response.access_token);
     setSessionUser(decodeSessionUser(response.access_token));
     setState('authenticated');
@@ -154,6 +180,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       writeUsername(response.username);
       setUsername(response.username);
     }
+    if (response.avatar_url) {
+      writeAvatarUrl(response.avatar_url);
+      setAvatarUrl(response.avatar_url);
+    }
     setAccessTokenState(response.access_token);
     setSessionUser(decodeSessionUser(response.access_token));
     setState('authenticated');
@@ -165,9 +195,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       clearAccessToken();
       clearUsername();
+      clearAvatarUrl();
       clearLikedPosts();
       setAccessTokenState(null);
       setUsername(null);
+      setAvatarUrl(null);
       setSessionUser({ userId: null, role: null });
       setState('anonymous');
     }
@@ -185,6 +217,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         writeUsername(response.username);
         setUsername(response.username);
       }
+      if (response.avatar_url) {
+        writeAvatarUrl(response.avatar_url);
+        setAvatarUrl(response.avatar_url);
+      }
       setAccessTokenState(response.access_token);
       setSessionUser(decodeSessionUser(response.access_token));
       setState('authenticated');
@@ -192,9 +228,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       clearAccessToken();
       clearUsername();
+      clearAvatarUrl();
       clearLikedPosts();
       setAccessTokenState(null);
       setUsername(null);
+      setAvatarUrl(null);
       setSessionUser({ userId: null, role: null });
       setState('anonymous');
       return false;
@@ -206,7 +244,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     accessToken,
     sessionUser,
     username,
+    avatarUrl,
     isAuthenticated: state === 'authenticated',
+    updateAvatarUrl: (nextAvatarUrl) => {
+      if (nextAvatarUrl) {
+        writeAvatarUrl(nextAvatarUrl);
+      } else {
+        clearAvatarUrl();
+      }
+      setAvatarUrl(nextAvatarUrl);
+    },
     signIn,
     signUp,
     signOut,
