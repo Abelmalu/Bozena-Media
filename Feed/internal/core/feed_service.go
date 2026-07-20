@@ -11,5 +11,7 @@ type FeedService interface {
 	CreateCachePost(ctx context.Context, postID int, title,content string) error
 	CreateCacheUser(ctx context.Context,userID int ,username,name string)(error)
 	CreateFeedEntries(ctx context.Context,followersID []int,postID,ownerID int  ) error
+	IncreaseLikeCount(ctx context.Context, postID int) error 
+	DecreaseLikeCount(ctx context.Context, postID int) error
 
 }

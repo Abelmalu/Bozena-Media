@@ -84,3 +84,27 @@ func (feedService *FeedService) CreateFeedEntries(ctx context.Context,followersI
 
 
 }
+
+
+
+
+
+func (feedService *FeedService)IncreaseLikeCount(ctx context.Context,postID int) error {
+
+	if err := feedService.FeedRepo.IncreaseLikeCount(ctx,postID); err != nil {
+
+		return err
+	}
+
+	return nil
+}
+func (feedService *FeedService)	DecreaseLikeCount(ctx context.Context,postID int) error {
+
+
+	if err := feedService.FeedRepo.DecreaseLikeCount(ctx,postID); err != nil {
+
+		return err
+	}
+
+	return nil
+}

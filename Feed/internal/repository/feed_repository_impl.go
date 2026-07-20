@@ -254,3 +254,33 @@ func (repo *FeedRepository) InsertFeedEntries(ctx context.Context, followersID [
 
 	return tx.Commit()
 }
+
+
+
+
+func (feedRepo *FeedRepository) IncreaseLikeCount(ctx context.Context, postID int) error {
+
+	query := `UPDATE posts_cache SET like_count = like_count +1 where id = $1`
+
+	_, err := feedRepo.DB.ExecContext(ctx, query, postID)
+
+	if err != nil {
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+	}
+	return err
+
+}
+func (feedRepo *FeedRepository) DecreaseLikeCount(ctx context.Context, postID int) error {
+
+		query := `UPDATE posts_cache SET like_count = like_count -1 where id = $1`
+
+	_, err := feedRepo.DB.ExecContext(ctx, query, postID)
+
+	if err != nil {
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+	}
+	return err
+
+}

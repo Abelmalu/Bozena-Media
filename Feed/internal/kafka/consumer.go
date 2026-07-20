@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -47,7 +48,7 @@ func initFollowClient() pb.FollowServiceClient {
 }
 
 // StartEventConsumers initializes separate listeners for different topics
-func StartConsumer(brokers []string, userTopic string, postTopic string, feedService core.FeedService, logger *platform.Logger) {
+func StartConsumer(brokers []string, userTopic string, postTopic string, likedTopic,unLikedTopic string,feedService core.FeedService, logger *platform.Logger) {
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
 
@@ -59,7 +60,7 @@ func StartConsumer(brokers []string, userTopic string, postTopic string, feedSer
 	log.Printf("Consumer started. Listening on topic: %s and %s", userTopic, postTopic)
 
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(4)
 
 	go func() {
 		defer wg.Done()
@@ -69,6 +70,16 @@ func StartConsumer(brokers []string, userTopic string, postTopic string, feedSer
 	go func() {
 		defer wg.Done()
 		consumePostEvents(consumer, postTopic, feedService, logger)
+	}()
+
+	go func() {
+		defer wg.Done()
+		postLikedConsumer(consumer, likedTopic, feedService, logger)
+	}()
+
+	go func() {
+		defer wg.Done()
+		postUnlikedConsumer(consumer, unLikedTopic, feedService, logger)
 	}()
 
 	wg.Wait()
@@ -113,7 +124,6 @@ func consumePostEvents(consumer sarama.Consumer, topic string, feedService core.
 	}
 	defer pc.Close()
 
-
 	jobs := make(chan *sarama.ConsumerMessage, 100)
 
 	wg := sync.WaitGroup{}
@@ -122,7 +132,7 @@ func consumePostEvents(consumer sarama.Consumer, topic string, feedService core.
 
 		wg.Add(1)
 		go workers(jobs, &wg, feedService, logger)
-		
+
 	}
 
 	for {
@@ -134,7 +144,6 @@ func consumePostEvents(consumer sarama.Consumer, topic string, feedService core.
 		case err := <-pc.Errors():
 			log.Printf("Post consumer error: %v", err)
 
-	
 		}
 	}
 }
@@ -147,16 +156,13 @@ func workers(msgs <-chan *sarama.ConsumerMessage, wgs *sync.WaitGroup, feedServi
 
 	for msg := range msgs {
 
-		ctx, cancel:= context.WithTimeout(context.Background(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 
-		
 		var post PostCreatedPayload
 		if err := json.Unmarshal(msg.Value, &post); err != nil {
 			log.Printf("Failed to unmarshal post: %v", err)
 			continue
 		}
-
-		
 
 		wg := sync.WaitGroup{}
 
@@ -224,4 +230,89 @@ func workers(msgs <-chan *sarama.ConsumerMessage, wgs *sync.WaitGroup, feedServi
 
 	}
 
+}
+
+func postLikedConsumer(consumer sarama.Consumer, postLikedTopic string, feedService core.FeedService, logger *platform.Logger) {
+
+	pc, err := consumer.ConsumePartition(postLikedTopic, 0, sarama.OffsetNewest)
+	if err != nil {
+		log.Fatalf("Error consuming post partition: %v", err)
+	}
+	defer pc.Close()
+
+	for {
+
+		select {
+
+		case msg := <-pc.Messages():
+
+			var likeEvent struct {
+				ID     int `json:"id"`
+				UserID int `json:"user_id"`
+				PostID int `json:"post_id"`
+			}
+
+			err := json.Unmarshal(msg.Value, &likeEvent)
+			if err != nil {
+				log.Printf("Failed to unmarshal user data: %v", err)
+				continue
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+
+			if err := feedService.IncreaseLikeCount(ctx, likeEvent.PostID); err != nil {
+
+				logger.Error("Error increasing like count ", zap.Error(err))
+			}
+
+			cancel()
+
+		case err := <-pc.Errors():
+
+			logger.Error("post liked consumer error", zap.Error(err))
+		}
+	}
+}
+
+func postUnlikedConsumer(consumer sarama.Consumer, postUnLikedTopic string, feedService core.FeedService, logger *platform.Logger) {
+
+	pc, err := consumer.ConsumePartition(postUnLikedTopic, 0, sarama.OffsetNewest)
+	if err != nil {
+		log.Fatalf("Error consuming post partition: %v", err)
+	}
+	defer pc.Close()
+
+	for {
+
+		select {
+
+		case msg := <-pc.Messages():
+
+			var likeEvent struct {
+				ID     int `json:"id"`
+				UserID int `json:"user_id"`
+				PostID int `json:"post_id"`
+			}
+
+			err := json.Unmarshal(msg.Value, &likeEvent)
+			if err != nil {
+				log.Printf("Failed to unmarshal user data: %v", err)
+				continue
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+
+			if err := feedService.DecreaseLikeCount(ctx, likeEvent.PostID); err != nil {
+
+				logger.Error("Error decreasing like count ", zap.Error(err))
+			}
+
+			fmt.Println("unlike coutn increased")
+			cancel()
+
+		case err := <-pc.Errors():
+
+			logger.Error("post unliked consumer error", zap.Error(err))
+		}
+	}
 }
