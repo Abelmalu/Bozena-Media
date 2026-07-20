@@ -93,9 +93,11 @@ func (app *App) Run() {
 	postTopic := "postCreated"
 	likedTopic := "liked"
 	unLikedTopic := "unliked"
+	followedTopic := "followed"
+
 
 	// Run consumer in the background
-	go kafka.StartConsumer(brokers, Usertopic, postTopic,likedTopic,unLikedTopic, feedService, logger)
+	go kafka.StartConsumer(brokers, Usertopic, postTopic,likedTopic,unLikedTopic,followedTopic, feedService, logger)
 
 	s.Serve(lis)
 

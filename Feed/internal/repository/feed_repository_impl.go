@@ -80,7 +80,7 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 
 			var userFeed dto.UserFeed
 
-			if err := rows.Scan(&userFeed.ID, &userFeed.PostOwnerID, &userFeed.UserName, &userFeed.Name, &userFeed.PostID,&userFeed.PostTitle, &userFeed.PostContent,&userFeed.LikeCount,&userFeed.Image); err != nil {
+			if err := rows.Scan(&userFeed.ID, &userFeed.PostOwnerID, &userFeed.UserName, &userFeed.Name, &userFeed.PostID, &userFeed.PostTitle, &userFeed.PostContent, &userFeed.LikeCount, &userFeed.Image); err != nil {
 
 				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 			}
@@ -143,7 +143,7 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 
 			var userFeed dto.UserFeed
 
-			if err := rows.Scan(&userFeed.ID, &userFeed.PostOwnerID, &userFeed.UserName, &userFeed.Name, &userFeed.PostID,&userFeed.PostTitle, &userFeed.PostContent,&userFeed.LikeCount,&userFeed.Image); err != nil {
+			if err := rows.Scan(&userFeed.ID, &userFeed.PostOwnerID, &userFeed.UserName, &userFeed.Name, &userFeed.PostID, &userFeed.PostTitle, &userFeed.PostContent, &userFeed.LikeCount, &userFeed.Image); err != nil {
 
 				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 			}
@@ -171,11 +171,11 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 
 }
 
-func (feedRepository *FeedRepository) CreateCachePost(ctx context.Context, postID int, title, content,image string) error {
+func (feedRepository *FeedRepository) CreateCachePost(ctx context.Context, postID int, title, content, image string) error {
 
-	query := `INSERT INTO posts_cache (post_id,title,content,image)  VALUES($1,$2,$3,$4)`
+	query := `INSERT INTO posts_cache (post_id,title,content,image,user_id)  VALUES($1,$2,$3,$4,$5)`
 
-	_, err := feedRepository.DB.ExecContext(ctx, query, postID, title, content,image)
+	_, err := feedRepository.DB.ExecContext(ctx, query, postID, title, content, image)
 
 	var pgErr *pgconn.PgError
 	if err != nil {
@@ -255,9 +255,6 @@ func (repo *FeedRepository) InsertFeedEntries(ctx context.Context, followersID [
 	return tx.Commit()
 }
 
-
-
-
 func (feedRepo *FeedRepository) IncreaseLikeCount(ctx context.Context, postID int) error {
 
 	query := `UPDATE posts_cache SET like_count = like_count +1 where post_id = $1`
@@ -273,7 +270,7 @@ func (feedRepo *FeedRepository) IncreaseLikeCount(ctx context.Context, postID in
 }
 func (feedRepo *FeedRepository) DecreaseLikeCount(ctx context.Context, postID int) error {
 
-		query := `UPDATE posts_cache SET like_count = like_count -1 where post_id = $1`
+	query := `UPDATE posts_cache SET like_count = like_count -1 where post_id = $1`
 
 	_, err := feedRepo.DB.ExecContext(ctx, query, postID)
 
@@ -283,4 +280,66 @@ func (feedRepo *FeedRepository) DecreaseLikeCount(ctx context.Context, postID in
 	}
 	return err
 
+}
+
+func (feedRepo *FeedRepository) GetCachePosts(ctx context.Context, userID int) (*dto.UserCachePostsResponse, error) {
+
+	var cachePosts []*dto.PostCache
+	query := ` SELECT user_id,post_id from posts_cache where user_id = $1 ORDER BY post_id DESC LIMIT $2`
+
+	rows, err := feedRepo.DB.QueryContext(ctx, query, userID, 3)
+
+	if err != nil {
+
+		return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+	}
+
+	for rows.Next() {
+
+		var cachePost dto.PostCache
+
+		if err := rows.Scan(&cachePost.UserID, &cachePost.PostID); err != nil {
+
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+
+		}
+
+		cachePosts = append(cachePosts, &cachePost)
+
+	}
+
+	return &dto.UserCachePostsResponse{
+
+		CachePosts: cachePosts,
+	}, nil
+
+}
+
+func (repo *FeedRepository) AddFeedEntries(ctx context.Context, feedEntries []*dto.FeedEntry) error {
+
+	tx, err := repo.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.PrepareContext(ctx, `
+        INSERT INTO feed_entries (user_id, owner_id, post_id)
+        VALUES ($1, $2, $3)
+    `)
+
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, entry := range feedEntries {
+
+		if _, err := stmt.ExecContext(ctx, entry.UserID, entry.OwnerID, entry.PostID); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }

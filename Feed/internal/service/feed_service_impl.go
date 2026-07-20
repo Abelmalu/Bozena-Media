@@ -108,3 +108,29 @@ func (feedService *FeedService)	DecreaseLikeCount(ctx context.Context,postID int
 
 	return nil
 }
+
+
+func (feedService *FeedService) GetCachePosts(ctx context.Context,userID int)(*dto.UserCachePostsResponse,error){
+
+	resp,err := feedService.FeedRepo.GetCachePosts(ctx,userID)
+
+	if err != nil {
+
+		return nil,err
+	}
+
+	return resp,nil
+
+}
+
+
+func (feedService *FeedService) AddFeedEntries(ctx context.Context, feedEntries []*dto.FeedEntry) error{
+
+
+	if err := feedService.FeedRepo.AddFeedEntries(ctx,feedEntries); err != nil {
+
+		return err
+	}
+
+	return nil
+}
