@@ -370,6 +370,13 @@ func followedConsumer(consumer sarama.Consumer, followedTopic string, feedServic
 
 			}
 
+			if len(resp.CachePosts) == 0 {
+
+				logger.Info("User doesn't have any posts")
+
+				continue
+			}
+
 			var feedEntries  []*dto.FeedEntry
 
 			for _,cachePost := range resp.CachePosts {

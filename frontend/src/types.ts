@@ -95,10 +95,9 @@ export type UserPost = {
   title: string;
   content: string;
   user_id: number;
-  post_image_url?: string;
-  image?: string;
   like_count?: number;
   likeCount?: number;
+  post_image_url?: string;
 };
 
 export type UserPostsResponse = {

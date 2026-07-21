@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { FeedItem, ProfileUser } from '../types';
-import { getPostLikes } from '../lib/api';
+import { getPostLikes, resolveImageUrl } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 
 export function FeedCard({
   item,
@@ -9,17 +10,20 @@ export function FeedCard({
   liked,
   onLike,
   onOpenLikes,
+  onLikeStatusFetched,
 }: {
   item: FeedItem;
   ownerId: number;
   liked: boolean;
   onLike: () => void;
   onOpenLikes: () => void;
+  onLikeStatusFetched?: (postId: number, liked: boolean) => void;
 }) {
   const canOpenProfile = ownerId > 0;
   const [likesCount, setLikesCount] = useState<number | null>(null);
   const postId = item.PostID ?? item.post_id ?? item.postId ?? item.id ?? 0;
-  const imageUrl = item.Image ?? item.image ?? '';
+  const imageUrl = resolveImageUrl(item.Image ?? item.image);
+  const { username: currentUsername } = useAuth();
 
   useEffect(() => {
     let active = true;
@@ -28,6 +32,10 @@ export function FeedCard({
         .then((res) => {
           if (active) {
             setLikesCount(res.users?.length ?? 0);
+            if (currentUsername && onLikeStatusFetched) {
+              const isLikedByMe = res.users?.some((u) => u.username === currentUsername) ?? false;
+              onLikeStatusFetched(postId, isLikedByMe);
+            }
           }
         })
         .catch(() => {});
@@ -35,7 +43,7 @@ export function FeedCard({
     return () => {
       active = false;
     };
-  }, [postId, liked]);
+  }, [postId, liked, currentUsername, onLikeStatusFetched]);
 
   return (
     <article className="feed-card">

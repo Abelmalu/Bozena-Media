@@ -306,3 +306,13 @@ export async function uploadFileToMinio(file: File, presigned: PresignedUploadRe
   // Return the object key so it can be stored alongside the record
   return fd.key;
 }
+
+export function resolveImageUrl(path: string | null | undefined): string {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:')) {
+    return path;
+  }
+  // Remove leading slash if any
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  return `http://localhost:9000/bozena-media/${cleanPath}`;
+}

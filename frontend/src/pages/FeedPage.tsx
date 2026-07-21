@@ -144,6 +144,14 @@ export function FeedPage() {
                   }
                   void openLikes(postId);
                 }}
+                onLikeStatusFetched={(postId, isLikedByMe) => {
+                  setLikedMap((prev) => {
+                    if (prev[postId] === isLikedByMe) return prev;
+                    const next = { ...prev, [postId]: isLikedByMe };
+                    writeLikedPosts(next);
+                    return next;
+                  });
+                }}
               />
             ))}
           </div>

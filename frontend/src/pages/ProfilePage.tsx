@@ -9,6 +9,7 @@ import {
   updatePost,
   deletePost,
   uploadFileToMinio,
+  resolveImageUrl,
 } from '../lib/api';
 import type { FollowersResponse, FollowingsResponse, ProfileUser, UserPostsResponse, UserPost } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -213,7 +214,7 @@ export function ProfilePage() {
         <div className="stack">
           {avatarUrl ? (
             <div className="profile-avatar-card">
-              <img className="profile-avatar" src={avatarUrl} alt={`${username ?? 'User'} avatar`} />
+              <img className="profile-avatar" src={resolveImageUrl(avatarUrl)} alt={`${username ?? 'User'} avatar`} />
             </div>
           ) : isOwnProfile ? (
             <div className="profile-avatar-empty">
@@ -354,7 +355,7 @@ export function ProfilePage() {
                   <div className="feed-image-wrap">
                     <img
                       className="feed-image"
-                      src={post.post_image_url ?? post.image}
+                      src={resolveImageUrl(post.post_image_url ?? post.image)}
                       alt={post.title ? `Post image for ${post.title}` : 'Post image'}
                       loading="lazy"
                     />
