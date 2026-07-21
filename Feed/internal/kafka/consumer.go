@@ -185,7 +185,7 @@ func workers(msgs <-chan *sarama.ConsumerMessage, wgs *sync.WaitGroup, feedServi
 		go func() {
 			defer wg.Done()
 
-			err := feedService.CreateCachePost(ctx, post.ID, post.Title, post.Content, post.Image)
+			err := feedService.CreateCachePost(ctx, post.ID, post.Title, post.Content, post.Image, post.UserID)
 
 			if err != nil {
 				logger.Error("Error inserting to posts_cache", zap.Error(err))
@@ -366,7 +366,7 @@ func followedConsumer(consumer sarama.Consumer, followedTopic string, feedServic
 
 			}
 
-			feedEntries := make([]*dto.FeedEntry,3)
+			var feedEntries  []*dto.FeedEntry
 
 			for _,cachePost := range resp.CachePosts {
 

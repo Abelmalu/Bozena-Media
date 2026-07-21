@@ -40,9 +40,9 @@ func (feedService *FeedService)	GetUserFeed(ctx context.Context,cursor string, u
 }
 
 
-func (feedService *FeedService) CreateCachePost(ctx context.Context, postID int, title,content,image string) error {
+func (feedService *FeedService) CreateCachePost(ctx context.Context, postID int, title,content,image string,userID int) error {
 
-	err := feedService.FeedRepo.CreateCachePost(ctx, postID, title,content,image)
+	err := feedService.FeedRepo.CreateCachePost(ctx, postID, title,content,image,userID)
 
 	return err
 

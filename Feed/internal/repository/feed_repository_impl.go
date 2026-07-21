@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/abelmalu/golang-posts/Feed/internal/dto"
@@ -171,11 +172,11 @@ func (feedRepo *FeedRepository) GetUserFeed(ctx context.Context, cursor string, 
 
 }
 
-func (feedRepository *FeedRepository) CreateCachePost(ctx context.Context, postID int, title, content, image string) error {
+func (feedRepository *FeedRepository) CreateCachePost(ctx context.Context, postID int, title, content, image string, userID int) error {
 
 	query := `INSERT INTO posts_cache (post_id,title,content,image,user_id)  VALUES($1,$2,$3,$4,$5)`
 
-	_, err := feedRepository.DB.ExecContext(ctx, query, postID, title, content, image)
+	_, err := feedRepository.DB.ExecContext(ctx, query, postID, title, content, image, userID)
 
 	var pgErr *pgconn.PgError
 	if err != nil {
@@ -304,11 +305,12 @@ func (feedRepo *FeedRepository) GetCachePosts(ctx context.Context, userID int) (
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 		}
+		fmt.Println("######3",cachePost)
 
 		cachePosts = append(cachePosts, &cachePost)
 
 	}
-
+fmt.Println("8888888",cachePosts)
 	return &dto.UserCachePostsResponse{
 
 		CachePosts: cachePosts,
@@ -318,6 +320,10 @@ func (feedRepo *FeedRepository) GetCachePosts(ctx context.Context, userID int) (
 
 func (repo *FeedRepository) AddFeedEntries(ctx context.Context, feedEntries []*dto.FeedEntry) error {
 
+	if len(feedEntries) == 0 {
+
+		fmt.Println("empty feedEntries")
+	}
 	tx, err := repo.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -336,7 +342,13 @@ func (repo *FeedRepository) AddFeedEntries(ctx context.Context, feedEntries []*d
 
 	for _, entry := range feedEntries {
 
+		if entry == nil {
+			fmt.Println("Found a nil entry in the slice!")
+			continue // Skip this element safely
+		}
+
 		if _, err := stmt.ExecContext(ctx, entry.UserID, entry.OwnerID, entry.PostID); err != nil {
+
 			return err
 		}
 	}
