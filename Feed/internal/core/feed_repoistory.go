@@ -17,5 +17,5 @@ type FeedRepository interface {
 	DecreaseLikeCount(ctx context.Context, postID int) error
 	GetCachePosts(ctx context.Context, userID int) (*dto.UserCachePostsResponse, error)
 	AddFeedEntries(ctx context.Context,feedEntries []*dto.FeedEntry ) error
-
+	DeleteFeedEntries(ctx context.Context,userID,ownerID int) error
 }

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-
 	"github.com/abelmalu/golang-posts/Feed/internal/dto"
 	ierrors "github.com/abelmalu/golang-posts/Feed/internal/errors"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -305,12 +304,10 @@ func (feedRepo *FeedRepository) GetCachePosts(ctx context.Context, userID int) (
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 		}
-		fmt.Println("######3",cachePost)
 
 		cachePosts = append(cachePosts, &cachePost)
 
 	}
-fmt.Println("8888888",cachePosts)
 	return &dto.UserCachePostsResponse{
 
 		CachePosts: cachePosts,
@@ -354,4 +351,21 @@ func (repo *FeedRepository) AddFeedEntries(ctx context.Context, feedEntries []*d
 	}
 
 	return tx.Commit()
+}
+
+
+func (feedRepo *FeedRepository) DeleteFeedEntries(ctx context.Context,userID,ownerID int) error {
+
+	query := `DELETE FROM feed_entries WHERE user_id=$1 AND owner_id=$2`
+
+	_,err := feedRepo.DB.ExecContext(ctx,query,userID,ownerID)
+
+
+	if err != nil {
+
+		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+	}
+
+	return nil
+
 }

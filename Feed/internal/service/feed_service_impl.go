@@ -134,3 +134,15 @@ func (feedService *FeedService) AddFeedEntries(ctx context.Context, feedEntries 
 
 	return nil
 }
+
+
+func (feedService *FeedService)	DeleteFeedEntries(ctx context.Context,userID,ownerID int) error {
+
+
+	if err := feedService.FeedRepo.DeleteFeedEntries(ctx,userID,ownerID); err != nil {
+
+		return err
+	}
+
+	return nil
+}

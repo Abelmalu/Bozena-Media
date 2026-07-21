@@ -56,7 +56,7 @@ func initFollowClient() pb.FollowServiceClient {
 }
 
 // StartEventConsumers initializes separate listeners for different topics
-func StartConsumer(brokers []string, userTopic string, postTopic string, likedTopic, unLikedTopic string,followedTopic string, feedService core.FeedService, logger *platform.Logger) {
+func StartConsumer(brokers []string, userTopic , postTopic , likedTopic, unLikedTopic ,followedTopic,unfollowTopic string, feedService core.FeedService, logger *platform.Logger) {
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
 
@@ -94,7 +94,11 @@ func StartConsumer(brokers []string, userTopic string, postTopic string, likedTo
 		defer wg.Done()
 		followedConsumer(consumer, followedTopic, feedService, logger)
 	}()
-
+	
+	go func() {
+		defer wg.Done()
+		unfollowedConsumer(consumer, unfollowTopic, feedService, logger)
+	}()
 	wg.Wait()
 }
 
@@ -398,42 +402,42 @@ func followedConsumer(consumer sarama.Consumer, followedTopic string, feedServic
 
 }
 
-// func unfollowedConsumer(consumer sarama.Consumer, unfollowedTopic string, feedService core.FeedService, logger *platform.Logger) {
+func unfollowedConsumer(consumer sarama.Consumer, unfollowedTopic string, feedService core.FeedService, logger *platform.Logger) {
 
-// 	pc, err := consumer.ConsumePartition(unfollowedTopic, 0, sarama.OffsetNewest)
-// 	if err != nil {
-// 		log.Fatalf("Error consuming post partition: %v", err)
-// 	}
-// 	defer pc.Close()
+	pc, err := consumer.ConsumePartition(unfollowedTopic, 0, sarama.OffsetNewest)
+	if err != nil {
+		log.Fatalf("Error consuming post partition: %v", err)
+	}
+	defer pc.Close()
 
-// 	for {
+	for {
 
-// 		select {
+		select {
 
-// 		case msg := <-pc.Messages():
+		case msg := <-pc.Messages():
 
-// 			var followed follow
+			var followed follow
 
-// 			if err := json.Unmarshal(msg.Value, &followed); err != nil {
+			if err := json.Unmarshal(msg.Value, &followed); err != nil {
 
-// 				logger.Error("Error while unmarshaling followed event", zap.Error(err))
-// 				continue
-// 			}
+				logger.Error("Error while unmarshaling followed event", zap.Error(err))
+				continue
+			}
 
-// 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 
-// 			err := feedService.DecreaseFollowCounts(ctx, followed.FollowerID, followed.FollowingID)
+			err := feedService.DeleteFeedEntries(ctx, followed.FollowerID, followed.FollowingID)
 
-// 			if err != nil {
+			if err != nil {
 
-// 				logger.Error("Error when decreasing follow count", zap.Error(err))
-// 			}
+				logger.Error("Error when deleting feed entries", zap.Error(err))
+			}
 
-// 			cancel()
+			cancel()
 
-// 		case err := <-pc.Errors():
-// 			logger.Error("Post consumer error: %v", zap.Error(err))
-// 		}
-// 	}
+		case err := <-pc.Errors():
+			logger.Error("Post consumer error: %v", zap.Error(err))
+		}
+	}
 
-// }
+}
