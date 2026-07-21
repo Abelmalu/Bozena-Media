@@ -100,7 +100,6 @@ func consumePostEvents(consumer sarama.Consumer, topic string, likeService core.
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-			// Assuming you implement CreateCachePost in your LikeService
 			err = likeService.CreateCachePost(ctx, post.ID,post.Title)
 			cancel() 
 

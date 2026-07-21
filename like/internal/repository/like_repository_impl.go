@@ -23,7 +23,7 @@ func NewLikeRepository(db *sql.DB) *LikeRespository {
 	}
 }
 
-func (likeRespository *LikeRespository) ToggleLike(ctx context.Context, state bool, userID, postID int) (string,error) {
+func (likeRespository *LikeRespository) ToggleLike(ctx context.Context, state bool, userID, postID int) (string, error) {
 
 	if state {
 		query := `
@@ -37,11 +37,22 @@ func (likeRespository *LikeRespository) ToggleLike(ctx context.Context, state bo
 
 			if errors.As(err, &pgErr) {
 
+				switch pgErr.Code {
+
+				case "23505":
+
+					return "", ierrors.NewBadRequestError(ierrors.ErrorMessage("post already liked"), nil)
+				}
+
+			}
+
+			if errors.As(err, &pgErr) {
+
 				return "", ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 			}
 			if errors.Is(err, context.Canceled) {
 
-				return "",ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+				return "", ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
 			}
 			if errors.Is(err, context.DeadlineExceeded) {
 
@@ -52,13 +63,12 @@ func (likeRespository *LikeRespository) ToggleLike(ctx context.Context, state bo
 
 		}
 
-
-		return "post liked successfully",nil
+		return "post liked successfully", nil
 	} else {
 
 		query := `DELETE FROM likes WHERE user_id = $1 AND post_id = $2;`
 
-		result, err := likeRespository.DB.ExecContext(ctx, query,userID, postID)
+		result, err := likeRespository.DB.ExecContext(ctx, query, userID, postID)
 
 		var appErr *pgconn.PgError
 		if err != nil {
@@ -69,42 +79,39 @@ func (likeRespository *LikeRespository) ToggleLike(ctx context.Context, state bo
 			}
 			if errors.Is(err, context.Canceled) {
 
-				return "",ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
+				return "", ierrors.NewCancelationError(ierrors.MSGRequestCanceled, err)
 			}
 			if errors.Is(err, context.DeadlineExceeded) {
 
-				return "",ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
+				return "", ierrors.NewTimeoutError(ierrors.MSGTimeoutReached, err)
 			}
 
-			return "",ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			return "", ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 		}
 		rowsAffected, err := result.RowsAffected()
 
 		if err != nil {
-			return "",ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
-
-		}
-
-		if rowsAffected == 0 {
 			return "", ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 		}
 
-		return "post unliked successfully",nil
+		if rowsAffected == 0 {
+			return "", ierrors.NewBadRequestError(ierrors.ErrorMessage("Already unliked the post"), err)
 
+		}
+
+		return "post unliked successfully", nil
 
 	}
 
-
 }
-
 
 func (likeRepository *LikeRespository) CreateCacheUser(ctx context.Context, userID int, username, name string) error {
 
 	query := `INSERT INTO users_cache (user_id,username,name)  VALUES($1,$2,$3)`
 
-	_, err := likeRepository.DB.ExecContext(ctx, query, userID, username,name)
+	_, err := likeRepository.DB.ExecContext(ctx, query, userID, username, name)
 
 	var pgErr *pgconn.PgError
 	if err != nil {
@@ -125,15 +132,11 @@ func (likeRepository *LikeRespository) CreateCacheUser(ctx context.Context, user
 		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 	}
-    
+
 	return nil
 }
 
-
-
-func (likeRepository *LikeRespository) CreateCachePost(ctx context.Context, postID int, title string)error{
-
-
+func (likeRepository *LikeRespository) CreateCachePost(ctx context.Context, postID int, title string) error {
 
 	query := `INSERT INTO posts_cache (post_id,title)  VALUES($1,$2)`
 
@@ -158,23 +161,20 @@ func (likeRepository *LikeRespository) CreateCachePost(ctx context.Context, post
 		return ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 
 	}
-    
-	return nil
 
+	return nil
 
 }
 
-
-func (likeRepository *LikeRespository) GetPostLikes (ctx context.Context, postID,limit int,cursor string)(*dto.PaginatedPostLikesResponse,error) {
+func (likeRepository *LikeRespository) GetPostLikes(ctx context.Context, postID, limit int, cursor string) (*dto.PaginatedPostLikesResponse, error) {
 
 	var usersLiked []*dto.User
 	var after string
 	var hasNext bool
 
-
 	if cursor != "" {
 
-		cursorByte,err := base64.StdEncoding.DecodeString(cursor)
+		cursorByte, err := base64.StdEncoding.DecodeString(cursor)
 		if err != nil {
 
 			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
@@ -182,18 +182,18 @@ func (likeRepository *LikeRespository) GetPostLikes (ctx context.Context, postID
 
 		cursorStr := string(cursorByte)
 
-		cursorInt,err := strconv.Atoi(cursorStr)
+		cursorInt, err := strconv.Atoi(cursorStr)
 
 		if err != nil {
 
-			return nil,ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+			return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 		}
 
-			// Joining likes table and users to get who liked a post 
+		// Joining likes table and users to get who liked a post
 		query := `SELECT u.user_id,u.name,u.username FROM users_cache u 
 				  INNER JOIN likes l ON u.user_id = l.user_id WHERE l.post_id = $1 AND l.id < $2 ORDER BY l.id DESC LIMIT $3 `
 
-		rows, err := likeRepository.DB.QueryContext(ctx,query,postID,cursorInt,(limit + 1))		  
+		rows, err := likeRepository.DB.QueryContext(ctx, query, postID, cursorInt, (limit + 1))
 
 		if err != nil {
 			var pgErr *pgconn.PgError
@@ -215,19 +215,17 @@ func (likeRepository *LikeRespository) GetPostLikes (ctx context.Context, postID
 
 		}
 
-
 		for rows.Next() {
 			var userLiked dto.User
 
-			if err := rows.Scan(&userLiked.ID,&userLiked.Name,&userLiked.Username); err != nil {
+			if err := rows.Scan(&userLiked.ID, &userLiked.Name, &userLiked.Username); err != nil {
 
-
-				return nil,ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 			}
 
 			if len(usersLiked) == limit {
 
-				hasNext = true 
+				hasNext = true
 
 				cursor = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(userLiked.ID)))
 
@@ -238,19 +236,17 @@ func (likeRepository *LikeRespository) GetPostLikes (ctx context.Context, postID
 
 		}
 
-
 		return &dto.PaginatedPostLikesResponse{
 			UsersLiked: usersLiked,
-			HasNext: hasNext,
-			Cursor: after,
-		},nil
+			HasNext:    hasNext,
+			Cursor:     after,
+		}, nil
 	} else {
 
 		query := `SELECT u.user_id,u.name,u.username FROM users_cache u 
 				  INNER JOIN likes l ON u.user_id = l.user_id WHERE l.post_id = $1  ORDER BY l.id DESC LIMIT $2 `
 
-
-		rows, err := likeRepository.DB.QueryContext(ctx,query,postID,(limit + 1))		  
+		rows, err := likeRepository.DB.QueryContext(ctx, query, postID, (limit + 1))
 
 		if err != nil {
 			var pgErr *pgconn.PgError
@@ -272,19 +268,17 @@ func (likeRepository *LikeRespository) GetPostLikes (ctx context.Context, postID
 
 		}
 
-
 		for rows.Next() {
 			var userLiked dto.User
 
-			if err := rows.Scan(&userLiked.ID,&userLiked.Name,&userLiked.Username); err != nil {
+			if err := rows.Scan(&userLiked.ID, &userLiked.Name, &userLiked.Username); err != nil {
 
-
-				return nil,ierrors.NewDatabaseError(ierrors.MSGDatabaseError,err)
+				return nil, ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 			}
 
 			if len(usersLiked) == limit {
 
-				hasNext = true 
+				hasNext = true
 
 				cursor = base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(userLiked.ID)))
 
@@ -295,12 +289,10 @@ func (likeRepository *LikeRespository) GetPostLikes (ctx context.Context, postID
 
 		}
 
-
 		return &dto.PaginatedPostLikesResponse{
 			UsersLiked: usersLiked,
-			HasNext: hasNext,
-			Cursor: after,
-		},nil
+			HasNext:    hasNext,
+			Cursor:     after,
+		}, nil
 	}
 }
- 

@@ -101,7 +101,8 @@ func (lh *LikeHandler) ToggleLike(ctx context.Context, req *pb.LikeRequest) (*pb
 				return nil, status.Error(codes.DeadlineExceeded, string(appErr.Message))
 			case ierrors.TypeCancelled:
 				return nil, status.Error(codes.Canceled, string(appErr.Message))
-
+			case ierrors.TypeBadRequest:
+				return nil,status.Error(codes.InvalidArgument,string(appErr.Message))
 			default:
 				return nil, status.Error(codes.Internal, "internal error")
 			}

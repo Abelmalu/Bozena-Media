@@ -38,6 +38,12 @@ func (followRepository *FollowRepository) ToggleFollow(ctx context.Context, foll
 
 			if errors.As(err, &pgErr) {
 
+				switch pgErr.Code{
+
+				case "23505":
+					return "",ierrors.NewBadRequestError(ierrors.ErrorMessage("already following the user"),nil)
+				}
+
 				return "", ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
 			}
 			if errors.Is(err, context.Canceled) {
@@ -87,7 +93,7 @@ func (followRepository *FollowRepository) ToggleFollow(ctx context.Context, foll
 		}
 
 		if rowsAffected == 0 {
-			return "", ierrors.NewDatabaseError(ierrors.MSGDatabaseError, err)
+			return "", ierrors.NewBadRequestError(ierrors.ErrorMessage("Already unfollowed the user"), err)
 
 		}
 
