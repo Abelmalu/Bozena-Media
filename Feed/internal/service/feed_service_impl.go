@@ -2,52 +2,70 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/abelmalu/golang-posts/Feed/internal/core"
 	"github.com/abelmalu/golang-posts/Feed/internal/dto"
 	ierrors "github.com/abelmalu/golang-posts/Feed/internal/errors"
+	"github.com/minio/minio-go/v7"
 )
 
-
-
 type FeedService struct {
-
-
-	FeedRepo core.FeedRepository
-
-
-
+	FeedRepo    core.FeedRepository
+	minioClient *minio.Client
 }
 
-func NewFeedService(feedRepo core.FeedRepository) *FeedService {
+func NewFeedService(feedRepo core.FeedRepository, minioClient *minio.Client) *FeedService {
 
 	return &FeedService{
-		FeedRepo: feedRepo,
+		FeedRepo:    feedRepo,
+		minioClient: minioClient,
 	}
 }
 
+func (feedService *FeedService) GetUserFeed(ctx context.Context, cursor string, userID, limit int) (*dto.PaginatedResponse, error) {
 
-func (feedService *FeedService)	GetUserFeed(ctx context.Context,cursor string, userID,limit int)(*dto.PaginatedResponse,error){
+	resp, err := feedService.FeedRepo.GetUserFeed(ctx, cursor, userID, limit)
 
-		resp,err := feedService.FeedRepo.GetUserFeed(ctx,cursor,userID,limit)
+	if err != nil {
 
-		if err != nil {
+		return nil, err
+	}
 
-			return nil,err
+	objectName := ""
+
+	for _, feed := range resp.UserFeeds {
+
+		if feed.Image != nil {
+
+			objectName = *feed.Image
+
+			url, err := feedService.minioClient.PresignedGetObject(ctx, "bozena-media", objectName, time.Hour, nil)
+
+			if err != nil {
+
+				return nil, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
+			}
+
+			urlStr := url.String()
+			feed.Image = &urlStr
+
 		}
 
-	return resp,nil
+		
+
+	}
+
+	return resp, nil
 }
 
+func (feedService *FeedService) CreateCachePost(ctx context.Context, postID int, title, content, image string, userID int) error {
 
-func (feedService *FeedService) CreateCachePost(ctx context.Context, postID int, title,content,image string,userID int) error {
-
-	err := feedService.FeedRepo.CreateCachePost(ctx, postID, title,content,image,userID)
+	err := feedService.FeedRepo.CreateCachePost(ctx, postID, title, content, image, userID)
 
 	return err
 
 }
-
 
 func (feedService *FeedService) CreateCacheUser(ctx context.Context, userID int, username, name string) error {
 
@@ -71,37 +89,26 @@ func (feedService *FeedService) CreateCacheUser(ctx context.Context, userID int,
 
 }
 
+func (feedService *FeedService) CreateFeedEntries(ctx context.Context, followersID []int, postID, ownerID int) error {
 
-
-func (feedService *FeedService) CreateFeedEntries(ctx context.Context,followersID []int,postID,ownerID int ) error {
-
-
-	err := feedService.FeedRepo.InsertFeedEntries(ctx,followersID,postID,ownerID)
-	
+	err := feedService.FeedRepo.InsertFeedEntries(ctx, followersID, postID, ownerID)
 
 	return err
 
-
-
 }
 
+func (feedService *FeedService) IncreaseLikeCount(ctx context.Context, postID int) error {
 
-
-
-
-func (feedService *FeedService)IncreaseLikeCount(ctx context.Context,postID int) error {
-
-	if err := feedService.FeedRepo.IncreaseLikeCount(ctx,postID); err != nil {
+	if err := feedService.FeedRepo.IncreaseLikeCount(ctx, postID); err != nil {
 
 		return err
 	}
 
 	return nil
 }
-func (feedService *FeedService)	DecreaseLikeCount(ctx context.Context,postID int) error {
+func (feedService *FeedService) DecreaseLikeCount(ctx context.Context, postID int) error {
 
-
-	if err := feedService.FeedRepo.DecreaseLikeCount(ctx,postID); err != nil {
+	if err := feedService.FeedRepo.DecreaseLikeCount(ctx, postID); err != nil {
 
 		return err
 	}
@@ -109,25 +116,22 @@ func (feedService *FeedService)	DecreaseLikeCount(ctx context.Context,postID int
 	return nil
 }
 
+func (feedService *FeedService) GetCachePosts(ctx context.Context, userID int) (*dto.UserCachePostsResponse, error) {
 
-func (feedService *FeedService) GetCachePosts(ctx context.Context,userID int)(*dto.UserCachePostsResponse,error){
-
-	resp,err := feedService.FeedRepo.GetCachePosts(ctx,userID)
+	resp, err := feedService.FeedRepo.GetCachePosts(ctx, userID)
 
 	if err != nil {
 
-		return nil,err
+		return nil, err
 	}
 
-	return resp,nil
+	return resp, nil
 
 }
 
+func (feedService *FeedService) AddFeedEntries(ctx context.Context, feedEntries []*dto.FeedEntry) error {
 
-func (feedService *FeedService) AddFeedEntries(ctx context.Context, feedEntries []*dto.FeedEntry) error{
-
-
-	if err := feedService.FeedRepo.AddFeedEntries(ctx,feedEntries); err != nil {
+	if err := feedService.FeedRepo.AddFeedEntries(ctx, feedEntries); err != nil {
 
 		return err
 	}
@@ -135,11 +139,9 @@ func (feedService *FeedService) AddFeedEntries(ctx context.Context, feedEntries 
 	return nil
 }
 
+func (feedService *FeedService) DeleteFeedEntries(ctx context.Context, userID, ownerID int) error {
 
-func (feedService *FeedService)	DeleteFeedEntries(ctx context.Context,userID,ownerID int) error {
-
-
-	if err := feedService.FeedRepo.DeleteFeedEntries(ctx,userID,ownerID); err != nil {
+	if err := feedService.FeedRepo.DeleteFeedEntries(ctx, userID, ownerID); err != nil {
 
 		return err
 	}

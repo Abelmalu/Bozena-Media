@@ -19,7 +19,7 @@ import (
 type PostService interface {
 	CreatePost(ctx context.Context, userID int64, title, content, ObjectName string) (*pb.CreatePostResponse, error)
 	ListPosts(ctx context.Context) (*pb.ListPostsResponse, error)
-	UpdatePost(ctx context.Context, postID int64, title string, content string) (*pb.UpdatePostResponse, error)
+	UpdatePost(ctx context.Context, postID int64, title string, content,ObjectName string) (*pb.UpdatePostResponse, error)
 	DeletePost(ctx context.Context, postID int64) (*pb.DeletePostResponse, error)
 	GetUserPosts(ctx context.Context, userID, limit int64, cursor string) (*pb.GetUserPostResponse, error)
 	GeneratePostUploadURL(ctx context.Context, userID int, fileName, ContentType string) (*pb.GenerateUploadURLResponse, error)
@@ -138,6 +138,8 @@ func (ps *PostHandler) UpdatePost(c *gin.Context) {
 	var input struct {
 		Title   string `json:"title" db:"title"`
 		Content string `json:"content" db:"content"`
+		ObjectName string `json:"object_name"`
+	
 	}
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
@@ -188,7 +190,7 @@ func (ps *PostHandler) UpdatePost(c *gin.Context) {
 		return
 	}
 
-	resp, err := ps.postClient.UpdatePost(ctx, postID, input.Title, input.Content)
+	resp, err := ps.postClient.UpdatePost(ctx, postID, input.Title, input.Content,input.ObjectName)
 	if err != nil {
 
 		ps.logger.Error("GRPC Error", zap.Error(err), zap.String("requestID", requestID))

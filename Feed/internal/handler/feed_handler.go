@@ -88,7 +88,7 @@ func (fh *FeedHandler) GetUserFeed(ctx context.Context, req *pb.GetUserFeedReque
 			UserName:    userFeed.UserName,
 			Name:        userFeed.Name,
 			PostOwnerID: userFeed.PostOwnerID,
-			Image: *userFeed.Image,
+			PostImageUrl: *userFeed.Image,
 			LikeCount: int64(userFeed.LikeCount),
 			
 		}

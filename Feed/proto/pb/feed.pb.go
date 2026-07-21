@@ -89,7 +89,7 @@ type UserFeed struct {
 	PostOwnerID   int64                  `protobuf:"varint,4,opt,name=PostOwnerID,proto3" json:"PostOwnerID,omitempty"`
 	UserName      string                 `protobuf:"bytes,5,opt,name=UserName,proto3" json:"UserName,omitempty"`
 	Name          string                 `protobuf:"bytes,6,opt,name=Name,proto3" json:"Name,omitempty"`
-	Image         string                 `protobuf:"bytes,7,opt,name=Image,proto3" json:"Image,omitempty"`
+	PostImageUrl  string                 `protobuf:"bytes,7,opt,name=post_image_url,json=postImageUrl,proto3" json:"post_image_url,omitempty"`
 	LikeCount     int64                  `protobuf:"varint,8,opt,name=LikeCount,proto3" json:"LikeCount,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -167,9 +167,9 @@ func (x *UserFeed) GetName() string {
 	return ""
 }
 
-func (x *UserFeed) GetImage() string {
+func (x *UserFeed) GetPostImageUrl() string {
 	if x != nil {
-		return x.Image
+		return x.PostImageUrl
 	}
 	return ""
 }
@@ -249,15 +249,15 @@ const file_proto_feed_proto_rawDesc = "" +
 	"\x12GetUserFeedRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x16\n" +
 	"\x06cursor\x18\x02 \x01(\tR\x06cursor\x12\x14\n" +
-	"\x05limit\x18\x03 \x01(\x03R\x05limit\"\xe8\x01\n" +
+	"\x05limit\x18\x03 \x01(\x03R\x05limit\"\xf8\x01\n" +
 	"\bUserFeed\x12\x16\n" +
 	"\x06PostID\x18\x01 \x01(\x03R\x06PostID\x12\x1c\n" +
 	"\tPostTitle\x18\x02 \x01(\tR\tPostTitle\x12 \n" +
 	"\vPostContent\x18\x03 \x01(\tR\vPostContent\x12 \n" +
 	"\vPostOwnerID\x18\x04 \x01(\x03R\vPostOwnerID\x12\x1a\n" +
 	"\bUserName\x18\x05 \x01(\tR\bUserName\x12\x12\n" +
-	"\x04Name\x18\x06 \x01(\tR\x04Name\x12\x14\n" +
-	"\x05Image\x18\a \x01(\tR\x05Image\x12\x1c\n" +
+	"\x04Name\x18\x06 \x01(\tR\x04Name\x12$\n" +
+	"\x0epost_image_url\x18\a \x01(\tR\fpostImageUrl\x12\x1c\n" +
 	"\tLikeCount\x18\b \x01(\x03R\tLikeCount\"x\n" +
 	"\x13GetUserFeedResponse\x123\n" +
 	"\tuserfeeds\x18\x01 \x03(\v2\x15.feedservice.UserFeedR\tuserfeeds\x12\x16\n" +

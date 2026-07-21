@@ -54,13 +54,13 @@ func (PostRepository *PostRepository) CreatePost(ctx context.Context, post *mode
 
 	return post, nil
 }
-func (pr *PostRepository) UpdatePost(ctx context.Context, ID int, title string, content string) (*models.Post, error) {
+func (pr *PostRepository) UpdatePost(ctx context.Context, ID int, title string, content ,image string) (*models.Post, error) {
 
 	var post models.Post
 
-	query := `UPDATE posts SET title=$1, content=$2 WHERE id=$3  RETURNING id, title, content`
+	query := `UPDATE posts SET title=$1, content=$2, image=$3 WHERE id=$4  RETURNING id, title, content`
 
-	err := pr.DB.QueryRowContext(ctx, query, title, content, ID).
+	err := pr.DB.QueryRowContext(ctx, query, title, content,image, ID).
 		Scan(&post.ID, &post.Title, &post.Content)
 
 	var pgErr *pgconn.PgError

@@ -10,12 +10,14 @@ import (
 	"github.com/abelmalu/golang-posts/Feed/config"
 	"github.com/abelmalu/golang-posts/Feed/internal/handler"
 	"github.com/abelmalu/golang-posts/Feed/internal/kafka"
+	miniocl "github.com/abelmalu/golang-posts/Feed/internal/minio"
 	"github.com/abelmalu/golang-posts/Feed/internal/repository"
 	"github.com/abelmalu/golang-posts/Feed/internal/service"
 	"github.com/abelmalu/golang-posts/Feed/proto/pb"
 	"github.com/abelmalu/golang-posts/platform"
 	_ "github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -82,8 +84,14 @@ func (app *App) Run() {
 
 	s := grpc.NewServer()
 
+	minioClient, err := miniocl.NewMinioClient()
+
+	if err != nil {
+
+		logger.Error("minion Error", zap.Error(err))
+	}
 	feedRepo := repository.NewFeedRepository(app.DB)
-	feedService := service.NewFeedService(feedRepo)
+	feedService := service.NewFeedService(feedRepo, minioClient)
 	fh := handler.NewFeedHandler(feedService, logger)
 
 	pb.RegisterFeedServiceServer(s, fh)
@@ -96,9 +104,8 @@ func (app *App) Run() {
 	followedTopic := "followed"
 	unfollowedTopic := "unfollowed"
 
-
 	// Run consumer in the background
-	go kafka.StartConsumer(brokers, Usertopic, postTopic,likedTopic,unLikedTopic,followedTopic,unfollowedTopic, feedService, logger)
+	go kafka.StartConsumer(brokers, Usertopic, postTopic, likedTopic, unLikedTopic, followedTopic, unfollowedTopic, feedService, logger)
 
 	s.Serve(lis)
 

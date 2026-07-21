@@ -177,6 +177,7 @@ func (ph *PostHandler) UpdatePost(ctx context.Context, req *pb.UpdatePostRequest
 	post := dto.UpdatePostRequest{
 		Title:   req.Title,
 		Content: req.Content,
+		Image:req.PostImageUrl,
 	}
 	validationErrStr := post.Validate()
 
@@ -199,7 +200,7 @@ func (ph *PostHandler) UpdatePost(ctx context.Context, req *pb.UpdatePostRequest
 
 	}
 
-	_, err = ph.service.UpdatePost(ctx, postID, post.Title, post.Content)
+	_, err = ph.service.UpdatePost(ctx, postID, post.Title, post.Content,post.Image)
 
 	if err != nil {
 		ph.logger.Error("Post service error", zap.Error(err), zap.String("requestID", requestID))

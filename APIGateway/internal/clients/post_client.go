@@ -39,7 +39,7 @@ func (pc *PostClient) ListPosts(ctx context.Context) (*pb.ListPostsResponse, err
 
 }
 
-func (pc *PostClient) UpdatePost(ctx context.Context,postID int64, title string,content string) (*pb.UpdatePostResponse, error) {
+func (pc *PostClient) UpdatePost(ctx context.Context,postID int64, title string,content, objectName string) (*pb.UpdatePostResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
@@ -48,6 +48,7 @@ func (pc *PostClient) UpdatePost(ctx context.Context,postID int64, title string,
 		PostId:  postID,
 		Title:   title,
 		Content: content,
+		PostImageUrl: objectName,
 	})
 }
 

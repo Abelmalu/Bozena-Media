@@ -74,14 +74,14 @@ func (postService *PostService) CreatePost(ctx context.Context, post *models.Pos
 	return createdPost, nil
 
 }
-func (postService *PostService) UpdatePost(ctx context.Context, postID int, title, content string) (*models.Post, error) {
+func (postService *PostService) UpdatePost(ctx context.Context, postID int, title, content,image string) (*models.Post, error) {
 
 	if postID <= 0 {
 
 		return nil, ierrors.NewValidationError(ierrors.MSGPathParamError, nil, nil)
 	}
 
-	updatedPost, err := postService.repo.UpdatePost(ctx, postID, title, content)
+	updatedPost, err := postService.repo.UpdatePost(ctx, postID, title, content,image)
 	if err != nil {
 
 		return nil, err

@@ -17,6 +17,7 @@ var AllowedTypes = map[string]bool{
 type UpdatePostRequest struct{
 	Title   string `json:"title"  db:"title" validate:"min=3,max=30,required"`
 	Content string `json:"content" db:"content" validate:"min=5,required"`
+	Image   string `json:"image" db:"image"`
 }
 
 type PaginatedResponse struct {
