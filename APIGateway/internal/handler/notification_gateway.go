@@ -71,6 +71,7 @@ func (nh *NotificationHanlder) Stream(c *gin.Context) {
 
 	}
 
+
 	userIDStr := strconv.Itoa(userID)
 
 	c.Request.Header.Set("X-Request-ID", requestID)
