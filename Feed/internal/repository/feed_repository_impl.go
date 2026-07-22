@@ -319,7 +319,7 @@ func (repo *FeedRepository) AddFeedEntries(ctx context.Context, feedEntries []*d
 
 	if len(feedEntries) == 0 {
 
-		fmt.Println("empty feedEntries")
+		fmt.Println("empty feedEntries!")
 	}
 	tx, err := repo.DB.BeginTx(ctx, nil)
 	if err != nil {
