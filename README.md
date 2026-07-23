@@ -47,6 +47,11 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`) is struc
 3. The Gateway forwards the request to the relevant service over gRPC.
 4. Services persist data in PostgreSQL, use Redis for auth/rate-limit state, and emit Kafka events where needed.
 
+### 🗂️ Static File Storage
+
+- Static files such as user avatars and post images are stored in MinIO object storage.
+- Services generate presigned URLs so clients can upload and access media securely without exposing the bucket directly.
+
 ### 🧩 Data Ownership
 
 - Each service owns its own PostgreSQL database and migrations.
