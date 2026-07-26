@@ -9,6 +9,7 @@ import (
 
 	"github.com/abelmalu/golang-posts/Chat/config"
 	"github.com/abelmalu/golang-posts/Chat/internal/handlers"
+	"github.com/abelmalu/golang-posts/Chat/internal/repository"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -66,6 +67,13 @@ func InitRoute(h *handlers.ChatHandler) {
 }
 
 func (app *App) Run(){
+
+	chatRepo := repository.NewChatRepository(app.mongoClient)
+
+
+
+	
+
 
 
 
