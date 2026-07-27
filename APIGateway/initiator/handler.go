@@ -12,6 +12,7 @@ type Handler struct {
 	fh                  *handler.FollowHandler
 	fd                  *handler.FeedHandler
 	notificationHandler *handler.NotificationHanlder
+	ch                   *handler.ChatHandler
 }
 
 func InitHandler(client Client, logger *platform.Logger) *Handler {
@@ -23,6 +24,7 @@ func InitHandler(client Client, logger *platform.Logger) *Handler {
 		fh:                  handler.NewFollowHandler(client.followClient, logger),
 		fd:                  handler.NewFeedHandler(client.feedClient, logger),
 		notificationHandler: handler.NewNotificationHandler(logger),
+		ch:					 handler.NewChatHandler(logger),
 	}
 
 }

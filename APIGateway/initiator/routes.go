@@ -27,23 +27,23 @@ func InitRoute(router *gin.Engine, handler Handler, logger *platform.Logger, red
 
 	//like route initialization
 	likeRouter := router.Group("api/post")
-
 	routing.InitLikeRoute(likeRouter, handler.lh, logger, redisClient)
 
 	//follow route initialization
-
 	followRouter := router.Group("api/follow")
-
 	routing.InitFollowRoute(followRouter, handler.fh, logger, redisClient)
 
 	//follow route initialization
 
 	feedRouter := router.Group("api/feed")
-
 	routing.InitFeedRoute(feedRouter, handler.fd, logger, redisClient)
 
+	// notification routes
 	notificationRouter := router.Group("api/notification")
-
 	routing.InitNotificationRoutes(notificationRouter, handler.notificationHandler, logger, redisClient)
 
+
+	// chat routes
+	chatRouter := router.Group("/api/chat")
+	routing.InitChatRoute(chatRouter,handler.ch,logger,redisClient)
 }
