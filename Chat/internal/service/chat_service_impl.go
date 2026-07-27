@@ -20,5 +20,5 @@ func NewChatService(r core.ChatRespository) *ChatService {
 
 func (cs *ChatService) CreateMessages(ctx context.Context, senderID, receiverID int) *dto.MessageResponse {
 
-	
+	return nil
 }

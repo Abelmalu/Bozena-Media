@@ -10,6 +10,8 @@ import (
 	"github.com/abelmalu/golang-posts/Chat/config"
 	"github.com/abelmalu/golang-posts/Chat/internal/handlers"
 	"github.com/abelmalu/golang-posts/Chat/internal/repository"
+	"github.com/abelmalu/golang-posts/Chat/internal/service"
+	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -17,7 +19,10 @@ import (
 
 type App struct {
 	mongoClient *mongo.Database
+	router      *gin.Engine
 }
+
+var logger = platform.InitZapLogger()
 
 func NewApp() *App {
 
@@ -30,9 +35,12 @@ func NewApp() *App {
 
 	DB := initDB(cfg)
 
+	r := gin.New()
+
 	return &App{
 
 		mongoClient: DB,
+		router:      r,
 	}
 }
 
@@ -58,24 +66,20 @@ func initDB(cfg *config.Config) *mongo.Database {
 	return database
 }
 
-func InitRoute(h *handlers.ChatHandler) {
+func InitRoute(h *handlers.ChatHandler, r *gin.Engine) {
 
-	router := gin.New()
-
-
-	router.Handle(http.MethodGet,"/api/chat/ws",h.HandleWebSocket)
+	r.Handle(http.MethodGet, "/api/chat/ws", h.HandleWebSocket)
 }
 
-func (app *App) Run(){
+func (app *App) Run() {
 
-	chatRepo := repository.NewChatRepository(app.mongoClient)
+	cr := repository.NewChatRepository(app.mongoClient)
+	cs := service.NewChatService(cr)
+	ch := handlers.NewChatHandler(cs, logger)
 
+	InitRoute(ch,app.router)
 
-
-	
-
-
-
-
+	log.Println("Starting server on port","8084")
+	app.router.Run(":8084")
 
 }
