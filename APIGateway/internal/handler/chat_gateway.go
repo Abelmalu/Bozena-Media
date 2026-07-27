@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/abelmalu/golang-posts/platform"
@@ -29,31 +27,49 @@ func NewChatHandler(l *platform.Logger) *ChatHandler {
 
 }
 
-func (ch *ChatHandler) Connect(c *gin.Context) {
+func (h *ChatHandler) Connect(c *gin.Context) {
 
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	clientConn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		log.Printf("Failed to upgrade connection: %v\n", err)
 		return
 	}
-	defer conn.Close()
+	defer clientConn.Close()
 
-	log.Println("Client successfully connected!")
+	backendConn, _, err := websocket.DefaultDialer.Dial(
+		"ws://localhost:8084/api/chat/ws",
+		http.Header{
+			"X-User-ID": []string{c.GetHeader("X-User-ID")},
+		},
+	)
+	if err != nil {
+		return
+	}
+	defer backendConn.Close()
 
+	// Browser -> Chat Service
+	go func() {
+		for {
+			mt, msg, err := clientConn.ReadMessage()
+			if err != nil {
+				backendConn.Close()
+				return
+			}
+
+			if err := backendConn.WriteMessage(mt, msg); err != nil {
+				return
+			}
+		}
+	}()
+
+	// Chat Service -> Browser
 	for {
-		messageType, messagePayload, err := conn.ReadMessage()
+		mt, msg, err := backendConn.ReadMessage()
 		if err != nil {
-			log.Printf("Connection closed or read error: %v\n", err)
 			break
 		}
 
-		fmt.Printf("Received: %s\n", messagePayload)
-
-		err = conn.WriteMessage(messageType, messagePayload)
-		if err != nil {
-			log.Printf("Failed to send message: %v\n", err)
+		if err := clientConn.WriteMessage(mt, msg); err != nil {
 			break
 		}
 	}
-
 }
