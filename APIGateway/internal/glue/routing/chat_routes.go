@@ -5,7 +5,7 @@ import (
 
 	"github.com/abelmalu/golang-posts/APIGateway/internal/glue"
 	"github.com/abelmalu/golang-posts/APIGateway/internal/handler"
-//	"github.com/abelmalu/golang-posts/APIGateway/internal/middleware"
+"github.com/abelmalu/golang-posts/APIGateway/internal/middleware"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -21,7 +21,7 @@ func InitChatRoute(router *gin.RouterGroup, handler *handler.ChatHandler, logger
 			Handler: handler.Connect,
 			Middlewares: []gin.HandlerFunc{
 
-				//middleware.AuthMiddleware(logger, redis),
+				middleware.AuthMiddleware(logger, redis),
 			},
 		},
 	}

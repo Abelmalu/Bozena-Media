@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/abelmalu/golang-posts/Chat/config"
+	"github.com/abelmalu/golang-posts/Chat/internal/broker"
 	"github.com/abelmalu/golang-posts/Chat/internal/handlers"
 	"github.com/abelmalu/golang-posts/Chat/internal/repository"
 	"github.com/abelmalu/golang-posts/Chat/internal/service"
@@ -73,9 +74,10 @@ func InitRoute(h *handlers.ChatHandler, r *gin.Engine) {
 
 func (app *App) Run() {
 
+	cb := broker.NewChatBroker(logger)
 	cr := repository.NewChatRepository(app.mongoClient)
 	cs := service.NewChatService(cr)
-	ch := handlers.NewChatHandler(cs, logger)
+	ch := handlers.NewChatHandler(cs, logger,cb)
 
 	InitRoute(ch,app.router)
 
