@@ -7,36 +7,24 @@ import (
 	"go.uber.org/zap"
 )
 
+func InitKafkaProducer(logger *platform.Logger) (sarama.SyncProducer, error) {
 
+	config := sarama.NewConfig()
+	config.Producer.Return.Successes = true
 
+	broker := []string{"localhost:9092"}
 
+	producer, err := sarama.NewSyncProducer(broker, config)
 
-func InitKafkaProducer(logger *platform.Logger) ( sarama.SyncProducer,error ){
+	if err != nil {
 
- config := sarama.NewConfig()
-  config.Producer.Return.Successes = true
+		logger.Error("Error while initializing kafka producer", zap.Error(err))
 
-
- broker := []string{"localhost:9092"}
-
- producer, err := sarama.NewSyncProducer(broker,config)
-
-
- if err != nil {
-
-
-	logger.Error("Error while initializing kafka producer",zap.Error(err))
-
-	return nil, ierrors.ErrKafkaConnection
- }
+		return nil, ierrors.ErrKafkaConnection
+	}
 
 	logger.Info("Kafka connected successfully!")
 
-
-	return producer,nil
+	return producer, nil
 
 }
-
-
-
-

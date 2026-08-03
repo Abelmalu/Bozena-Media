@@ -137,7 +137,7 @@ func (app *App) Run() {
 	authRepo := repository.NewAuthRepository(app.DB)
 	authService := service.NewAuthService(authRepo, app.RedisClient, app.Kafka, logger, app.minioClient)
 	ah := handler.NewAuthHandler(authService, logger)
-	brokers := []string{"localhost:9092"}
+	brokers := []string{"localhost:9092","localhost:9093"}
 	followedTopic := "followed"
 	unfollowTopic := "unfollowed"
 
