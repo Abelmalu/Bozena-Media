@@ -1,15 +1,12 @@
 package handlers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 
-	//ierrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	"github.com/abelmalu/golang-posts/Chat/internal/broker"
 	"github.com/abelmalu/golang-posts/Chat/internal/core"
-//	"github.com/abelmalu/golang-posts/notification/pkg"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -44,14 +41,15 @@ func NewChatHandler(cs core.ChatService, lg *platform.Logger, b *broker.ChatBrok
 
 func (ch *ChatHandler) HandleWebSocket(c *gin.Context) {
 
-    userID := c.GetHeader("X-User-ID")
+	requestID := c.GetHeader("X-Request-ID")
+	ch.logger.Info(requestID)
+	userID := c.GetHeader("X-User-ID")
 	userIDInt, err := strconv.Atoi(userID)
 	if err != nil {
 		ch.logger.Error("Error parsing user ID", zap.Error(err))
 		//pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
 		return
 	}
-	log.Println("User connected:", userIDInt)
 
 	conn, err := ch.WSUpGrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -66,7 +64,9 @@ func (ch *ChatHandler) HandleWebSocket(c *gin.Context) {
 
 	readerDone := make(chan struct{})
 
+	// the reader routine 
 	go func() {
+
 		defer close(readerDone)
 		for {
 			_, messagePayload, err := conn.ReadMessage()
@@ -74,26 +74,17 @@ func (ch *ChatHandler) HandleWebSocket(c *gin.Context) {
 				log.Printf("Connection closed or read error: %v\n", err)
 				return
 			}
-			fmt.Printf("Received: %s\n", messagePayload)
-
-			// Echo message back to client
-			// err = conn.WriteMessage(messageType, messagePayload)
-			// if err != nil {
-			// 	log.Printf("Failed to send message: %v\n", err)
-			// 	return
-			// }
 
 			msgStr := string(messagePayload)
-			receverID, err := strconv.Atoi(msgStr)
-	if err != nil {
-		ch.logger.Error("Error parsing user ID", zap.Error(err))
-		//pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
-		return
-	}
+
+			receiverID, err := strconv.Atoi(msgStr)
+			if err != nil {
+				ch.logger.Error("Error parsing user ID", zap.Error(err))
+				return
+			}
 
 			go func(msg string) {
-				ch.broker.Publish((receverID), msg)
-				fmt.Printf("after: %s\n", msg)
+				ch.broker.Publish((receiverID), msg)
 			}(string(messagePayload))
 
 		}
@@ -114,21 +105,16 @@ func (ch *ChatHandler) HandleWebSocket(c *gin.Context) {
 				log.Println("Broker channel closed")
 				return
 			}
-			// Send broker messages as WebSocket Text messages instead of SSE
 			err := conn.WriteMessage(websocket.TextMessage, []byte(msg))
 			if err != nil {
 				log.Printf("Failed to push broker message to client: %v\n", err)
 				return
 			}
 
-		
-
 		}
 	}
 }
 
 func (ch *ChatHandler) CreateConversation() {
-
-	
 
 }
