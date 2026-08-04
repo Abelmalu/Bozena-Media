@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/abelmalu/golang-posts/Chat/internal/core"
-	dto "github.com/abelmalu/golang-posts/Chat/internal/dtos"
 )
 
 type ChatService struct {
@@ -18,7 +17,7 @@ func NewChatService(r core.ChatRespository) *ChatService {
 	}
 }
 
-func (cs *ChatService) CreateMessages(ctx context.Context, senderID, receiverID int) *dto.MessageResponse {
+func (cs *ChatService) SendMessage(ctx context.Context, senderID, receiverID int,message string) {
 
-	return nil
+	 
 }

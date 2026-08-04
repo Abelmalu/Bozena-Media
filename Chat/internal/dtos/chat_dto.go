@@ -1,12 +1,7 @@
 package dto
 
-
-
-
-type MessageResponse struct {
-
-	SenderID int `json:"sender_id"`
-	ReceiverID int `json:"receiver_id"`
-
-
+type MessageRequest struct {
+	Message    string `json:"message"`
+	ReceiverID int    `json:"receiver_id"`
 }
+

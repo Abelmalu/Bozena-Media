@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	dto "github.com/abelmalu/golang-posts/Chat/internal/dtos"
+
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
@@ -17,12 +17,6 @@ func NewChatRepository(DB *mongo.Database) *ChatRepository {
 	}
 }
 
-func (cr *ChatRepository) InserMessages(ctx context.Context, senderID, receiverID int) *dto.MessageResponse {
-
-
-	return &dto.MessageResponse{
-
-
-	}
+func (cr *ChatRepository) InserMessages(ctx context.Context, senderID, receiverID int) {
 
 }
