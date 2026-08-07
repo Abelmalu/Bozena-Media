@@ -5,5 +5,5 @@ import (
 )
 
 type ChatService interface {
-	SendMessage(ctx context.Context, senderID, receiverID int,message string)
+	SendMessage(ctx context.Context, senderID, receiverID int,message string) error
 }

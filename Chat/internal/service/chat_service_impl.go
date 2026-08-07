@@ -17,7 +17,9 @@ func NewChatService(r core.ChatRespository) *ChatService {
 	}
 }
 
-func (cs *ChatService) SendMessage(ctx context.Context, senderID, receiverID int,message string) {
+func (cs *ChatService) SendMessage(ctx context.Context, senderID, receiverID int,message string) error{
 
+
+	return nil 
 	 
 }

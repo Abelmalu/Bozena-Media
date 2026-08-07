@@ -1,7 +1,6 @@
 package broker
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/abelmalu/golang-posts/platform"
@@ -18,13 +17,11 @@ func NewChatBroker(logger *platform.Logger) *ChatBroker {
 
 	broker := &ChatBroker{
 		userStreams: make(map[int]chan string),
-		logger: logger,
+		logger:      logger,
 	}
 
 	return broker
 }
-
-
 
 func (b *ChatBroker) Register(userID int) chan string {
 	b.mu.Lock()
@@ -49,9 +46,7 @@ func (b *ChatBroker) Publish(userID int, message string) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	fmt.Println("hell yea")
-
-	 ch, exists := b.userStreams[userID]; 
+	ch, exists := b.userStreams[userID]
 	if exists {
 		select {
 
@@ -59,18 +54,13 @@ func (b *ChatBroker) Publish(userID int, message string) {
 
 		default:
 
-			b.logger.Warn("Chat Dropped",zap.Int16("userID",int16(userID)))
-
+			b.logger.Warn("Chat Dropped", zap.Int16("userID", int16(userID)))
 
 		}
 	}
 	if !exists {
 
-		fmt.Println("useid doesn't exist",userID)
+		b.logger.Error("[ChatBroker Publish] UserID doesn't exist")
 	}
 
-
-
-
-	
 }
