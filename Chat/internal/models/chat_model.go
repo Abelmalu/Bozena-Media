@@ -30,7 +30,7 @@ type LastMessage struct {
 
 
 type Message struct {
-	ID             bson.ObjectID `json:"id" bson:"_id"`
+	ID             bson.ObjectID `json:"id" bson:"_id omitempty"`
 	ChatID bson.ObjectID `json:"chatID" bson:"chatID"`
 	SenderID       int                `json:"senderId" bson:"senderId"`
 	Content        string             `json:"content" bson:"content"`

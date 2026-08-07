@@ -12,6 +12,7 @@ import (
 	dto "github.com/abelmalu/golang-posts/Chat/internal/dtos"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gorilla/websocket"
+	"go.uber.org/zap"
 )
 
 type Client struct {
@@ -59,7 +60,7 @@ func (c *Client) ReadPump(ctx context.Context) {
 
 		if err := c.ChatService.SendMessage(ctx, c.UserID, req.ReceiverID, req.Message); err != nil {
 
-			c.Logger.Error("Error saving chat message to db")
+			c.Logger.Error("Error saving chat message to db",zap.Error(err))
 			cancel()
 
 			return
