@@ -17,9 +17,19 @@ func NewChatService(r core.ChatRespository) *ChatService {
 	}
 }
 
-func (cs *ChatService) SendMessage(ctx context.Context, senderID, receiverID int,message string) error{
+func (cs *ChatService) SendMessage(ctx context.Context, senderID, receiverID int, message string) error {
 
+	chat, err := cs.repo.FindChat(ctx, senderID, receiverID)
+	if err != nil {
 
-	return nil 
-	 
+		return err
+	}
+
+	if err := cs.repo.InserMessages(ctx, senderID, receiverID, chat.ID, message); err != nil {
+
+		return err
+	}
+
+	return nil
+
 }

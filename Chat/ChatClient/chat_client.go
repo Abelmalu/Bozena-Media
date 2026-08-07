@@ -2,8 +2,9 @@ package chatclient
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"time"
+
 	//"time"
 
 	"github.com/abelmalu/golang-posts/Chat/internal/broker"
@@ -45,37 +46,34 @@ func (c *Client) ReadPump(ctx context.Context) {
 	}()
 
 	for {
-		//ctx, cancel := context.WithTimeout(ctx, time.Second*1000)
+		ctx, cancel := context.WithTimeout(ctx, time.Second*1000)
 
 		var req dto.MessageRequest
 
 		if err := c.Conn.ReadJSON(&req); err != nil {
 
-		//	cancel()
+			cancel()
 
 			return
 		}
 
-		// if err := c.ChatService.SendMessage(ctx, c.UserID, req.ReceiverID, req.Message); err != nil {
+		if err := c.ChatService.SendMessage(ctx, c.UserID, req.ReceiverID, req.Message); err != nil {
 
-		// 	c.Logger.Error("Error saving chat message to db")
-		// 	cancel()
+			c.Logger.Error("Error saving chat message to db")
+			cancel()
 
-		// 	return
+			return
 
-		// }
-
-		fmt.Println(req.ReceiverID)
+		}
 
 		c.Broker.Publish(req.ReceiverID, req.Message)
 
+		cancel()
 
 	}
 }
 
 func (c *Client) WritePump(ctx context.Context, userChan chan string) {
-
-
 
 	for {
 
@@ -95,7 +93,6 @@ func (c *Client) WritePump(ctx context.Context, userChan chan string) {
 			}
 
 		case <-ctx.Done():
-
 
 			return
 		}
