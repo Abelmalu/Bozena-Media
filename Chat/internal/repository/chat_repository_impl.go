@@ -85,9 +85,10 @@ func (cr *ChatRepository) FindChat(ctx context.Context, senderID, receiverID int
 			if err != nil {
 				return nil, err
 			}
+			return &conversation, nil
+
 		}
-		return nil, err
 	}
 
-	return nil, nil
+	return &result, nil
 }
