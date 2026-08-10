@@ -35,7 +35,7 @@ func (cr *ChatRepository) InserMessages(ctx context.Context, senderID, receiverI
 	return nil
 }
 
-func (cr *ChatRepository) FindChat(ctx context.Context, senderID, receiverID int) (*models.Conversation, error) {
+func (cr *ChatRepository) GetChatBetweenUsers(ctx context.Context, senderID, receiverID int) (*models.Conversation, error) {
 
 	filter := bson.M{
 		"participants": bson.M{
@@ -91,4 +91,16 @@ func (cr *ChatRepository) FindChat(ctx context.Context, senderID, receiverID int
 	}
 
 	return &result, nil
+}
+
+
+
+
+func (cr *ChatRepository) GetUserChats(ctx context.Context,userID int)([] *models.Conversation,error){
+
+	filter := bson.M{"participants.userId": 1}
+	 
+	cr.DB.Collection("Chats").Find(ctx,filter)
+
+	return nil,nil
 }

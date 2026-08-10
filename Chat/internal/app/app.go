@@ -70,6 +70,8 @@ func initDB(cfg *config.Config) *mongo.Database {
 func InitRoute(h *handlers.ChatHandler, r *gin.Engine) {
 
 	r.Handle(http.MethodGet, "/api/chat/ws", h.HandleWebSocket)
+	r.Handle(http.MethodGet, "/api/chat/user/chats", h.GetUserChats)
+
 }
 
 func (app *App) Run() {

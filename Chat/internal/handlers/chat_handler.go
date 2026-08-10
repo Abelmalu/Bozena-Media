@@ -94,6 +94,22 @@ func (ch *ChatHandler) HandleWebSocket(c *gin.Context) {
 
 }
 
-func (ch *ChatHandler) CreateConversation() {
 
+func (ch *ChatHandler) GetUserChats(c *gin.Context) {
+
+	requestID := c.GetHeader("X-Request-ID")
+	userID := c.GetHeader("X-User-ID")
+	userIDInt, err := strconv.Atoi(userID)
+	if err != nil {
+		ch.logger.Error("Error parsing user ID", zap.Error(err))
+		return
+	}
+
+	
+	
+
+
+
+
+	
 }

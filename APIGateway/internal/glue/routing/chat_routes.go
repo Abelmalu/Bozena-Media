@@ -24,6 +24,17 @@ func InitChatRoute(router *gin.RouterGroup, handler *handler.ChatHandler, logger
 				middleware.AuthMiddleware(logger, redis),
 			},
 		},
+				{
+			Method:  http.MethodGet,
+			Path:    "/user/chats",
+			Handler: handler.GetUserChats,
+			Middlewares: []gin.HandlerFunc{
+
+				middleware.AuthMiddleware(logger, redis),
+			},
+		},
+
+		
 	}
 
 	glue.RegisterRoutes(router, routes)

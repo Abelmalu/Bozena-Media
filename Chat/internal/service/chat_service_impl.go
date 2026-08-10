@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/abelmalu/golang-posts/Chat/internal/core"
+	"github.com/abelmalu/golang-posts/Chat/internal/models"
 )
 
 type ChatService struct {
@@ -19,7 +20,7 @@ func NewChatService(r core.ChatRespository) *ChatService {
 
 func (cs *ChatService) SendMessage(ctx context.Context, senderID, receiverID int, message string) error {
 
-	chat, err := cs.repo.FindChat(ctx, senderID, receiverID)
+	chat, err := cs.repo.GetChatBetweenUsers(ctx, senderID, receiverID)
 	if err != nil {
 
 		return err
@@ -32,4 +33,16 @@ func (cs *ChatService) SendMessage(ctx context.Context, senderID, receiverID int
 
 	return nil
 
+}
+
+func (cs *ChatService) GetUserChats(ctx context.Context, userID int) ([]*models.Conversation, error) {
+	
+	resp,err := cs.repo.GetUserChats(ctx,userID)
+
+	if err != nil {
+
+		return nil,err
+	}
+
+	return resp, nil
 }
