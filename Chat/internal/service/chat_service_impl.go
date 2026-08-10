@@ -11,6 +11,7 @@ type ChatService struct {
 	repo core.ChatRespository
 }
 
+
 func NewChatService(r core.ChatRespository) *ChatService {
 
 	return &ChatService{
