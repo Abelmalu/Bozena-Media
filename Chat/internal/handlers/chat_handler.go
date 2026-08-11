@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/abelmalu/golang-posts/APIGateway/pkg/utils"
 	chatclient "github.com/abelmalu/golang-posts/Chat/ChatClient"
 	"github.com/abelmalu/golang-posts/Chat/internal/broker"
 	"github.com/abelmalu/golang-posts/Chat/internal/core"
@@ -14,6 +15,7 @@ import (
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.uber.org/zap"
 )
 
@@ -105,16 +107,32 @@ func (ch *ChatHandler) GetUserChats(c *gin.Context) {
 		ch.logger.Error("Error parsing user ID", zap.Error(err))
 		return
 	}
+	limitStr := c.GetHeader("X-Limit")
+	limit, err := strconv.Atoi(limitStr)
 
-	resp, err := ch.cs.GetUserChats(c.Request.Context(), userIDInt)
+	if err != nil {
+		ch.logger.Error("Error parsing limit", zap.Error(err))
+		return
+	}
+	lastSeenIDStr := c.GetHeader("X-Last-ID")
+	lastSeenID, err := bson.ObjectIDFromHex(lastSeenIDStr)
+	if err != nil {
+
+		ch.logger.Error("Error parsing lastSeenID", zap.Error(err))
+		return
+
+	}
+
+	resp, err := ch.cs.GetUserChats(c.Request.Context(), userIDInt, limit, lastSeenID)
 
 	if err != nil {
 
 		ch.logger.Info("Error getting users chat", zap.Error(err))
 		pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
 
-
 		return
 	}
+
+	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
 
 }

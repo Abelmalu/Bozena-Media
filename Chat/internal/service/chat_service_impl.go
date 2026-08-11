@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/abelmalu/golang-posts/Chat/internal/core"
-	"github.com/abelmalu/golang-posts/Chat/internal/models"
+	dto "github.com/abelmalu/golang-posts/Chat/internal/dtos"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type ChatService struct {
 	repo core.ChatRespository
 }
-
 
 func NewChatService(r core.ChatRespository) *ChatService {
 
@@ -36,13 +36,13 @@ func (cs *ChatService) SendMessage(ctx context.Context, senderID, receiverID int
 
 }
 
-func (cs *ChatService) GetUserChats(ctx context.Context, userID int) ([]*models.Conversation, error) {
-	
-	resp,err := cs.repo.GetUserChats(ctx,userID)
+func (cs *ChatService) GetUserChats(ctx context.Context, userID, limit int, lastSeenID bson.ObjectID) (*dto.UserChatsResponse, error) {
+
+	resp, err := cs.repo.GetUserChats(ctx, userID,limit,lastSeenID)
 
 	if err != nil {
 
-		return nil,err
+		return nil, err
 	}
 
 	return resp, nil

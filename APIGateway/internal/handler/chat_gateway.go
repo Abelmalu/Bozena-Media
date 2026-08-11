@@ -171,9 +171,13 @@ func (h *ChatHandler) GetUserChats(c *gin.Context) {
 	}
 
 	userIDStr := strconv.Itoa(userID)
+	limit := c.Query("X-Limit")
+	lastSeenID := c.Query("X-Last-ID")
 
 	c.Request.Header.Set("X-Request-ID", requestID)
 	c.Request.Header.Set("X-User-ID", userIDStr)
+	c.Request.Header.Set("X-Limit", limit)
+	c.Request.Header.Set("X-Last-ID", lastSeenID)
 
 	h.logger.Info("proxying the request to notification service")
 	ChatProxy.ServeHTTP(c.Writer, c.Request)
