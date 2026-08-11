@@ -44,6 +44,6 @@ func InitRoute(router *gin.Engine, handler Handler, logger *platform.Logger, red
 
 
 	// chat routes
-	chatRouter := router.Group("/api/chat")
+	chatRouter := router.Group("api/chat")
 	routing.InitChatRoute(chatRouter,handler.ch,logger,redisClient)
 }

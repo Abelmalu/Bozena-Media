@@ -27,7 +27,7 @@ var upgrader = websocket.Upgrader{
 
 var chatTarget, _ = url.Parse("http://localhost:8084")
 
-var ChatProxy = httputil.NewSingleHostReverseProxy(target)
+var ChatProxy = httputil.NewSingleHostReverseProxy(chatTarget)
 
 func NewChatHandler(l *platform.Logger) *ChatHandler {
 
