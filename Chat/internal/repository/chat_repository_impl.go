@@ -4,9 +4,11 @@ import (
 	"context"
 	"time"
 
+	dto "github.com/abelmalu/golang-posts/Chat/internal/dtos"
 	"github.com/abelmalu/golang-posts/Chat/internal/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type ChatRepository struct {
@@ -93,14 +95,53 @@ func (cr *ChatRepository) GetChatBetweenUsers(ctx context.Context, senderID, rec
 	return &result, nil
 }
 
+func (cr *ChatRepository) GetUserChats(ctx context.Context, userID, limit int, lastSeenID bson.ObjectID) (*dto.UserChatsResponse, error) {
 
+	var hasNext bool
+	var after bson.ObjectID
+	var chats []*models.Conversation
+	filter := bson.M{"participants.userId": userID}
+	if lastSeenID != bson.NilObjectID {
+		filter["_id"] = bson.M{"$gt": lastSeenID}
+	}
 
+	findOptions := options.Find().SetLimit(int64(limit + 1))
 
-func (cr *ChatRepository) GetUserChats(ctx context.Context,userID int)([] *models.Conversation,error){
+	cursor, err := cr.DB.Collection("Chats").Find(ctx, filter, findOptions)
+	if err != nil {
 
-	filter := bson.M{"participants.userId": 1}
-	 
-	cr.DB.Collection("Chats").Find(ctx,filter)
+		return nil, err
+	}
 
-	return nil,nil
+	for cursor.Next(ctx) {
+
+		var chat models.Conversation
+
+		if err := cursor.Decode(&chat); err != nil {
+
+			return nil, err
+		}
+
+		if len(chats) == limit {
+
+			hasNext = true
+			after = chat.ID
+
+			break
+		}
+
+		chats = append(chats, &chat)
+
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return &dto.UserChatsResponse{
+
+		Chats:   chats,
+		Cursor:  after,
+		HasNext: hasNext,
+	}, nil
 }

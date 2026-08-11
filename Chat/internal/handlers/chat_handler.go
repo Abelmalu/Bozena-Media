@@ -9,6 +9,8 @@ import (
 	chatclient "github.com/abelmalu/golang-posts/Chat/ChatClient"
 	"github.com/abelmalu/golang-posts/Chat/internal/broker"
 	"github.com/abelmalu/golang-posts/Chat/internal/core"
+	ierrors "github.com/abelmalu/golang-posts/Chat/internal/errors"
+	"github.com/abelmalu/golang-posts/Chat/pkg"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -94,7 +96,6 @@ func (ch *ChatHandler) HandleWebSocket(c *gin.Context) {
 
 }
 
-
 func (ch *ChatHandler) GetUserChats(c *gin.Context) {
 
 	requestID := c.GetHeader("X-Request-ID")
@@ -105,11 +106,15 @@ func (ch *ChatHandler) GetUserChats(c *gin.Context) {
 		return
 	}
 
-	
-	
+	resp, err := ch.cs.GetUserChats(c.Request.Context(), userIDInt)
+
+	if err != nil {
+
+		ch.logger.Info("Error getting users chat", zap.Error(err))
+		pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
 
 
+		return
+	}
 
-
-	
 }
