@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"log"
 	"time"
 
 	dto "github.com/abelmalu/golang-posts/Chat/internal/dtos"
+	ierrors "github.com/abelmalu/golang-posts/Chat/internal/errors"
 	"github.com/abelmalu/golang-posts/Chat/internal/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -34,6 +36,13 @@ func (cr *ChatRepository) InserMessages(ctx context.Context, senderID, receiverI
 	if err != nil {
 		return err
 	}
+
+	if err := cr.UpdateLastChatMessage(ctx, senderID, chatID, message); err != nil {
+
+		return err
+
+	}
+
 	return nil
 }
 
@@ -44,12 +53,12 @@ func (cr *ChatRepository) GetChatBetweenUsers(ctx context.Context, senderID, rec
 			"$all": []bson.M{
 				{
 					"$elemMatch": bson.M{
-						"userID": senderID,
+						"userId": senderID,
 					},
 				},
 				{
 					"$elemMatch": bson.M{
-						"userID": receiverID,
+						"userId": receiverID,
 					},
 				},
 			},
@@ -62,6 +71,7 @@ func (cr *ChatRepository) GetChatBetweenUsers(ctx context.Context, senderID, rec
 	if err != nil {
 
 		if err == mongo.ErrNoDocuments {
+
 
 			now := time.Now()
 
@@ -87,6 +97,7 @@ func (cr *ChatRepository) GetChatBetweenUsers(ctx context.Context, senderID, rec
 			if err != nil {
 				return nil, err
 			}
+
 			return &conversation, nil
 
 		}
@@ -100,7 +111,9 @@ func (cr *ChatRepository) GetUserChats(ctx context.Context, userID, limit int, l
 	var hasNext bool
 	var after bson.ObjectID
 	var chats []*models.Conversation
-	filter := bson.M{"participants.userId": userID}
+	filter := bson.M{
+		"participants.userId": userID,
+	}
 	if lastSeenID != bson.NilObjectID {
 		filter["_id"] = bson.M{"$gt": lastSeenID}
 	}
@@ -144,4 +157,34 @@ func (cr *ChatRepository) GetUserChats(ctx context.Context, userID, limit int, l
 		Cursor:  after,
 		HasNext: hasNext,
 	}, nil
+}
+
+func (cr *ChatRepository) UpdateLastChatMessage(ctx context.Context, senderID int, chatID bson.ObjectID, message string) error {
+
+	update := bson.M{
+		"$set": bson.M{
+			"lastMessage": struct {
+				SenderID int    `bson:"senderId"`
+				Text     string `bson:"text"`
+			}{
+				SenderID: senderID,
+				Text:     message,
+			},
+		},
+	}
+
+	result, err := cr.DB.Collection("Chats").UpdateByID(ctx, chatID, update)
+
+	if err != nil {
+
+		return err
+	}
+
+	if result.ModifiedCount == 0 {
+
+		return ierrors.NewDatabaseError("Chat update affected zero documents", nil)
+	}
+
+	return err
+
 }
