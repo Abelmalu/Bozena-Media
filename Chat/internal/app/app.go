@@ -10,6 +10,7 @@ import (
 	"github.com/abelmalu/golang-posts/Chat/config"
 	"github.com/abelmalu/golang-posts/Chat/internal/broker"
 	"github.com/abelmalu/golang-posts/Chat/internal/handlers"
+	"github.com/abelmalu/golang-posts/Chat/internal/kafka"
 	"github.com/abelmalu/golang-posts/Chat/internal/repository"
 	"github.com/abelmalu/golang-posts/Chat/internal/service"
 	"github.com/abelmalu/golang-posts/platform"
@@ -79,11 +80,17 @@ func (app *App) Run() {
 	cb := broker.NewChatBroker(logger)
 	cr := repository.NewChatRepository(app.mongoClient)
 	cs := service.NewChatService(cr)
-	ch := handlers.NewChatHandler(cs, logger,cb)
+	ch := handlers.NewChatHandler(cs, logger, cb)
 
-	InitRoute(ch,app.router)
 
-	log.Println("Starting server on port","8084")
+	var broker = []string{"localhost:9092"}
+	var userCreatedTopic = "userCreated"
+
+	kafka.StartConsumer(broker, userCreatedTopic, cs, logger)
+
+	InitRoute(ch, app.router)
+
+	log.Println("Starting server on port", "8084")
 	app.router.Run(":8084")
 
 }

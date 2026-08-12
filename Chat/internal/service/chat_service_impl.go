@@ -47,3 +47,19 @@ func (cs *ChatService) GetUserChats(ctx context.Context, userID, limit int, last
 
 	return resp, nil
 }
+
+
+func (cs *ChatService) 	CreateCacheUser(ctx context.Context, userID int, Username, Name,Avatar string) error {
+
+	if err := cs.repo.InsertCacheUser(ctx,userID,Username,Name,Avatar); err != nil {
+
+		return err
+
+
+
+	}
+
+	return nil
+
+}
+

@@ -189,3 +189,25 @@ func (cr *ChatRepository) UpdateLastChatMessage(ctx context.Context, senderID in
 	return err
 
 }
+
+
+
+func (cr *ChatRepository) InsertCacheUser(ctx context.Context, userID int, Username, Name, Avatar string) error  {
+
+	user := models.User{
+
+		UserID: userID,
+		Name: Name,
+		Username: Username,
+		Avatar: Avatar,
+	}
+
+	_, err := cr.DB.Collection("users_cache").InsertOne(ctx, user)
+
+	if err != nil {
+		return err
+	}
+
+
+	return nil 
+}

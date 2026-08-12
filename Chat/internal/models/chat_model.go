@@ -30,11 +30,20 @@ type LastMessage struct {
 
 
 type Message struct {
-	ID             bson.ObjectID `json:"id" bson:"_id omitempty"`
+	ID             bson.ObjectID `json:"id" bson:"_id,omitempty"`
 	ChatID bson.ObjectID `json:"chatID" bson:"chatID"`
 	SenderID       int                `json:"senderId" bson:"senderId"`
 	Content        string             `json:"content" bson:"content"`
 	Status         string             `json:"status" bson:"status"`
 	CreatedAt      string             `json:"createdAt" bson:"createdAt"`
+} 
+
+
+type User struct {
+	ID bson.ObjectID  `bson:"_id,omitempty"`
+	UserID int `bson:"userId"`
+	Name string `bson:"name"`
+	Username string `bson:"username"`
+	Avatar   string `bson:"avatar"`
 }
 
