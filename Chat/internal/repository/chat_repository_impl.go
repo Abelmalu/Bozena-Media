@@ -6,7 +6,6 @@ import (
 	"time"
 
 	dto "github.com/abelmalu/golang-posts/Chat/internal/dtos"
-	ierrors "github.com/abelmalu/golang-posts/Chat/internal/errors"
 	"github.com/abelmalu/golang-posts/Chat/internal/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -177,12 +176,14 @@ func (cr *ChatRepository) UpdateLastChatMessage(ctx context.Context, senderID in
 
 	if err != nil {
 
+		log.Println("the error",err)
+
 		return err
 	}
 
 	if result.ModifiedCount == 0 {
 
-		return ierrors.NewDatabaseError("Chat update affected zero documents", nil)
+		return nil 
 	}
 
 	return err
