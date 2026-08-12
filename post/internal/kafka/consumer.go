@@ -25,16 +25,15 @@ func StartConsumer(brokers []string, userCreatedtopic, postLikedTopic, postUnlik
 
 	go func() {
 
-		go userCreatedConsumer(consumer, userCreatedtopic, postService, logger)
+		userCreatedConsumer(consumer, userCreatedtopic, postService, logger)
 	}()
 	go func() {
-
-		go postLikedConsumer(consumer, postLikedTopic, postService, logger)
+		postLikedConsumer(consumer, postLikedTopic, postService, logger)
 	}()
 
 	go func() {
 
-		go postUnlikedConsumer(consumer, postUnlikedTopic, postService, logger)
+		postUnlikedConsumer(consumer, postUnlikedTopic, postService, logger)
 	}()
 
 }
