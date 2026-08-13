@@ -4,10 +4,11 @@
 ![gRPC](https://img.shields.io/badge/gRPC-Framework-4285F4?style=for-the-badge&logo=grpc)
 ![Gin](https://img.shields.io/badge/Gin-Framework-00ADD8?style=for-the-badge&logo=go)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-v15+-336791?style=for-the-badge&logo=postgresql)
+![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 ![Kafka](https://img.shields.io/badge/Apache_Kafka-231F20?style=for-the-badge&logo=apachekafka&logoColor=white)
 
-A modern, scalable social network backend built using **Microservices Architecture**. The system uses **Gin** as the public HTTP entry point and **gRPC** for service-to-service communication.
+A modern, scalable social network backend built using **Microservices Architecture**. The system uses **Gin** as the public HTTP entry point, **gRPC** for service-to-service communication, and **WebSockets** for direct messaging.
 
 ---
 
@@ -16,23 +17,24 @@ A modern, scalable social network backend built using **Microservices Architectu
 The project is built using **Clean Architecture** principles in each service to ensure scalability, testability, and a clear separation of concerns.
 
 ### 🏛️ Clean Architecture Layers
-Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`) is structured into the following layers within the `internal/` directory:
+Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`, `Chat`) is structured into the following layers within the `internal/` directory:
 
-- **`internal/handlers/`**: The **Delivery/Transport Layer**. It implements the gRPC server interfaces and handles incoming requests and outgoing responses.
+- **`internal/handlers/`**: The **Delivery/Transport Layer**. It implements the gRPC/HTTP server interfaces and WebSocket handlers, managing incoming requests and outgoing responses.
 - **`internal/service/`**: The **Business Logic/Use Case Layer**. This contains the core logic of the application and is independent of external frameworks.
-- **`internal/repository/`**: The **Data Access/Infrastructure Layer**. It handles all database operations (PostgreSQL) and isolates the data storage details from the business logic.
+- **`internal/repository/`**: The **Data Access/Infrastructure Layer**. It handles database operations (PostgreSQL / MongoDB) and isolates the data storage details from the business logic.
 - **`internal/core/`**: The **Entities/Domain Layer**. Contains core business rules and logic that are essential to the service.
 - **`internal/models/`**: The **Data Models**. Defines the structures used for data transfer and storage across different layers.
 
 ### 🛰️ The Services
 
-1.  **API Gateway**: The public entry point. It handles routing, request IDs, CORS, rate limiting, auth checks, and forwards requests to internal services over gRPC.
+1.  **API Gateway**: The public entry point. It handles routing, request IDs, CORS, rate limiting, auth checks, and forwards/proxies requests to internal services over gRPC or HTTP/WebSocket.
 2.  **Auth Service**: Manages user registration, login, refresh, logout, JWT issuance, session management, and username search.
 3.  **Post Service**: Handles post CRUD and user-specific post lookup.
 4.  **Like Service**: Manages like and unlike operations plus post like listings.
 5.  **Follow Service**: Manages follow and unfollow relationships between users, plus follower/following listings.
 6.  **Feed Service**: Builds the authenticated user feed from post and user metadata.
 7.  **Notification Service**: Connects to Kafka and pushes real-time follower notifications to the browser via Server-Sent Events (SSE).
+8.  **Chat Service**: Manages direct messaging between users. It uses **MongoDB** to persist conversations, direct messages, and user cache info, and supports real-time communication via WebSockets.
 
 ### 🔌 Communication Map
 
@@ -54,8 +56,8 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`) is struc
 
 ### 🧩 Data Ownership
 
-- Each service owns its own PostgreSQL database and migrations.
-- Auth, Post, Follow, and Feed all maintain user caches for username/name lookups.
+- Each service owns its own database (PostgreSQL for Auth, Post, Like, Follow, Feed, Notification; MongoDB for Chat) and migrations/collections.
+- Auth, Post, Follow, Feed, and Chat all maintain user caches for username/name/avatar lookups.
 - Kafka propagates `userCreated` and post-related events to downstream services, and triggers real-time pushes in the Notification Service.
 - Redis is used for refresh-token/session blacklist state and distributed token-bucket rate limiting.
 
@@ -65,6 +67,8 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`) is struc
 
 - **Clean Architecture Implementation**: Strict separation of concerns for maintainability and testability.
 - **Microservices Architecture**: Decoupled services for better scalability and maintenance.
+- **Real-Time Direct Messaging**: Handled by the **Chat Service** using **Gorilla WebSockets** for low-latency, real-time message streaming.
+- **NoSQL Chat Persistence**: Conversation history and direct messages are saved to **MongoDB** with cursor-based pagination for high write throughput and schema flexibility.
 - **Real-Time Notifications**: Server-Sent Events (SSE) stream real-time updates (like new followers) from the Notification Service directly to the frontend, proxied securely by the API Gateway.
 - **Event-Driven Architecture**: Configured with **Apache Kafka**. When users register or update their profiles, `userCreated` events are published and consumed by other services. This asynchronous messaging is also utilized for post creation logic.
 - **gRPC Integration**: High-performance internal communication using Protocol Buffers.
@@ -75,7 +79,7 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`) is struc
 - **Structured Logging**: High-performance, structured JSON logging implemented using **Uber's Zap** (`go.uber.org/zap`).
 - **Data Validation**: Strict incoming request validation utilizing **go-playground/validator** and Gin's built-in bindings.
 - **Granular Permissions**: Role-Based Access Control (RBAC) and ownership verification.
-- **Independent Database & Migrations**: Each service fully owns its own database and handles its own migrations, ensuring strong data decoupling across the microservices ecosystem.
+- **Independent Database & Migrations**: Each service fully owns its own database and database migrations, ensuring strong data decoupling across the microservices ecosystem.
 - **Containerization**: Docker support for simplified deployment.
 
 ---
@@ -90,6 +94,7 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`) is struc
 ├── follow/               # Follow management service (gRPC Server)
 ├── feed/                 # Feed management service (gRPC Server)
 ├── notification/         # Real-time notifications service (HTTP SSE Server)
+├── Chat/                 # Real-time Chat service (HTTP/WebSocket server using MongoDB)
 ├── frontend/             # React + TypeScript web client
 ├── pkg/                  # Shared utilities (JWT, etc.)
 ├── migrations/           # Database migration files
@@ -104,6 +109,7 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`) is struc
 
 - [Go](https://golang.org/dl/) (version 1.25+)
 - [PostgreSQL](https://www.postgresql.org/download/)
+- [MongoDB](https://www.mongodb.com/try/download/community) (for Chat history and user cache)
 - [Redis](https://redis.io/download/) (for distributed rate limiting and token blacklisting)
 - [Apache Kafka](https://kafka.apache.org/downloads) (for event-driven communication)
 - [Protoc](https://grpc.io/docs/protoc-installation/) (for generating gRPC code)
@@ -230,6 +236,13 @@ To run the entire microservices ecosystem (including PostgreSQL and Redis) using
 | `GET`  | `/api/notifications/stream` | Real-time SSE stream for new followers| Authenticated User   |
 | `GET`  | `/api/notification/user`    | Get past notifications for a user     | Authenticated User   |
 
+### Chat
+
+| Method | Endpoint                     | Description                           | Permissions          |
+| :----- | :--------------------------- | :------------------------------------ | :------------------- |
+| `GET`  | `/api/chat/ws`               | Establish real-time WebSocket session | Authenticated User   |
+| `GET`  | `/api/chat/user/chats`       | Get direct message history & list     | Authenticated User   |
+
 ---
 
 ## 📅 Roadmap
@@ -238,6 +251,7 @@ To run the entire microservices ecosystem (including PostgreSQL and Redis) using
 - [x] **Follows Service**: Allow users to follow and unfollow other users.
 - [x] **Feeds Service**: Optimized algorithm for displaying posts.
 - [x] **Notification Service**: Real-time SSE pushes proxied via API Gateway.
+- [x] **Chat Service**: Real-time direct messaging backed by **MongoDB**.
 - [x] **Docker Compose**: Single command to spin up the entire ecosystem.
 - [ ] **Service Discovery**: Implement Consul or Etcd.
 
