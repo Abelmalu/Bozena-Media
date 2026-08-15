@@ -77,7 +77,7 @@ func (cr *ChatRepository) GetChatBetweenUsers(ctx context.Context, senderID, rec
 			conversation := models.Conversation{
 				ID: bson.NewObjectID(),
 
-				Participants: []models.Participant{
+				Participants: []*models.Participant{
 					{
 						UserID: senderID,
 					},

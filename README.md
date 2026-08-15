@@ -163,6 +163,12 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`, `Chat`) 
    go run cmd/main.go
    ```
 
+   **Chat Service (Port 8084):**
+   ```bash
+   cd Chat
+   go run cmd/main.go
+   ```
+
    **API Gateway (Port 8080):**
    ```bash
    cd APIGateway

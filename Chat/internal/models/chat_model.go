@@ -8,7 +8,7 @@ import (
 
 type Conversation struct {
 	ID           bson.ObjectID `bson:"_id,omitempty" json:"id"`
-	Participants []Participant `bson:"participants" json:"participants"`
+	Participants []*Participant `bson:"participants" json:"participants"`
 	LastMessage  LastMessage   `bson:"lastMessage,omitempty" json:"lastMessage"`
 	CreatedAt    time.Time     `bson:"createdAt" json:"createdAt"`
 	UpdatedAt    time.Time     `bson:"updatedAt" json:"updatedAt"`
