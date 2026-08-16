@@ -55,6 +55,11 @@ func (cs *ChatService) GetUserChats(ctx context.Context, userID, limit int, last
 		for _, user := range chat.Participants {
 
 			objectName := user.Avatar
+
+			if objectName == ""{
+
+				continue
+			} 
 			url, err := cs.minio.PresignedGetObject(ctx, "bozena-media", objectName, time.Hour, nil)
 
 			if err != nil {
