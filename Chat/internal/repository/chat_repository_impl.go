@@ -71,7 +71,6 @@ func (cr *ChatRepository) GetChatBetweenUsers(ctx context.Context, senderID, rec
 
 		if err == mongo.ErrNoDocuments {
 
-
 			now := time.Now()
 
 			conversation := models.Conversation{
@@ -176,30 +175,28 @@ func (cr *ChatRepository) UpdateLastChatMessage(ctx context.Context, senderID in
 
 	if err != nil {
 
-		log.Println("the error",err)
+		log.Println("the error", err)
 
 		return err
 	}
 
 	if result.ModifiedCount == 0 {
 
-		return nil 
+		return nil
 	}
 
 	return err
 
 }
 
-
-
-func (cr *ChatRepository) InsertCacheUser(ctx context.Context, userID int, Username, Name, Avatar string) error  {
+func (cr *ChatRepository) InsertCacheUser(ctx context.Context, userID int, Username, Name, Avatar string) error {
 
 	user := models.User{
 
-		UserID: userID,
-		Name: Name,
+		UserID:   userID,
+		Name:     Name,
 		Username: Username,
-		Avatar: Avatar,
+		Avatar:   Avatar,
 	}
 
 	_, err := cr.DB.Collection("users_cache").InsertOne(ctx, user)
@@ -208,6 +205,30 @@ func (cr *ChatRepository) InsertCacheUser(ctx context.Context, userID int, Usern
 		return err
 	}
 
+	return nil
+}
 
-	return nil 
+func (cr *ChatRepository) UpdateCacheUser(ctx context.Context, userID int, Avatar string) error{
+
+
+	filter := bson.M{
+		"userId":userID,
+	}
+
+	update := bson.M{
+
+		"$set":bson.M{
+			"avatar":Avatar,
+
+		},
+	}
+
+	_, err := cr.DB.Collection("users_cache").UpdateOne(ctx,filter,update)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }

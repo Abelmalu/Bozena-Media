@@ -90,8 +90,9 @@ func (app *App) Run() {
 
 	var broker = []string{"localhost:9092"}
 	var userCreatedTopic = "userCreated"
+	var profileUploadTopic = "profileUpload"
 
-	go kafka.StartConsumer(broker, userCreatedTopic, cs, logger)
+	go kafka.StartConsumer(broker, userCreatedTopic,profileUploadTopic, cs, logger)
 
 	InitRoute(ch, app.router)
 

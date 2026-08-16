@@ -56,10 +56,10 @@ func (cs *ChatService) GetUserChats(ctx context.Context, userID, limit int, last
 
 			objectName := user.Avatar
 
-			if objectName == ""{
+			if objectName == "" {
 
 				continue
-			} 
+			}
 			url, err := cs.minio.PresignedGetObject(ctx, "bozena-media", objectName, time.Hour, nil)
 
 			if err != nil {
@@ -86,4 +86,11 @@ func (cs *ChatService) CreateCacheUser(ctx context.Context, userID int, Username
 
 	return nil
 
+}
+
+func (cs *ChatService) UpdateCacheUser(ctx context.Context, userID int, Avatar string) error {
+
+	err := cs.repo.UpdateCacheUser(ctx, userID, Avatar)
+
+	return err
 }

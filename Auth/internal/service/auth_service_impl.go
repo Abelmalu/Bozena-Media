@@ -84,7 +84,6 @@ func (authSer *AuthService) Register(ctx context.Context, user *model.User) (*mo
 		Value: sarama.StringEncoder(createdUserByte),
 	}
 
-	// Send the message to Kafka
 	partition, offset, err := authSer.kafka.SendMessage(msg)
 
 	if err != nil {
@@ -566,6 +565,34 @@ func (authSer *AuthService) GenerateUploadURL(ctx context.Context, filename, con
 	if err != nil {
 		return "", nil, ierrors.NewInternalError("Error generating presigned POST policy", err)
 	}
+
+	var ProfileUploadPayload = struct {
+		UserID int    `json:"user_id" `
+		Avatar string `json:"avatar" `
+	}{
+		UserID: userID,
+		Avatar: url.String(),
+	}
+
+	createdUserByte, err := json.Marshal(ProfileUploadPayload)
+
+	if err != nil {
+
+		return "", nil, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
+	}
+	msg := &sarama.ProducerMessage{
+		Topic: "profileUpload",
+		Value: sarama.StringEncoder(createdUserByte),
+	}
+
+	partition, offset, err := authSer.kafka.SendMessage(msg)
+
+	if err != nil {
+
+		return "", nil, ierrors.NewInternalError(ierrors.ErrorMessage("Kafka Sending Error"), err)
+	}
+
+	authSer.logger.Info(fmt.Sprintf("Apache kafka Partition : %d Offset : %d", partition, offset))
 
 	return url.String(), formData, nil
 }
