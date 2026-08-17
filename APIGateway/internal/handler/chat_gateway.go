@@ -187,6 +187,7 @@ func (h *ChatHandler) GetUserChats(c *gin.Context) {
 
 func (h *ChatHandler) GetChatMessages(c *gin.Context) {
 
+
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
 
@@ -240,7 +241,7 @@ func (h *ChatHandler) GetChatMessages(c *gin.Context) {
 	c.Request.Header.Set("Chat-ID", chatID)
 
 
-	h.logger.Info("proxying the request to notification service")
+	h.logger.Info("proxying the request to chat service")
 	ChatProxy.ServeHTTP(c.Writer, c.Request)
 
 }

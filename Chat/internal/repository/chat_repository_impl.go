@@ -277,6 +277,8 @@ func (cr *ChatRepository) GetChatMessages(ctx context.Context, chatID, cursor bs
 		messages = append(messages, &message)
 
 	}
+
+	fmt.Println(messages,"the messages")
 	return &dto.ChatMessagesResponse{
 
 		Messages: messages,

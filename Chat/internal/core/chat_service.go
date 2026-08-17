@@ -12,5 +12,5 @@ type ChatService interface {
 	GetUserChats(ctx context.Context, userID, limit int, lastSeenID bson.ObjectID) (*dto.UserChatsResponse, error)
 	CreateCacheUser(ctx context.Context, ID int, Username, Name, Avatar string) error
 	UpdateUserAvatar(ctx context.Context, userID int, Avatar string) error
-	GetChatMessages(ctx context.Context,chatID bson.ObjectID) (*dto.ChatMessagesResponse,error)
+	GetChatMessages(ctx context.Context, chatID, cursor bson.ObjectID, limit int) (*dto.ChatMessagesResponse, error)
 }

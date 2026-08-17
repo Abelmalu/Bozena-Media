@@ -153,8 +153,6 @@ func (ch *ChatHandler) GetUserChats(c *gin.Context) {
 
 func (ch *ChatHandler) GetChatMessages(c *gin.Context) {
 
- 
-
 	chatIDStr := c.Param("id")
 	chatID, err := bson.ObjectIDFromHex(chatIDStr)
 	if err != nil {
@@ -163,12 +161,12 @@ func (ch *ChatHandler) GetChatMessages(c *gin.Context) {
 		return
 	}
 	requestID := c.GetHeader("X-Request-ID")
-	userID := c.GetHeader("X-User-ID")
-	userIDInt, err := strconv.Atoi(userID)
-	if err != nil {
-		ch.logger.Error("Error parsing user ID", zap.Error(err))
-		return
-	}
+	// userID := c.GetHeader("X-User-ID")
+	// userIDInt, err := strconv.Atoi(userID)
+	// if err != nil {
+	// 	ch.logger.Error("Error parsing user ID", zap.Error(err))
+	// 	return
+	// }
 	limitStr := c.GetHeader("X-Limit")
 	var limit int
 	if limitStr == "" {
@@ -198,4 +196,15 @@ func (ch *ChatHandler) GetChatMessages(c *gin.Context) {
 
 		ch.logger.Info("X-Last-ID header is empty; fetching from the beginning")
 	}
+
+	resp, err := ch.cs.GetChatMessages(c.Request.Context(), chatID, lastSeenID, limit)
+
+	if err != nil {
+
+		ch.logger.Error("Chat Error", zap.Error(err), zap.String("requestID", requestID))
+		pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
+
+	}
+
+	pkg.SendSuccessResponse(c, resp, requestID, http.StatusOK)
 }

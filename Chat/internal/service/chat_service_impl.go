@@ -95,10 +95,15 @@ func (cs *ChatService) UpdateUserAvatar(ctx context.Context, userID int, Avatar 
 	return err
 }
 
+func (cs *ChatService) GetChatMessages(ctx context.Context, chatID, cursor bson.ObjectID, limit int) (*dto.ChatMessagesResponse, error) {
 
-func (cs *ChatService) GetChatMessages(ctx context.Context,chatID,cursor bson.ObjectID,limit int) (*dto.ChatMessagesResponse,error) {
+	resp, err := cs.repo.GetChatMessages(ctx, chatID,cursor,limit)
 
-	return nil,nil
+	if err != nil {
 
+		return nil, err
+	}
+
+	return resp, err
 
 }
