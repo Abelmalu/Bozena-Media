@@ -88,9 +88,17 @@ func (cs *ChatService) CreateCacheUser(ctx context.Context, userID int, Username
 
 }
 
-func (cs *ChatService) UpdateCacheUser(ctx context.Context, userID int, Avatar string) error {
+func (cs *ChatService) UpdateUserAvatar(ctx context.Context, userID int, Avatar string) error {
 
-	err := cs.repo.UpdateCacheUser(ctx, userID, Avatar)
+	err := cs.repo.UpdateUserAvatar(ctx, userID, Avatar)
 
 	return err
+}
+
+
+func (cs *ChatService) GetChatMessages(ctx context.Context,chatID,cursor bson.ObjectID,limit int) (*dto.ChatMessagesResponse,error) {
+
+	return nil,nil
+
+
 }

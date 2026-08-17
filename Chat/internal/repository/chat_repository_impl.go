@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -208,27 +209,78 @@ func (cr *ChatRepository) InsertCacheUser(ctx context.Context, userID int, Usern
 	return nil
 }
 
-func (cr *ChatRepository) UpdateCacheUser(ctx context.Context, userID int, Avatar string) error{
-
+func (cr *ChatRepository) UpdateUserAvatar(ctx context.Context, userID int, Avatar string) error {
 
 	filter := bson.M{
-		"userId":userID,
+		// "userId":userID,
+		"participants.userId": userID,
 	}
 
 	update := bson.M{
-
-		"$set":bson.M{
-			"avatar":Avatar,
-
+		"$set": bson.M{
+			"participants.$[].avatar": Avatar,
 		},
 	}
 
-	_, err := cr.DB.Collection("users_cache").UpdateOne(ctx,filter,update)
+	_, err := cr.DB.Collection("Chats").UpdateOne(ctx, filter, update)
 
 	if err != nil {
 		return err
 	}
+	fmt.Println("successs")
 
 	return nil
 
+}
+
+func (cr *ChatRepository) GetChatMessages(ctx context.Context, chatID, cursor bson.ObjectID, limit int) (*dto.ChatMessagesResponse, error) {
+
+	var after bson.ObjectID
+	var messages []*models.Message
+	var hasNext bool
+
+	filter := bson.M{
+
+		"chatID": chatID,
+	}
+	if cursor != bson.NilObjectID {
+		filter["_id"] = bson.M{"$gt": cursor}
+	}
+
+	findOptions := options.Find().SetLimit(int64(limit + 1))
+
+	rows, err := cr.DB.Collection("Messages").Find(ctx, filter, findOptions)
+
+	if err != nil {
+
+		return nil, err
+	}
+
+	for rows.Next(ctx) {
+
+		var message models.Message
+
+		if err := rows.Decode(&message); err != nil {
+
+			return nil, err
+		}
+
+		if limit == len(messages) {
+
+			hasNext = true
+			after = message.ChatID
+
+			break
+
+		}
+
+		messages = append(messages, &message)
+
+	}
+	return &dto.ChatMessagesResponse{
+
+		Messages: messages,
+		HasNext: hasNext,
+		Cursor: after,
+	}, nil
 }

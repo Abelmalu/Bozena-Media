@@ -571,7 +571,7 @@ func (authSer *AuthService) GenerateUploadURL(ctx context.Context, filename, con
 		Avatar string `json:"avatar" `
 	}{
 		UserID: userID,
-		Avatar: url.String(),
+		Avatar: objectName,
 	}
 
 	createdUserByte, err := json.Marshal(ProfileUploadPayload)

@@ -78,6 +78,7 @@ func InitRoute(h *handlers.ChatHandler, r *gin.Engine) {
 
 	r.Handle(http.MethodGet, "/api/chat/ws", h.HandleWebSocket)
 	r.Handle(http.MethodGet, "/api/chat/user/chats", h.GetUserChats)
+	r.Handle(http.MethodGet, "/api/chat/:id/messages", h.GetChatMessages)
 
 }
 
@@ -91,10 +92,9 @@ func (app *App) Run() {
 	var broker = []string{"localhost:9092"}
 	var userCreatedTopic = "userCreated"
 	var profileUploadTopic = "profileUpload"
-
-	go kafka.StartConsumer(broker, userCreatedTopic,profileUploadTopic, cs, logger)
-
 	InitRoute(ch, app.router)
+
+	go kafka.StartConsumer(broker, userCreatedTopic, profileUploadTopic, cs, logger)
 
 	log.Println("Starting server on port", "8084")
 	app.router.Run(":8084")

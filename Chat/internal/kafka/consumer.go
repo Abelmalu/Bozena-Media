@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func StartConsumer(brokers []string, userCreatedtopic,profileUploadTopic string, cs core.ChatService, logger *platform.Logger) {
+func StartConsumer(brokers []string, userCreatedtopic, profileUploadTopic string, cs core.ChatService, logger *platform.Logger) {
 
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
@@ -27,9 +27,9 @@ func StartConsumer(brokers []string, userCreatedtopic,profileUploadTopic string,
 		userCreatedConsumer(consumer, userCreatedtopic, cs, logger)
 	}()
 
-	go func () {
+	go func() {
 
-		profileUploadConsumer(consumer,profileUploadTopic,cs, logger)
+		profileUploadConsumer(consumer, profileUploadTopic, cs, logger)
 	}()
 
 }
@@ -103,14 +103,14 @@ func profileUploadConsumer(consumer sarama.Consumer, profileUploadTopic string, 
 
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 
-			err = cs.UpdateCacheUser(ctx, profileUploadPayload.UserID,profileUploadPayload.Avatar)
+			err = cs.UpdateUserAvatar(ctx, profileUploadPayload.UserID, profileUploadPayload.Avatar)
 			if err != nil {
 
 				logger.Error("Error in updating users_cache document", zap.Error(err))
 
 			}
 			cancel()
-			log.Printf("Received user profileUpload event: ID=%v, Avatar=%s,", profileUploadPayload.UserID,profileUploadPayload.Avatar)
+			log.Printf("Received user profileUpload event: ID=%v, Avatar=%s,", profileUploadPayload.UserID, profileUploadPayload.Avatar)
 
 		case err := <-pc.Errors():
 			log.Printf("Consumer error encountered: %v", err)

@@ -141,7 +141,7 @@ func (ch *ChatHandler) GetUserChats(c *gin.Context) {
 
 	if err != nil {
 
-		ch.logger.Info("Error getting users chat", zap.Error(err))
+		ch.logger.Info("Error getting users chat", zap.Error(err), zap.String("requestID", requestID))
 		pkg.SendErrorResponse[ierrors.AppError](c, ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err), requestID, http.StatusInternalServerError)
 
 		return
@@ -149,4 +149,53 @@ func (ch *ChatHandler) GetUserChats(c *gin.Context) {
 
 	utils.SendSuccessResponse(c, resp, requestID, http.StatusOK)
 
+}
+
+func (ch *ChatHandler) GetChatMessages(c *gin.Context) {
+
+ 
+
+	chatIDStr := c.Param("id")
+	chatID, err := bson.ObjectIDFromHex(chatIDStr)
+	if err != nil {
+		ch.logger.Error("Error parsing lastSeenID", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid last seen ID format"})
+		return
+	}
+	requestID := c.GetHeader("X-Request-ID")
+	userID := c.GetHeader("X-User-ID")
+	userIDInt, err := strconv.Atoi(userID)
+	if err != nil {
+		ch.logger.Error("Error parsing user ID", zap.Error(err))
+		return
+	}
+	limitStr := c.GetHeader("X-Limit")
+	var limit int
+	if limitStr == "" {
+
+		limit = 10
+
+	} else {
+		limit, err = strconv.Atoi(limitStr)
+
+		if err != nil {
+			ch.logger.Error("Error parsing limit", zap.Error(err))
+			return
+		}
+	}
+	lastSeenIDStr := c.GetHeader("X-Last-ID")
+
+	var lastSeenID bson.ObjectID
+
+	if lastSeenIDStr != "" {
+		lastSeenID, err = bson.ObjectIDFromHex(lastSeenIDStr)
+		if err != nil {
+			ch.logger.Error("Error parsing lastSeenID", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid last seen ID format"})
+			return
+		}
+	} else {
+
+		ch.logger.Info("X-Last-ID header is empty; fetching from the beginning")
+	}
 }

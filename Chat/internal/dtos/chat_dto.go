@@ -15,3 +15,13 @@ type UserChatsResponse struct {
 	HasNext bool                   `json:"has_next"`
 	Cursor  bson.ObjectID                 `json:"cursor"`
 }
+
+
+
+type ChatMessagesResponse struct {
+
+	Messages []* models.Message
+	HasNext bool                   `json:"has_next"`
+	Cursor  bson.ObjectID                 `json:"cursor"`
+
+}

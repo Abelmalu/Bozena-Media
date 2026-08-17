@@ -5,7 +5,7 @@ import (
 
 	"github.com/abelmalu/golang-posts/APIGateway/internal/glue"
 	"github.com/abelmalu/golang-posts/APIGateway/internal/handler"
-"github.com/abelmalu/golang-posts/APIGateway/internal/middleware"
+	"github.com/abelmalu/golang-posts/APIGateway/internal/middleware"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -24,7 +24,7 @@ func InitChatRoute(router *gin.RouterGroup, handler *handler.ChatHandler, logger
 				middleware.AuthMiddleware(logger, redis),
 			},
 		},
-				{
+		{
 			Method:  http.MethodGet,
 			Path:    "/user/chats",
 			Handler: handler.GetUserChats,
@@ -34,7 +34,15 @@ func InitChatRoute(router *gin.RouterGroup, handler *handler.ChatHandler, logger
 			},
 		},
 
-		
+				{
+			Method:  http.MethodGet,
+			Path:    "/:id/messages",
+			Handler: handler.GetChatMessages,
+			Middlewares: []gin.HandlerFunc{
+
+				middleware.AuthMiddleware(logger, redis),
+			},
+		},
 	}
 
 	glue.RegisterRoutes(router, routes)
