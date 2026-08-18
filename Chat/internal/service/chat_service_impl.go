@@ -2,21 +2,25 @@ package service
 
 import (
 	"context"
+	"net/url"
 	"time"
 
 	"github.com/abelmalu/golang-posts/Chat/internal/core"
 	dto "github.com/abelmalu/golang-posts/Chat/internal/dtos"
 	ierrors "github.com/abelmalu/golang-posts/Chat/internal/errors"
-	"github.com/minio/minio-go/v7"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-type ChatService struct {
-	repo  core.ChatRespository
-	minio *minio.Client
+type MinioClient interface {
+	PresignedGetObject(ctx context.Context, bucketName, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error)
 }
 
-func NewChatService(r core.ChatRespository, minioClient *minio.Client) *ChatService {
+type ChatService struct {
+	repo  core.ChatRespository
+	minio MinioClient
+}
+
+func NewChatService(r core.ChatRespository, minioClient MinioClient) *ChatService {
 
 	return &ChatService{
 		repo:  r,
@@ -38,7 +42,6 @@ func (cs *ChatService) SendMessage(ctx context.Context, senderID, receiverID int
 	}
 
 	return nil
-
 }
 
 func (cs *ChatService) GetUserChats(ctx context.Context, userID, limit int, lastSeenID bson.ObjectID) (*dto.UserChatsResponse, error) {
@@ -97,7 +100,7 @@ func (cs *ChatService) UpdateUserAvatar(ctx context.Context, userID int, Avatar 
 
 func (cs *ChatService) GetChatMessages(ctx context.Context, chatID, cursor bson.ObjectID, limit int) (*dto.ChatMessagesResponse, error) {
 
-	resp, err := cs.repo.GetChatMessages(ctx, chatID,cursor,limit)
+	resp, err := cs.repo.GetChatMessages(ctx, chatID, cursor, limit)
 
 	if err != nil {
 
