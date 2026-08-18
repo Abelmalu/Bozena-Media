@@ -190,9 +190,9 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 	user, err := authSer.redis.Get(ctx, key).Result()
 
 	if err != nil && err != redis.Nil {
-		internalErr := ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
+		err = ierrors.NewInternalError(ierrors.MSGSomethingWentWrong, err)
 
-		return nil, nil, internalErr
+		return nil, nil, err
 
 	}
 
@@ -208,7 +208,7 @@ func (authSer *AuthService) Login(ctx context.Context, userName, password string
 
 		message := fmt.Sprintf("Account Temporarly blocked %f", timeLeft.Minutes())
 
-		return nil, nil, ierrors.NewValidationError(ierrors.ErrorMessage(message), nil, nil)
+		return nil, nil, ierrors.NewBadRequestError(ierrors.ErrorMessage(message), nil)
 	}
 
 	if fetchedUser.TemporaryLockUntil != nil {

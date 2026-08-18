@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/abelmalu/golang-posts/Auth/internal/dto"
+	ierrors "github.com/abelmalu/golang-posts/Auth/internal/errors"
 	model "github.com/abelmalu/golang-posts/Auth/internal/models"
 	"github.com/abelmalu/golang-posts/Auth/internal/service"
 	"github.com/abelmalu/golang-posts/platform"
@@ -17,8 +18,44 @@ import (
 )
 
 type MockAuthRepository struct {
-	User *model.User
-	err  error
+	User  *model.User
+	err   error
+	Users []*model.User
+}
+
+var ctx = metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-client-type", "web"))
+
+var users = []*model.User{
+	{
+		Name:     "Abebe Bikila",
+		Username: "abebeb",
+		Email:    "abebe.bikila@example.com",
+		Password: "pass@344#P",
+	},
+	{
+		Name:     "Almaz Ayana",
+		Username: "almaza",
+		Email:    "almaz.ayana@example.com",
+		Password: "pass@344#P",
+	},
+	{
+		Name:     "Dawit Isaak",
+		Username: "dawiti",
+		Email:    "dawit.isaak@example.com",
+		Password: "pass@344#P",
+	},
+	{
+		Name:     "Aster Aweke",
+		Username: "astera",
+		Email:    "aster.aweke@example.com",
+		Password: "pass@344#P",
+	},
+	{
+		Name:     "Gebisa Egeta",
+		Username: "gebisaE",
+		Email:    "gebisa.egeta@example.com",
+		Password: "pass@344#P",
+	},
 }
 
 type MockKafkaClient struct{}
@@ -80,7 +117,17 @@ func (m *MockAuthRepository) Register(ctx context.Context, user *model.User) (*m
 }
 
 func (m *MockAuthRepository) Login(ctx context.Context, userName, password string) (*model.User, error) {
-	return nil, nil
+
+	for _, user := range m.Users {
+
+		if userName == user.Username && password == user.Password {
+
+			return user, nil
+
+		}
+
+	}
+	return nil, ierrors.NewNotFoundError(ierrors.MSGUserNotFound, nil)
 }
 
 func (m *MockAuthRepository) Logout(ctx context.Context, tokenID string) error {
@@ -139,9 +186,7 @@ func TestAuthService_Register_Success(t *testing.T) {
 			Email:    "email",
 			Password: "pass@344#P",
 		},
-
 	}
-	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-client-type", "web"))
 
 	sv := service.NewAuthService(mr, nil, &MockKafkaClient{}, logger, &MockMinioClient{})
 
@@ -162,6 +207,60 @@ func TestAuthService_Register_Success(t *testing.T) {
 	if cu != mr.User {
 
 		t.Fatalf("the returned user doesn't match")
+	}
+
+}
+
+func TestAuthService_Register_Error(t *testing.T) {
+
+	mr := &MockAuthRepository{
+
+		err: ierrors.NewValidationError(ierrors.MSGUsernameIsRequired, nil, nil),
+	}
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-client-type", "web"))
+
+	sv := service.NewAuthService(mr, nil, &MockKafkaClient{}, logger, &MockMinioClient{})
+
+	user := &model.User{
+		Name:     "hellow",
+		Username: "",
+		Email:    "email",
+		Password: "pass@344#P",
+	}
+
+	_, _, err := sv.Register(ctx, user)
+
+	if err == nil {
+
+		t.Fatalf("expected error got nil ")
+	}
+
+	if err.Error() != string(ierrors.MSGUsernameIsRequired) {
+
+		t.Fatalf("expected %s got %s", string(ierrors.MSGUsernameIsRequired), err.Error())
+	}
+
+}
+
+func TestAuthService_Login_Error(t *testing.T) {
+
+	mr := &MockAuthRepository{
+
+		Users: users,
+	}
+
+	sv := service.NewAuthService(mr, nil, &MockKafkaClient{}, logger, &MockMinioClient{})
+
+	_, _, err := sv.Login(ctx, "mamo", "mamo@123")
+
+	if err == nil {
+
+		t.Fatalf("expected error got nil")
+	}
+
+	if err.Error() != string(ierrors.MSGUserNotFound) {
+
+		t.Fatalf("expected %s got %s", string(ierrors.MSGUsernameIsRequired), err.Error())
 	}
 
 }
