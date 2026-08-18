@@ -186,7 +186,7 @@ func (cr *ChatRepository) UpdateLastChatMessage(ctx context.Context, senderID in
 		return nil
 	}
 
-	return err
+	return nil
 
 }
 
@@ -222,7 +222,7 @@ func (cr *ChatRepository) UpdateUserAvatar(ctx context.Context, userID int, Avat
 		},
 	}
 
-	_, err := cr.DB.Collection("Chats").UpdateOne(ctx, filter, update)
+	_, err := cr.DB.Collection("Chats").UpdateMany(ctx, filter, update)
 
 	if err != nil {
 		return err
@@ -268,7 +268,7 @@ func (cr *ChatRepository) GetChatMessages(ctx context.Context, chatID, cursor bs
 		if limit == len(messages) {
 
 			hasNext = true
-			after = message.ChatID
+			after = message.ID
 
 			break
 

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"net/url"
 	"time"
 
 	"github.com/IBM/sarama"
@@ -23,25 +24,30 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+type MinioClient interface {
+	PresignedGetObject(ctx context.Context, bucketName, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error)
+	PresignedPostPolicy(ctx context.Context, p *minio.PostPolicy) (u *url.URL, formData map[string]string, err error)
+}
+
 type AuthService struct {
 	repo        core.AuthRepository
 	logger      *platform.Logger
 	redis       *redis.Client
 	kafka       sarama.SyncProducer
-	minioClient *minio.Client
+	minioClient MinioClient
 }
 
 var maxLoginAttempt = 6
 var tempMaxLoginAttempt = 3
 
-func NewAuthService(authRepo core.AuthRepository, redisCient *redis.Client, kafkaClient sarama.SyncProducer, logger *platform.Logger, minio *minio.Client) *AuthService {
+func NewAuthService(authRepo core.AuthRepository, redisCient *redis.Client, kafkaClient sarama.SyncProducer, logger *platform.Logger, minioClient MinioClient) *AuthService {
 
 	return &AuthService{
 		repo:        authRepo,
 		redis:       redisCient,
 		kafka:       kafkaClient,
 		logger:      logger,
-		minioClient: minio,
+		minioClient: minioClient,
 	}
 }
 func (authSer *AuthService) Register(ctx context.Context, user *model.User) (*model.User, *model.TokenPair, error) {

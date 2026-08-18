@@ -248,6 +248,7 @@ To run the entire microservices ecosystem (including PostgreSQL and Redis) using
 | :----- | :--------------------------- | :------------------------------------ | :------------------- |
 | `GET`  | `/api/chat/ws`               | Establish real-time WebSocket session | Authenticated User   |
 | `GET`  | `/api/chat/user/chats`       | Get direct message history & list     | Authenticated User   |
+| `GET`  | `/api/chat/:id/messages`     | Get messages in a specific chat       | Authenticated User   |
 
 ---
 
