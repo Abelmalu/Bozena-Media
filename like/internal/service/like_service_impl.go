@@ -10,12 +10,19 @@ import (
 	ierrors "github.com/abelmalu/golang-posts/like/internal/errors"
 )
 
-type LikeService struct {
-	likeRepo core.LikeRepository
-	kafka    sarama.SyncProducer
+type KafkaClient interface {
+
+	SendMessage(msg *sarama.ProducerMessage) (partition int32, offset int64, err error)
+
+
 }
 
-func NewLikeService(likeRepo core.LikeRepository,kafkaCl sarama.SyncProducer) *LikeService {
+type LikeService struct {
+	likeRepo core.LikeRepository
+	kafka    KafkaClient
+}
+
+func NewLikeService(likeRepo core.LikeRepository,kafkaCl KafkaClient) *LikeService {
 
 	return &LikeService{
 		likeRepo: likeRepo,

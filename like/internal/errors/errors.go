@@ -2,7 +2,6 @@ package ierrors
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"google.golang.org/grpc/codes"
@@ -24,17 +23,14 @@ const (
 	TypeBadRequest   ErrorType = "BAD_REQUEST"
 )
 
-//constant errors 
+// constant errors
 var (
-
-	ErrMetaDataNotFound = errors.New("meta data not found")
+	ErrMetaDataNotFound  = errors.New("meta data not found")
 	ErrRequestIDNotFound = errors.New("request id not found")
-	ErrUSerIDNotFound = errors.New("user id not found")
-	ErrPostIDNotFound = errors.New("post id not found")
-	ErrKafkaConnection = errors.New("couldn't connect to kafka server")
-
+	ErrUSerIDNotFound    = errors.New("user id not found")
+	ErrPostIDNotFound    = errors.New("post id not found")
+	ErrKafkaConnection   = errors.New("couldn't connect to kafka server")
 )
-
 
 type AppError struct {
 	Type      ErrorType              `json:"type"`
@@ -47,9 +43,9 @@ type AppError struct {
 
 func (e *AppError) Error() string {
 	if e.Cause != nil {
-		return fmt.Sprintf("%s: %s (cause: %v)", e.Type, e.Message, e.Cause)
+		return string(e.Message)
 	}
-	return fmt.Sprintf("%s: %s", e.Type, e.Message)
+	return string(e.Message)
 }
 
 func (e *AppError) Unwrap() error {
@@ -127,7 +123,6 @@ func NewDatabaseError(message ErrorMessage, cause error) *AppError {
 	}
 }
 
-
 func NewBadRequestError(message ErrorMessage, cause error) *AppError {
 
 	return &AppError{
@@ -152,7 +147,7 @@ func (e *AppError) HTTPStatus() int {
 	case TypeTimeout:
 		return http.StatusGatewayTimeout
 	case TypeBadRequest:
-		return  http.StatusBadRequest
+		return http.StatusBadRequest
 	default:
 		return http.StatusInternalServerError
 	}
