@@ -2,20 +2,24 @@ package service
 
 import (
 	"context"
+	"net/url"
 	"time"
 
 	"github.com/abelmalu/golang-posts/Feed/internal/core"
 	"github.com/abelmalu/golang-posts/Feed/internal/dto"
 	ierrors "github.com/abelmalu/golang-posts/Feed/internal/errors"
-	"github.com/minio/minio-go/v7"
 )
+
+type MinioClient interface {
+	PresignedGetObject(ctx context.Context, bucketName, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error)
+}
 
 type FeedService struct {
 	FeedRepo    core.FeedRepository
-	minioClient *minio.Client
+	minioClient MinioClient
 }
 
-func NewFeedService(feedRepo core.FeedRepository, minioClient *minio.Client) *FeedService {
+func NewFeedService(feedRepo core.FeedRepository, minioClient MinioClient) *FeedService {
 
 	return &FeedService{
 		FeedRepo:    feedRepo,
@@ -52,8 +56,6 @@ func (feedService *FeedService) GetUserFeed(ctx context.Context, cursor string, 
 
 		}
 
-		
-
 	}
 
 	return resp, nil
@@ -71,12 +73,12 @@ func (feedService *FeedService) CreateCacheUser(ctx context.Context, userID int,
 
 	if userID <= 0 {
 
-		return ierrors.NewValidationError(ierrors.MSGNameIsRequired, nil, nil)
+		return ierrors.NewValidationError(ierrors.MSGUserNotFound, nil, nil)
 	}
 
 	if username == "" {
 
-		return ierrors.NewValidationError(ierrors.MSGNameIsRequired, nil, nil)
+		return ierrors.NewValidationError(ierrors.MSGUsernameIsRequired, nil, nil)
 	}
 
 	if err := feedService.FeedRepo.CreateCacheUser(ctx, userID, username, name); err != nil {
