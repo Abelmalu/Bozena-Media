@@ -2,7 +2,6 @@ package ierrors
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"google.golang.org/grpc/codes"
@@ -47,9 +46,9 @@ type AppError struct {
 
 func (e *AppError) Error() string {
 	if e.Cause != nil {
-		return fmt.Sprintf("%s: %s (cause: %v)", e.Type, e.Message, e.Cause)
+		return  string(e.Message)
 	}
-	return fmt.Sprintf("%s: %s", e.Type, e.Message)
+	return string( e.Message)
 }
 
 func (e *AppError) Unwrap() error {

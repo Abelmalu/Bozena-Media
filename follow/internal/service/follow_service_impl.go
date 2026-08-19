@@ -10,12 +10,19 @@ import (
 	"github.com/abelmalu/golang-posts/follow/internal/models"
 )
 
-type FollowService struct {
-	followRepo core.FollowRepository
-	kafka      sarama.SyncProducer
+type KafkaClient interface {
+
+	SendMessage(msg *sarama.ProducerMessage) (partition int32, offset int64, err error)
+
+
 }
 
-func NewFollowService(followRepo core.FollowRepository, kafka sarama.SyncProducer) *FollowService {
+type FollowService struct {
+	followRepo core.FollowRepository
+	kafka      KafkaClient
+}
+
+func NewFollowService(followRepo core.FollowRepository, kafka KafkaClient) *FollowService {
 
 	return &FollowService{
 		followRepo: followRepo,
