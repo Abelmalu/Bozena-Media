@@ -201,7 +201,7 @@ func (postService *PostService) GenerateUploadURL(ctx context.Context, filename,
 	switch ext {
 	case ".jpg", ".jpeg", ".png", ".avif":
 	default:
-		return "", nil, ierrors.NewBadRequestError("Invalid file fromat", nil)
+		return "", nil, ierrors.NewBadRequestError("Invalid file extension", nil)
 	}
 
 	objectName := fmt.Sprintf(
