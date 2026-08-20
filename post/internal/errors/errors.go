@@ -2,7 +2,6 @@ package ierrors
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"google.golang.org/grpc/codes"
@@ -21,18 +20,15 @@ const (
 	TypeTimeout      ErrorType = "TIMEOUT"
 	TypeCancelled    ErrorType = "CANCELLED"
 	TypeDatabase     ErrorType = "DATABASE"
-	TypeKafka  		 ErrorType = "kafka"
+	TypeKafka        ErrorType = "kafka"
 	TypeBadRequest   ErrorType = "BAD_REQUEST"
-
 )
 
-//constant errors 
+// constant errors
 var (
-
-	ErrMetaDataNotFound = errors.New("meta data not found")
+	ErrMetaDataNotFound  = errors.New("meta data not found")
 	ErrRequestIDNotFound = errors.New("reques id not found")
-	ErrKafkaConnection = errors.New("couldn't connect to kafka server")
-
+	ErrKafkaConnection   = errors.New("couldn't connect to kafka server")
 )
 
 type AppError struct {
@@ -46,9 +42,10 @@ type AppError struct {
 
 func (e *AppError) Error() string {
 	if e.Cause != nil {
-		return fmt.Sprintf("%s: %s (cause: %v)", e.Type, e.Message, e.Cause)
+		return string(e.Message)
+
 	}
-	return fmt.Sprintf("%s: %s", e.Type, e.Message)
+	return string(e.Message)
 }
 
 func (e *AppError) Unwrap() error {

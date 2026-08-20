@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
+
 	"github.com/IBM/sarama"
 	"github.com/abelmalu/golang-posts/post/internal/cleanup"
 	"github.com/abelmalu/golang-posts/post/internal/core"
@@ -17,18 +19,29 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
+type kafkaClient interface {
+	SendMessage(msg *sarama.ProducerMessage) (partition int32, offset int64, err error)
+
+}
+
+type MinioClient interface {
+	PresignedGetObject(ctx context.Context, bucketName, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error)
+	PresignedPostPolicy(ctx context.Context, p *minio.PostPolicy) (u *url.URL, formData map[string]string, err error)
+
+}
+
 type PostService struct {
 	repo           core.PostRepository
-	kafka          sarama.SyncProducer
-	minioClient    *minio.Client
+	kafka          kafkaClient
+	minioClient    MinioClient
 	cleanupService *cleanup.CleanUpService
 }
 
-func NewPostService(repository core.PostRepository, kafkaClient sarama.SyncProducer, minioClient *minio.Client, cleanup *cleanup.CleanUpService) *PostService {
+func NewPostService(repository core.PostRepository, kafka kafkaClient, minioClient MinioClient, cleanup *cleanup.CleanUpService) *PostService {
 
 	return &PostService{
 		repo:           repository,
-		kafka:          kafkaClient,
+		kafka:          kafka,
 		minioClient:    minioClient,
 		cleanupService: cleanup,
 	}
@@ -42,7 +55,6 @@ func (postService *PostService) CreatePost(ctx context.Context, post *models.Pos
 		return nil, ierrors.NewValidationError(ierrors.MSGTitleIsRrequired, nil, nil)
 
 	}
-
 
 	createdPost, err := postService.repo.CreatePost(ctx, post)
 
@@ -74,14 +86,14 @@ func (postService *PostService) CreatePost(ctx context.Context, post *models.Pos
 	return createdPost, nil
 
 }
-func (postService *PostService) UpdatePost(ctx context.Context, postID int, title, content,image string) (*models.Post, error) {
+func (postService *PostService) UpdatePost(ctx context.Context, postID int, title, content, image string) (*models.Post, error) {
 
 	if postID <= 0 {
 
 		return nil, ierrors.NewValidationError(ierrors.MSGPathParamError, nil, nil)
 	}
 
-	updatedPost, err := postService.repo.UpdatePost(ctx, postID, title, content,image)
+	updatedPost, err := postService.repo.UpdatePost(ctx, postID, title, content, image)
 	if err != nil {
 
 		return nil, err
@@ -133,8 +145,7 @@ func (postService *PostService) GetUserPosts(ctx context.Context, UserID, limit 
 
 			objectName = *post.Image
 
-
-			if objectName == ""{
+			if objectName == "" {
 
 				continue
 			}
@@ -153,8 +164,6 @@ func (postService *PostService) GetUserPosts(ctx context.Context, UserID, limit 
 
 	}
 
-	
-
 	return resp, nil
 }
 
@@ -162,12 +171,12 @@ func (postService *PostService) CreateCacheUser(ctx context.Context, userID int,
 
 	if userID <= 0 {
 
-		return ierrors.NewValidationError(ierrors.MSGNameIsRequired, nil, nil)
+		return ierrors.NewValidationError(ierrors.MSGUserNotFound, nil, nil)
 	}
 
 	if username == "" {
 
-		return ierrors.NewValidationError(ierrors.MSGNameIsRequired, nil, nil)
+		return ierrors.NewValidationError(ierrors.MSGUsernameIsRequired, nil, nil)
 	}
 
 	if err := postService.repo.CreateCacheUser(ctx, userID, username, name); err != nil {
@@ -217,21 +226,18 @@ func (postService *PostService) GenerateUploadURL(ctx context.Context, filename,
 	return url.String(), formData, nil
 }
 
+func (postService *PostService) IncreaseLikeCount(ctx context.Context, postID int) error {
 
-
-func (postService *PostService)IncreaseLikeCount(ctx context.Context,postID int) error {
-
-	if err := postService.repo.IncreaseLikeCount(ctx,postID); err != nil {
+	if err := postService.repo.IncreaseLikeCount(ctx, postID); err != nil {
 
 		return err
 	}
 
 	return nil
 }
-func (postService *PostService)	DecreaseLikeCount(ctx context.Context,postID int) error {
+func (postService *PostService) DecreaseLikeCount(ctx context.Context, postID int) error {
 
-
-	if err := postService.repo.DecreaseLikeCount(ctx,postID); err != nil {
+	if err := postService.repo.DecreaseLikeCount(ctx, postID); err != nil {
 
 		return err
 	}
