@@ -1,0 +1,216 @@
+
+
+services:
+  # ---------------- Infrastructure ----------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password@123
+      POSTGRES_DB: user_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./psql-init-script:/docker-entrypoint-initdb.d 
+    networks:
+      - bozena_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_cache
+    networks:
+      - bozena_network
+
+  mongodb:
+    image: mongo:6.0-alpine
+    container_name: mongodb_db
+    environment:
+      MONGO_INITDB_DATABASE: chat_db
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - bozena_network
+
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    networks:
+      - bozena_network
+
+  # ---------------- Microservices ----------------
+  auth-service:
+    build:
+      context: .
+      args:
+        - SERVICE_NAME=Auth
+        - MAIN_PATH=cmd/main.go
+    container_name: auth_service
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    environment:
+      - DB_URL=postgres://user:password%40123@postgres_db:5432/user_db?sslmode=disable
+      - REDIS_URL=redis:6379
+      - KAFKA_URL=kafka:29092
+      - GRPC_PORT=50052
+    networks:
+      - bozena_network
+
+  post-service:
+    build:
+      context: .
+      args:
+        - SERVICE_NAME=post
+        - MAIN_PATH=cmd/main.go
+    container_name: post_service
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      - DB_URL=postgres://user:password%40123@postgres_db:5432/post_db?sslmode=disable
+      - DB_PORT=5432
+      - KAFKA_URL=kafka:29092
+      - GRPC_PORT=50051
+    networks:
+      - bozena_network
+
+  like-service:
+    build:
+      context: .
+      args:
+        - SERVICE_NAME=like
+        - MAIN_PATH=cmd/main.go
+    container_name: like_service
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      - DB_URL=postgres://user:password%40123@postgres_db:5432/like_db?sslmode=disable
+      - KAFKA_URL=kafka:29092
+      - GRPC_PORT=50053
+    networks:
+      - bozena_network
+
+  follow-service:
+    build:
+      context: .
+      args:
+        - SERVICE_NAME=follow
+        - MAIN_PATH=cmd/main.go
+    container_name: follow_service
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      - DB_URL=postgres://user:password%40123@postgres_db:5432/follow_db?sslmode=disable
+      - KAFKA_URL=kafka:29092
+      - GRPC_PORT=50054
+    networks:
+      - bozena_network
+
+  feed-service:
+    build:
+      context: .
+      args:
+        - SERVICE_NAME=Feed
+        - MAIN_PATH=cmd/main.go
+    container_name: feed_service
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      - DB_URL=postgres://user:password%40123@postgres_db:5432/feed_db?sslmode=disable
+      - KAFKA_URL=kafka:29092
+      - GRPC_PORT=50055
+    networks:
+      - bozena_network
+  
+
+  notification-service:
+    build: 
+      context: .
+      args:
+        - SERVICE_NAME=notification
+        - MAIN_PATH=cmd/main.go
+      container_name: notification-service
+      depends_on:
+        - postgres
+        - kafka
+      environment:
+        - DB_URL=postgres://user:password%40123@postgres_db:5432/feed_db?sslmode=disable
+        - KAFKA_URL=kafka:29092
+        - SERVER_PORT=8081
+      networks:
+        - bozena_network
+
+
+  chat-service:
+    build: 
+      context: .
+      args:
+        - SERVICE_NAME=Chat
+        - MAIN_PATH=cmd/main.go
+      container_name: chat-service
+      depends_on:
+        - postgres
+        - kafka
+      environment:
+        - DB_URL=postgres:mongodb://mongodb:27017/
+        - KAFKA_URL=kafka:29092
+        - SERVER_PORT=8082
+      networks:
+        - bozena_network
+
+
+   
+
+  api-gateway:
+    build:
+      context: .
+      args:
+        - SERVICE_NAME=APIGateway
+        - MAIN_PATH=cmd/gateway/main.go
+    container_name: api_gateway
+    depends_on:
+      - auth-service
+      - post-service
+      - like-service
+      - follow-service
+      - feed-service
+      - redis
+    ports:
+      - "8080:8080" # Exposed to the outside world
+    environment:
+      - REDIS_URL=redis:6379
+      - AUTH_SERVICE_URL=auth-service:50052
+      - POST_SERVICE_URL=post-service:50051
+      - LIKE_SERVICE_URL=like-service:50053
+      - FOLLOW_SERVICE_URL=follow-service:50054
+      - FEED_SERVICE_URL=feed-service:50055
+      - SERVER_PORT=8080
+    networks:
+      - bozena_network
+
+networks:
+  bozena_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongo_data:
