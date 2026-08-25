@@ -3,6 +3,7 @@ package initiator
 import (
 	"log"
 
+	"github.com/abelmalu/golang-posts/APIGateway/config"
 	client "github.com/abelmalu/golang-posts/APIGateway/internal/clients"
 	"github.com/abelmalu/golang-posts/platform"
 	"google.golang.org/grpc"
@@ -23,42 +24,42 @@ type Client struct {
 
 
 
-func NewClient(logger *platform.Logger) *Client{
+func NewClient(logger *platform.Logger,cfg *config.Config) *Client{
 
-	  	postConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	  	postConn, err := grpc.NewClient(cfg.PostServiceADD, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
 
-		log.Fatalf("failed to connect to gRPC server: %v", err)
+		log.Fatalf("failed to connect to post gRPC server: %v", err)
 
 	}
-	authConn, err := grpc.NewClient("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	authConn, err := grpc.NewClient(cfg.AuthServiceADD, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
 
-		log.Fatalf("failed to connect to gRPC server: %v", err)
-
-	}
-
-
-	likeConn, err := grpc.NewClient("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
-
-	if err != nil {
-
-		log.Fatalf("failed to connect to gRPC server: %v", err)
+		log.Fatalf("failed to connect to auth gRPC server: %v", err)
 
 	}
 
-	followConn, err := grpc.NewClient("localhost:50054", grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	likeConn, err := grpc.NewClient(cfg.LikeServiceADD, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
 
-		log.Fatalf("failed to connect to gRPC server: %v", err)
+		log.Fatalf("failed to connect to like gRPC server: %v", err)
+
+	}
+
+	followConn, err := grpc.NewClient(cfg.FollowServiceADD, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	if err != nil {
+
+		log.Fatalf("failed to connect to follow gRPC server: %v", err)
 
 	}
     
 
-	feedConn, err := grpc.NewClient("localhost:50055", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	feedConn, err := grpc.NewClient(cfg.FeedServiceADD, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
 

@@ -203,6 +203,8 @@ services:
       - LIKE_SERVICE_URL=like-service:50053
       - FOLLOW_SERVICE_URL=follow-service:50054
       - FEED_SERVICE_URL=feed-service:50055
+      - NOTIFICATION_SERVICE_URL=notification-service:8081
+      - CHAT_SERVICE_URL=notification-service:8082
       - SERVER_PORT=8080
     networks:
       - bozena_network
