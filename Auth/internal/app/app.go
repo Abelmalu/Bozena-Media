@@ -135,7 +135,7 @@ func initRedis(address, password string, db int, logger *platform.Logger) *redis
 // Run starts the gRPC server on the provided port
 func (app *App) Run() {
 
-	lis, _ := net.Listen("tcp", ":50052")
+	lis, _ := net.Listen("tcp", app.config.GRPCPORT)
 	s := grpc.NewServer()
 
 	// Dependency Injection for each layer one by one

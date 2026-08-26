@@ -52,14 +52,14 @@ func NewApp() (*App, error) {
 
 	// initializing the kafka client
 
-	kafkaClient, err := kafka.InitKafkaProducer(logger)
+	kafkaClient, err := kafka.InitKafkaProducer(logger, config.KafkaBrokersURL)
 
 	if err != nil {
 
 		log.Fatalf("Couldn't make kafka connection %v", err)
 	}
 
-	minioClient, err := miniocl.NewMinioClient()
+	minioClient, err := miniocl.NewMinioClient(config.MinioULR)
 
 	if err != nil {
 
@@ -109,7 +109,7 @@ func initDB(config *config.Config) (*sql.DB, error) {
 func (app *App) Run() {
 	logger := platform.InitZapLogger()
 
-	lis, _ := net.Listen("tcp", ":50051")
+	lis, _ := net.Listen("tcp", app.config.GRPCPORT)
 	s := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			interceptors.AuthInterceptor(logger),
@@ -117,21 +117,20 @@ func (app *App) Run() {
 		),
 	)
 
-	cleanupService := cleanup.NewCleanUpService(app.minioClient,logger)
+	cleanupService := cleanup.NewCleanUpService(app.minioClient, logger)
 	postRepo := repository.NewPostRepository(app.DB)
-	postService := service.NewPostService(postRepo, app.KafkaClient, app.minioClient,cleanupService)
-	postHandler := handlers.NewPostHandler(postService, logger,cleanupService)
+	postService := service.NewPostService(postRepo, app.KafkaClient, app.minioClient, cleanupService)
+	postHandler := handlers.NewPostHandler(postService, logger, cleanupService)
 
 	pb.RegisterPostServiceServer(s, postHandler)
 
-	brokers := []string{"localhost:9092"}
 	userCreatedtopic := "userCreated"
 
-	 postLikedTopic := "liked"
-	  postUnlikedTopic := "unliked"
+	postLikedTopic := "liked"
+	postUnlikedTopic := "unliked"
 
 	// Run consumer in the background
-	go kafka.StartConsumer(brokers, userCreatedtopic,postLikedTopic,postUnlikedTopic, postService, logger)
+	go kafka.StartConsumer(app.config.KafkaBrokersURL, userCreatedtopic, postLikedTopic, postUnlikedTopic, postService, logger)
 
 	// start the grpc server
 	s.Serve(lis)

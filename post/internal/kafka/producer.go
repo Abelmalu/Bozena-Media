@@ -11,15 +11,13 @@ import (
 
 
 
-func InitKafkaProducer(logger *platform.Logger) ( sarama.SyncProducer,error ){
+func InitKafkaProducer(logger *platform.Logger,kafkaURL []string) ( sarama.SyncProducer,error ){
 
  config := sarama.NewConfig()
   config.Producer.Return.Successes = true
 
 
- broker := []string{"localhost:9092"}
-
- producer, err := sarama.NewSyncProducer(broker,config)
+ producer, err := sarama.NewSyncProducer(kafkaURL,config)
 
 
  if err != nil {

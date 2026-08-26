@@ -116,8 +116,8 @@ func initRedis(address, password string, db int, logger *platform.Logger) *redis
 
 func (app *App) Run() {
 
-	port := app.Config.GRPCPORT
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", port))
+	
+	lis, err := net.Listen("tcp", app.Config.GRPCPORT)
 	if err != nil {
 
 		log.Fatalf("error while tcp connection %v", err)
