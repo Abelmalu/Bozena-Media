@@ -9,8 +9,8 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-func NewMinioClient() (*minio.Client, error) {
-	minioClient, err := minio.New("localhost:9000", &minio.Options{
+func NewMinioClient(minioADD string) (*minio.Client, error) {
+	minioClient, err := minio.New(minioADD, &minio.Options{
 		Creds:  credentials.NewStaticV4("minioadmin", "minioadminpassword", ""), //
 		Secure: false,                                                        // true for HTTPS, false for HTTP
 	})

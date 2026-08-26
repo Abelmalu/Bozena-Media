@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"time"
-
 	"github.com/abelmalu/golang-posts/Feed/config"
 	"github.com/abelmalu/golang-posts/Feed/internal/handler"
 	"github.com/abelmalu/golang-posts/Feed/internal/kafka"
@@ -80,11 +79,11 @@ var logger = platform.InitZapLogger()
 
 func (app *App) Run() {
 
-	lis, _ := net.Listen("tcp", ":50055")
+	lis, _ := net.Listen("tcp", app.config.GRPCPORT)
 
 	s := grpc.NewServer()
 
-	minioClient, err := miniocl.NewMinioClient()
+	minioClient, err := miniocl.NewMinioClient(app.config.MinioADD)
 
 	if err != nil {
 
@@ -96,7 +95,6 @@ func (app *App) Run() {
 
 	pb.RegisterFeedServiceServer(s, fh)
 
-	brokers := []string{"localhost:9092"}
 	Usertopic := "userCreated"
 	postTopic := "postCreated"
 	likedTopic := "liked"
@@ -105,7 +103,7 @@ func (app *App) Run() {
 	unfollowedTopic := "unfollowed"
 
 	// Run consumer in the background
-	go kafka.StartConsumer(brokers, Usertopic, postTopic, likedTopic, unLikedTopic, followedTopic, unfollowedTopic, feedService, logger)
+	go kafka.StartConsumer(app.config.KafkaBrokersURL, Usertopic, postTopic, likedTopic, unLikedTopic, followedTopic, unfollowedTopic, feedService, logger)
 
 	s.Serve(lis)
 

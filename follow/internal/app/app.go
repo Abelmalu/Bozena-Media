@@ -47,11 +47,11 @@ func NewApp() *App {
 		log.Fatalf("error while connectiong DB %v", err)
 	}
 	// Init Reids
-	redisClient := initRedis("127.0.0.1:6379", "", 0, logger)
+	redisClient := initRedis(config.RedisADD, "", 0, logger)
 
 	// initializing the kafka client
 
-	kafkaClient, err := kafka.InitKafkaProducer(logger)
+	kafkaClient, err := kafka.InitKafkaProducer(logger,config)
 
 	if err != nil {
 
@@ -130,11 +130,10 @@ func (app *App) Run() {
 
 	pb.RegisterFollowServiceServer(s, fh)
 
-	brokers := []string{"localhost:9092"}
 	topic := "userCreated"
 
 	// Run consumer in the background
-	go kafka.StartConsumer(brokers, topic, followService, logger)
+	go kafka.StartConsumer(app.Config.KafkaBrokersURL, topic, followService, logger)
 
 	s.Serve(lis)
 

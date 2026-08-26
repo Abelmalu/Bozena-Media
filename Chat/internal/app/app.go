@@ -25,6 +25,7 @@ type App struct {
 	mongoClient *mongo.Database
 	router      *gin.Engine
 	minioClient *minio.Client
+	cfg       *config.Config
 }
 
 var logger = platform.InitZapLogger()
@@ -42,13 +43,14 @@ func NewApp() *App {
 
 	r := gin.New()
 
-	minio, err := miniocl.NewMinioClient()
+	minio, err := miniocl.NewMinioClient(cfg.MinioADD)
 
 	return &App{
 
 		mongoClient: DB,
 		router:      r,
 		minioClient: minio,
+		cfg: cfg,
 	}
 }
 
@@ -89,14 +91,13 @@ func (app *App) Run() {
 	cs := service.NewChatService(cr, app.minioClient)
 	ch := handlers.NewChatHandler(cs, logger, cb)
 
-	var broker = []string{"localhost:9092"}
 	var userCreatedTopic = "userCreated"
 	var profileUploadTopic = "profileUpload"
 	InitRoute(ch, app.router)
 
-	go kafka.StartConsumer(broker, userCreatedTopic, profileUploadTopic, cs, logger)
+	go kafka.StartConsumer(app.cfg.KafkaBrokersURL, userCreatedTopic, profileUploadTopic, cs, logger)
 
 	log.Println("Starting server on port", "8084")
-	app.router.Run(":8084")
+	app.router.Run(app.cfg.Port)
 
 }

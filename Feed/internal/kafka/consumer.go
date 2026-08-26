@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/IBM/sarama"
+	"github.com/abelmalu/golang-posts/Feed/config"
 	"github.com/abelmalu/golang-posts/Feed/internal/core"
 	"github.com/abelmalu/golang-posts/Feed/internal/dto"
 	"github.com/abelmalu/golang-posts/follow/proto/pb"
@@ -42,7 +43,9 @@ type follow struct {
 
 func initFollowClient() pb.FollowServiceClient {
 
-	followConn, err := grpc.NewClient("localhost:50054", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	cfg,err := config.LoadConfig()
+
+	followConn, err := grpc.NewClient(cfg.FollowServiceADD, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
 

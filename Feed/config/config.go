@@ -4,46 +4,45 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strconv"
 )
 
-
-type Config struct{
-	DBURL string 
-	GRPCPORT int 
-
+type Config struct {
+	DBURL            string
+	GRPCPORT         string
+	FollowServiceADD string
+	MinioADD		 string
+	KafkaBrokersURL         []string
 }
-func LoadConfig() (*Config,error){
 
+func LoadConfig() (*Config, error) {
 
 	cfg := Config{}
 
-	var err error
-
-	portStr := os.Getenv("GRPC_PORT")
-
-	if portStr == "" {
-
-		portStr = "50051"
-	}
-	cfg.GRPCPORT, err = strconv.Atoi(portStr)
-	if err != nil {
-
-		return nil, fmt.Errorf("invalid SERVER_PORT '%s': must be an integer", portStr)
-
+	cfg.GRPCPORT = ":" + os.Getenv("GRPC_PORT")
+	if cfg.GRPCPORT == "" {
+		cfg.GRPCPORT = ":50055"
 	}
 
 	cfg.DBURL = os.Getenv("DB_URL")
-
-	if cfg.DBURL == ""{
-
-
-		return nil,errors.New("DB_URL environment variable is required!")
+	if cfg.DBURL == "" {
+		return nil, errors.New("DB_URL environment variable is required!")
 	}
 
+	cfg.FollowServiceADD = os.Getenv("FOLLOW_SERVICE_URL")
+	if cfg.FollowServiceADD == "" {
+		return nil, fmt.Errorf("FOLLOW_SERVICE_URL is required")
+	}
 
-	return &cfg,nil
+	cfg.MinioADD = os.Getenv("MINIO_URL")
+	if cfg.MinioADD == "" {
+		return nil, fmt.Errorf("MINIO_ADD is required")
+	}
+
+	cfg.KafkaBrokersURL = []string {os.Getenv("KAFKA_BROKERS_URL")}
+	if len(cfg.KafkaBrokersURL) == 0 {
+		return nil, fmt.Errorf("MINIO_ADD is required")
+	}
+
+	return &cfg, nil
 
 }
-
-

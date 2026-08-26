@@ -24,10 +24,10 @@ func Initialize() {
 	}
 
 	//Initializing redis client
-	redisClient := InitRedis("127.0.0.1:6379", "", 0, logger)
+	redisClient := InitRedis(cfg.RedisADD, "", 0, logger)
 
 	// initializing clients
-	clients := NewClient(logger,cfg)
+	clients := NewClient(logger, cfg)
 
 	// initializing handlers
 	handlers := InitHandler(*clients, logger)

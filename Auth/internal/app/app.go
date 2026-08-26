@@ -52,7 +52,7 @@ func NewApp() (*App, error) {
 
 	}
 
-	redisClient := initRedis("127.0.0.1:6379", "", 0, logger)
+	redisClient := initRedis(config.RedisADD, "", 0, logger)
 
 	// initializing the kafka client
 
@@ -63,7 +63,7 @@ func NewApp() (*App, error) {
 		log.Fatalf("Couldn't make kafka connection %v", err)
 	}
 
-	minio, err := miniocl.NewMinioClient()
+	minio, err := miniocl.NewMinioClient(config.MinioADD)
 
 	if err != nil {
 

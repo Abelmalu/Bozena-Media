@@ -3,21 +3,18 @@ package kafka
 import (
 	"github.com/IBM/sarama"
 	ierrors "github.com/abelmalu/golang-posts/follow/internal/errors"
+	"github.com/abelmalu/golang-posts/follow/config"
 	"github.com/abelmalu/golang-posts/platform"
 	"go.uber.org/zap"
 )
 
 
-func InitKafkaProducer(logger *platform.Logger) ( sarama.SyncProducer,error ){
+func InitKafkaProducer(logger *platform.Logger,cfg *config.Config) ( sarama.SyncProducer,error ){
 
  config := sarama.NewConfig()
   config.Producer.Return.Successes = true
 
-
- broker := []string{"localhost:9092"}
-
- producer, err := sarama.NewSyncProducer(broker,config)
-
+ producer, err := sarama.NewSyncProducer(cfg.KafkaBrokersURL,config)
 
  if err != nil {
 

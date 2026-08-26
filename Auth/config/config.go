@@ -7,14 +7,14 @@ import (
 	"strconv"
 )
 
-
-type Config struct{
-	DBURL string 
-	GRPCPORT int 
-
+type Config struct {
+	DBURL    string
+	GRPCPORT int
+	RedisADD string
+	MinioADD string
 }
-func LoadConfig() (*Config,error){
 
+func LoadConfig() (*Config, error) {
 
 	cfg := Config{}
 
@@ -35,15 +35,21 @@ func LoadConfig() (*Config,error){
 
 	cfg.DBURL = os.Getenv("DB_URL")
 
-	if cfg.DBURL == ""{
+	if cfg.DBURL == "" {
 
-
-		return nil,errors.New("DB_URL environment variable is required!")
+		return nil, errors.New("DB_URL environment variable is required!")
 	}
 
+	cfg.RedisADD = os.Getenv("REDIS_URL")
+	if cfg.RedisADD == "" {
+		return nil, fmt.Errorf("REDIS_ADD is required")
+	}
 
-	return &cfg,nil
+	cfg.MinioADD = os.Getenv("MINIO_URL")
+	if cfg.MinioADD == "" {
+		return nil, fmt.Errorf("MINIO_ADD is required")
+	}
+
+	return &cfg, nil
 
 }
-
-

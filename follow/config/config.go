@@ -10,7 +10,9 @@ import (
 
 type Config struct{
 	DBURL string 
-	GRPCPORT int 
+	GRPCPORT int
+	KafkaBrokersURL []string
+	RedisADD   string
 
 }
 func LoadConfig() (*Config,error){
@@ -24,7 +26,7 @@ func LoadConfig() (*Config,error){
 
 	if portStr == "" {
 
-		portStr = "50051"
+		portStr = "50054"
 	}
 	cfg.GRPCPORT, err = strconv.Atoi(portStr)
 	if err != nil {
@@ -39,6 +41,16 @@ func LoadConfig() (*Config,error){
 
 
 		return nil,errors.New("DB_URL environment variable is required!")
+	}
+
+	cfg.KafkaBrokersURL = []string {os.Getenv("KAFKA_BROKERS_URL")}
+	if len(cfg.KafkaBrokersURL) == 0 {
+		return nil, fmt.Errorf("MINIO_ADD is required")
+	}
+
+		cfg.RedisADD = os.Getenv("REDIS_URL")
+	if cfg.RedisADD == "" {
+		return nil, fmt.Errorf("REDIS_ADD is required")
 	}
 
 
