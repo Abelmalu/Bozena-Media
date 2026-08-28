@@ -56,7 +56,7 @@ func NewApp() (*App, error) {
 
 	// initializing the kafka client
 
-	kafkaClient, err := kafka.InitKafkaProducer(logger)
+	kafkaClient, err := kafka.InitKafkaProducer(logger,config.KafkaBrokersURL)
 
 	if err != nil {
 
@@ -142,11 +142,10 @@ func (app *App) Run() {
 	authRepo := repository.NewAuthRepository(app.DB)
 	authService := service.NewAuthService(authRepo, app.RedisClient, app.Kafka, logger, app.minioClient)
 	ah := handler.NewAuthHandler(authService, logger)
-	brokers := []string{"localhost:9092", "localhost:9093"}
 	followedTopic := "followed"
 	unfollowTopic := "unfollowed"
 
-	go kafka.StartConsumer(brokers, followedTopic, unfollowTopic, authService, logger)
+	go kafka.StartConsumer(app.config.KafkaBrokersURL, followedTopic, unfollowTopic, authService, logger)
 	pb.RegisterAuthServiceServer(s, ah)
 	s.Serve(lis)
 

@@ -41,7 +41,7 @@ func NewApp() *App {
 		log.Fatalf("Error while initiating db connection %v", err)
 	}
 
-	kafkaClient,err := kafka.InitKafkaProducer(logger)
+	kafkaClient, err := kafka.InitKafkaProducer(logger, cfg.KafkaBrokersURL)
 
 	if err != nil {
 		log.Fatalf("Error while initiating kafka connection %v", err)
@@ -50,7 +50,7 @@ func NewApp() *App {
 	return &App{
 		DB:     DBConPool,
 		config: cfg,
-		Kafka: kafkaClient,
+		Kafka:  kafkaClient,
 	}
 
 }
@@ -83,7 +83,10 @@ func initDB(config *config.Config) (*sql.DB, error) {
 
 func (app *App) Run() {
 
-	lis, _ := net.Listen("tcp", ":50053")
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", app.config.GRPCPORT))
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+	}
 	s := grpc.NewServer()
 
 	logger := platform.InitZapLogger()
@@ -94,12 +97,11 @@ func (app *App) Run() {
 
 	pb.RegisterLikeServiceServer(s, lh)
 
-	brokers := []string{"localhost:9092"}
 	Usertopic := "userCreated"
 	postTopic := "postCreated"
 
 	// Run consumer in the background
-	go kafka.StartConsumer(brokers, Usertopic, postTopic, likeService, logger)
+	go kafka.StartConsumer(app.config.KafkaBrokersURL, Usertopic, postTopic, likeService, logger)
 
 	s.Serve(lis)
 

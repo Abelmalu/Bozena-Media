@@ -36,7 +36,7 @@ func LoadConfig() (*Config, error) {
 
 	cfg.KafkaBrokersURL = []string{os.Getenv("KAFKA_BROKERS_URL")}
 	if len(cfg.KafkaBrokersURL) == 0 {
-		return nil, fmt.Errorf("MINIO_ADD is required")
+		return nil, fmt.Errorf("KAFKA_BROEKER_URL is required")
 	}
 
 	cfg.RedisADD = os.Getenv("REDIS_URL")

@@ -7,14 +7,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func InitKafkaProducer(logger *platform.Logger) (sarama.SyncProducer, error) {
+func InitKafkaProducer(logger *platform.Logger, brokers []string) (sarama.SyncProducer, error) {
 
 	config := sarama.NewConfig()
 	config.Producer.Return.Successes = true
 
-	broker := []string{"localhost:9092"}
-
-	producer, err := sarama.NewSyncProducer(broker, config)
+	producer, err := sarama.NewSyncProducer(brokers, config)
 
 	if err != nil {
 

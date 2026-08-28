@@ -8,13 +8,13 @@ import (
 )
 
 
-type Config struct{
-	DBURL string 
-	GRPCPORT int 
-
+type Config struct {
+	DBURL           string
+	GRPCPORT        int
+	KafkaBrokersURL []string
 }
-func LoadConfig() (*Config,error){
 
+func LoadConfig() (*Config, error) {
 
 	cfg := Config{}
 
@@ -24,7 +24,7 @@ func LoadConfig() (*Config,error){
 
 	if portStr == "" {
 
-		portStr = "50051"
+		portStr = "50053"
 	}
 	cfg.GRPCPORT, err = strconv.Atoi(portStr)
 	if err != nil {
@@ -35,14 +35,16 @@ func LoadConfig() (*Config,error){
 
 	cfg.DBURL = os.Getenv("DB_URL")
 
-	if cfg.DBURL == ""{
+	if cfg.DBURL == "" {
 
-
-		return nil,errors.New("DB_URL environment variable is required!")
+		return nil, errors.New("DB_URL environment variable is required!")
 	}
 
-
-	return &cfg,nil
+	cfg.KafkaBrokersURL = []string{os.Getenv("KAFKA_BROKERS_URL")}
+	if len(cfg.KafkaBrokersURL) == 0 {
+		return nil, fmt.Errorf("KAFKA_PRODUCER is required")
+	}
+	return &cfg, nil
 
 }
 
