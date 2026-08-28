@@ -19,9 +19,9 @@ func LoadConfig() (*Config, error) {
 	cfg := Config{}
 
 
-	portStr := ":" + os.Getenv("GRPC_PORT")
+	cfg.GRPCPORT = ":" + os.Getenv("GRPC_PORT")
 
-	if portStr == "" {
+	if cfg.GRPCPORT == "" {
 
 		return nil, errors.New("GRPC_POR environment variable is required!")
 

@@ -82,13 +82,13 @@ func (app *App) Run() {
 
 	router := InitRoute(notificationHandler)
 
-	brokers := []string{"localhost:9092"}
+	
 	followedtopic := "followed"
 	userCreatedTopic := "userCreated"
 
-	go kafka.StartConsumer(brokers, userCreatedTopic,followedtopic,notificationService,logger,notificationBroker)
+	go kafka.StartConsumer(app.Config.KafkaBrokersURL, userCreatedTopic,followedtopic,notificationService,logger,notificationBroker)
 
-	if err := router.Run(":8083"); err != nil {
+	if err := router.Run(app.Config.ServerPort); err != nil {
 
 		log.Fatalf("Error starting server %v", err)
 	}

@@ -2,30 +2,61 @@ package handler
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"net/http/httputil"
 	"net/url"
 	"strconv"
 
+	"github.com/abelmalu/golang-posts/APIGateway/config"
 	ierrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	"github.com/abelmalu/golang-posts/APIGateway/pkg/utils"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
 
 type NotificationHanlder struct {
 	logger *platform.Logger
+	config *config.Config
 }
 
-var target, _ = url.Parse("http://localhost:8083")
+var target *url.URL
+var proxy *httputil.ReverseProxy
 
-var proxy = httputil.NewSingleHostReverseProxy(target)
+func init() {
+
+	// load environment variables using godoenv package
+	if err := godotenv.Load(); err != nil {
+
+		log.Fatalf("Error while loading environment variables %v", err)
+
+	}
+
+	cfg, err = config.LoadConfig()
+
+	if err != nil {
+
+		log.Printf("Error loading env variables %v", err)
+
+	}
+
+	target, _ = url.Parse("http://" + cfg.NotificationServiceADD)
+
+	fmt.Println("proxy",target)
+	proxy = httputil.NewSingleHostReverseProxy(target)
+
+
+
+}
 
 func NewNotificationHandler(logger *platform.Logger) *NotificationHanlder {
 
 	return &NotificationHanlder{
 
 		logger: logger,
+		config: cfg,
 	}
 }
 
@@ -70,7 +101,6 @@ func (nh *NotificationHanlder) Stream(c *gin.Context) {
 		}
 
 	}
-
 
 	userIDStr := strconv.Itoa(userID)
 

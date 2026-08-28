@@ -2,21 +2,26 @@ package handler
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strconv"
 
+	"github.com/abelmalu/golang-posts/APIGateway/config"
 	ierrors "github.com/abelmalu/golang-posts/APIGateway/internal/errors"
 	"github.com/abelmalu/golang-posts/APIGateway/pkg/utils"
 	"github.com/abelmalu/golang-posts/platform"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
 
 type ChatHandler struct {
 	logger *platform.Logger
+	config *config.Config
 }
 
 var upgrader = websocket.Upgrader{
@@ -25,15 +30,42 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-var chatTarget, _ = url.Parse("http://localhost:8084")
+var cfg *config.Config
+var err error
+var ChatProxy *httputil.ReverseProxy
+var chatTarget *url.URL
+var targetURL string
 
-var ChatProxy = httputil.NewSingleHostReverseProxy(chatTarget)
+func init() {
+
+	// load environment variables using godoenv package
+	if err := godotenv.Load(); err != nil {
+
+		log.Fatalf("Error while loading environment variables %v", err)
+
+	}
+
+	cfg, err = config.LoadConfig()
+
+	if err != nil {
+
+		log.Printf("Error loading env variables %v", err)
+	}
+
+	targetURL = "http://" + cfg.ChatServiceADD
+
+	fmt.Println(targetURL)
+	chatTarget, _ = url.Parse(targetURL)
+	ChatProxy = httputil.NewSingleHostReverseProxy(chatTarget)
+
+}
 
 func NewChatHandler(l *platform.Logger) *ChatHandler {
 
 	return &ChatHandler{
 
 		logger: l,
+		config: cfg,
 	}
 
 }
@@ -90,8 +122,12 @@ func (h *ChatHandler) Connect(c *gin.Context) {
 	}
 	defer clientConn.Close()
 
+	targetEndpoint := fmt.Sprintf("ws://%v/api/chat/ws", h.config.ChatServiceADD)
+
+	fmt.Println(targetEndpoint,"target")
+
 	backendConn, _, err := websocket.DefaultDialer.Dial(
-		"ws://localhost:8084/api/chat/ws",
+		targetEndpoint,
 		http.Header{
 			"X-User-ID":    []string{userIDStr},
 			"X-Request-ID": []string{requestID},
@@ -184,9 +220,7 @@ func (h *ChatHandler) GetUserChats(c *gin.Context) {
 
 }
 
-
 func (h *ChatHandler) GetChatMessages(c *gin.Context) {
-
 
 	requestID, err := utils.GetRequestID(c)
 	if err != nil {
@@ -228,18 +262,16 @@ func (h *ChatHandler) GetChatMessages(c *gin.Context) {
 
 	}
 
-
 	userIDStr := strconv.Itoa(userID)
 	limit := c.Query("X-Limit")
 	lastSeenID := c.Query("X-Last-ID")
-	chatID  := c.Param("id")
+	chatID := c.Param("id")
 
 	c.Request.Header.Set("X-Request-ID", requestID)
 	c.Request.Header.Set("X-User-ID", userIDStr)
 	c.Request.Header.Set("X-Limit", limit)
 	c.Request.Header.Set("X-Last-ID", lastSeenID)
 	c.Request.Header.Set("Chat-ID", chatID)
-
 
 	h.logger.Info("proxying the request to chat service")
 	ChatProxy.ServeHTTP(c.Writer, c.Request)

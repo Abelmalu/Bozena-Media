@@ -25,15 +25,17 @@ func LoadConfig() (*Config, error) {
 	config := Config{}
 
 
+	config.AuthServiceADD = os.Getenv("AUTH_SERVICE_URL")
+	if config.AuthServiceADD == "" {
+		return nil, fmt.Errorf("AUTH_SERVICE_URL is required")
+	}
+	
 	config.PostServiceADD = os.Getenv("POST_SERVICE_URL")
 	if config.PostServiceADD == "" {
 		return nil, fmt.Errorf("POST_SERVICE_URL is required")
 	}
 
-	config.AuthServiceADD = os.Getenv("AUTH_SERVICE_URL")
-	if config.AuthServiceADD == "" {
-		return nil, fmt.Errorf("AUTH_SERVICE_URL is required")
-	}
+
 
 	config.LikeServiceADD = os.Getenv("LIKE_SERVICE_URL")
 	if config.LikeServiceADD == "" {
