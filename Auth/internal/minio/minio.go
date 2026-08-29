@@ -11,8 +11,8 @@ import (
 
 func NewMinioClient(minioURL string) (*minio.Client, error) {
 	minioClient, err := minio.New(minioURL, &minio.Options{
-		Creds:  credentials.NewStaticV4("minioadmin", "minioadminpassword", ""), //
-		Secure: false,                                                        // true for HTTPS, false for HTTP
+		Creds:  credentials.NewStaticV4("minioadmin", "minioadminpassword", ""), 
+		Secure: false,                                                       
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize MinIO client: %w", err)

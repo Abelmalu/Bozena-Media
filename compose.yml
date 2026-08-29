@@ -31,6 +31,21 @@ services:
     networks:
       - bozena_network
 
+  minio:
+    image: minio/minio:RELEASE.2024-01-28T22-35-53Z
+    container_name: minio_server
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadminpassword
+    volumes:
+      - minio_data:/data
+    networks:
+      - bozena_network
+    command: server /data --console-address ":9001"
+
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
@@ -67,7 +82,8 @@ services:
     environment:
       - DB_URL=postgres://user:password%40123@postgres_db:5432/user_db?sslmode=disable
       - REDIS_URL=redis:6379
-      - KAFKA_URL=kafka:29092
+      - KAFKA_BROKERS_URL=kafka:29092
+      - MINIO_URL=minio:9000
       - GRPC_PORT=50052
     networks:
       - bozena_network
@@ -84,8 +100,8 @@ services:
       - kafka
     environment:
       - DB_URL=postgres://user:password%40123@postgres_db:5432/post_db?sslmode=disable
-      - DB_PORT=5432
-      - KAFKA_URL=kafka:29092
+      - KAFKA_BROKERS_URL=kafka:29092
+      - MINIO_URL=minio:9000
       - GRPC_PORT=50051
     networks:
       - bozena_network
@@ -102,7 +118,7 @@ services:
       - kafka
     environment:
       - DB_URL=postgres://user:password%40123@postgres_db:5432/like_db?sslmode=disable
-      - KAFKA_URL=kafka:29092
+      - KAFKA_BROKERS_URL=kafka:29092
       - GRPC_PORT=50053
     networks:
       - bozena_network
@@ -119,7 +135,8 @@ services:
       - kafka
     environment:
       - DB_URL=postgres://user:password%40123@postgres_db:5432/follow_db?sslmode=disable
-      - KAFKA_URL=kafka:29092
+      - KAFKA_BROKERS_URL=kafka:29092
+      - REDIS_URL=redis:6379
       - GRPC_PORT=50054
     networks:
       - bozena_network
@@ -136,46 +153,49 @@ services:
       - kafka
     environment:
       - DB_URL=postgres://user:password%40123@postgres_db:5432/feed_db?sslmode=disable
-      - KAFKA_URL=kafka:29092
+      - KAFKA_BROKERS_URL=kafka:29092
+      - MINIO_URL=minio:9000
+      - FOLLOW_SERVICE_URL=follow-service:50054
       - GRPC_PORT=50055
     networks:
       - bozena_network
   
 
   notification-service:
-    build: 
+    build:
       context: .
       args:
         - SERVICE_NAME=notification
         - MAIN_PATH=cmd/main.go
-      container_name: notification-service
-      depends_on:
-        - postgres
-        - kafka
-      environment:
-        - DB_URL=postgres://user:password%40123@postgres_db:5432/feed_db?sslmode=disable
-        - KAFKA_URL=kafka:29092
-        - SERVER_PORT=8081
-      networks:
-        - bozena_network
+    container_name: notification-service
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      - DB_URL=postgres://user:password%40123@postgres_db:5432/notification_db?sslmode=disable
+      - KAFKA_BROKERS_URL=kafka:9092
+      - SERVER_PORT=8083
+    networks:
+      - bozena_network
 
 
   chat-service:
-    build: 
+    build:
       context: .
       args:
         - SERVICE_NAME=Chat
         - MAIN_PATH=cmd/main.go
-      container_name: chat-service
-      depends_on:
-        - postgres
-        - kafka
-      environment:
-        - DB_URL=postgres:mongodb://mongodb:27017/
-        - KAFKA_URL=kafka:29092
-        - SERVER_PORT=8082
-      networks:
-        - bozena_network
+    container_name: chat-service
+    depends_on:
+      - mongodb
+      - kafka
+    environment:
+      - DB_URL=mongodb://mongodb_db:27017/
+      - KAFKA_BROKERS_URL=kafka:29092
+      - MINIO_URL=minio:9000
+      - SERVER_PORT=8084
+    networks:
+      - bozena_network
 
 
    
@@ -195,7 +215,7 @@ services:
       - feed-service
       - redis
     ports:
-      - "8080:8080" # Exposed to the outside world
+      - "8080:8080"
     environment:
       - REDIS_URL=redis:6379
       - AUTH_SERVICE_URL=auth-service:50052
@@ -203,8 +223,8 @@ services:
       - LIKE_SERVICE_URL=like-service:50053
       - FOLLOW_SERVICE_URL=follow-service:50054
       - FEED_SERVICE_URL=feed-service:50055
-      - NOTIFICATION_SERVICE_URL=notification-service:8081
-      - CHAT_SERVICE_URL=notification-service:8082
+      - NOTIFICATION_SERVICE_URL=notification-service:8083
+      - CHAT_SERVICE_URL=chat-service:8084
       - SERVER_PORT=8080
     networks:
       - bozena_network
@@ -216,3 +236,4 @@ networks:
 volumes:
   postgres_data:
   mongo_data:
+  minio_data:
