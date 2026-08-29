@@ -70,10 +70,10 @@ func LoadConfig() (*Config, error) {
 	config.RedisPassword = os.Getenv("REDIS_PASSWORD") 
 
 	
-	config.Port = os.Getenv("SERVER_PORT")
+	config.Port = ":" + os.Getenv("SERVER_PORT")
 	if config.Port == "" {
 
-		config.Port = "8080"
+		config.Port = ":8080"
 	}
 
 	return &config, nil

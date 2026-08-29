@@ -36,6 +36,6 @@ func Initialize() {
 	InitRoute(router, *handlers, logger, redisClient)
 
 	//start the gin server
-	server.StartServer(router)
+	server.StartServer(router,cfg.Port)
 
 }

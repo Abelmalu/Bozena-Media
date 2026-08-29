@@ -31,7 +31,7 @@ func NewApp() *App {
 
 	if err != nil {
 
-		log.Fatalf("error while loading env variables %v", err)
+		log.Printf("error while loading env variables %v", err)
 	}
 
 	DBConn, err := initDB(cfg)

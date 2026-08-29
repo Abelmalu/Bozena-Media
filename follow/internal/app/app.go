@@ -38,7 +38,7 @@ func NewApp() *App {
 
 	if err != nil {
 
-		log.Fatalf("Couldn't load configuration %v", err)
+		log.Printf("Couldn't load configuration %v", err)
 	}
 
 	DBConnPool, err := initDB(config)

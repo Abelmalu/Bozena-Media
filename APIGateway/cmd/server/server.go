@@ -6,10 +6,10 @@ import (
 )
 
 
-func StartServer(router *gin.Engine){
+func StartServer(router *gin.Engine,port string){
 
 	
-	if err := router.Run(":8082"); err != nil {
+	if err := router.Run(port); err != nil {
 
 		log.Fatalf("Couldn't start the router %v",err)
 	}

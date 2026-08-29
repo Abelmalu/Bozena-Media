@@ -32,7 +32,7 @@ func NewApp() *App {
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("Couldn't load configuration %v", err)
+		log.Printf("Couldn't load configuration %v", err)
 
 	}
 

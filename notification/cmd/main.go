@@ -12,7 +12,7 @@ func main(){
 
 	if err := godotenv.Load(); err != nil {
 
-		log.Fatalf("Error loading env variables %v",err)
+		log.Printf("Error loading env variables %v",err)
 	}
 
 	app := application.NewApp()
