@@ -55,6 +55,17 @@ services:
     container_name: kafka
     ports:
       - "9092:9092"
+    healthcheck:
+      test:
+          [
+           "CMD-SHELL",
+           "kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1"
+          ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+      
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: 'broker,controller'
@@ -76,7 +87,7 @@ services:
     image: migrate/migrate:v4.17.0
     depends_on:
       postgres:
-        condition: service_started 
+        condition: service_healthy 
     volumes:
       - ./Auth/migrations:/migrations:ro
     command: ["-path=/migrations", "-database=postgres://user:password%40123@postgres_db:5432/user_db?sslmode=disable", "up"]
@@ -87,7 +98,7 @@ services:
     image: migrate/migrate:v4.17.0
     depends_on:
       postgres:
-        condition: service_started 
+        condition: service_healthy 
     volumes:
       - ./post/migrations:/migrations:ro
     command: ["-path=/migrations", "-database=postgres://user:password%40123@postgres_db:5432/post_db?sslmode=disable", "up"]
@@ -99,7 +110,7 @@ services:
     image: migrate/migrate:v4.17.0
     depends_on:
       postgres:
-        condition: service_started 
+        condition: service_healthy 
     volumes:
       - ./like/migrations:/migrations:ro
     command: ["-path=/migrations", "-database=postgres://user:password%40123@postgres_db:5432/like_db?sslmode=disable", "up"]
@@ -112,7 +123,7 @@ services:
     image: migrate/migrate:v4.17.0
     depends_on:
       postgres:
-        condition: service_started 
+        condition: service_healthy 
     volumes:
       - ./follow/migrations:/migrations:ro
     command: ["-path=/migrations", "-database=postgres://user:password%40123@postgres_db:5432/follow_db?sslmode=disable", "up"]
@@ -124,7 +135,7 @@ services:
     image: migrate/migrate:v4.17.0
     depends_on:
       postgres:
-        condition: service_started 
+        condition: service_healthy 
     volumes:
       - ./Feed/migrations:/migrations:ro
     command: ["-path=/migrations", "-database=postgres://user:password%40123@postgres_db:5432/feed_db?sslmode=disable", "up"]
@@ -135,7 +146,7 @@ services:
     image: migrate/migrate:v4.17.0  
     depends_on:
       postgres:
-        condition: service_started 
+        condition: service_healthy 
     volumes:
       - ./notification/migrations:/migrations:ro
     command: ["-path=/migrations", "-database=postgres://user:password%40123@postgres_db:5432/notification_db?sslmode=disable", "up"]
@@ -157,7 +168,7 @@ services:
       redis:
         condition: service_started
       kafka:
-        condition: service_started
+         condition: service_healthy 
       minio:
         condition: service_started
     environment:
@@ -184,7 +195,7 @@ services:
       redis:
         condition: service_started
       kafka:
-        condition: service_started
+         condition: service_healthy
       minio:
         condition: service_started
       
@@ -211,7 +222,7 @@ services:
       redis:
         condition: service_started
       kafka:
-        condition: service_started
+        condition: service_healthy
     environment:
       - DB_URL=postgres://user:password%40123@postgres_db:5432/like_db?sslmode=disable
       - KAFKA_BROKERS_URL=kafka:29092
@@ -234,7 +245,7 @@ services:
       redis:
         condition: service_started
       kafka:
-        condition: service_started
+         condition: service_healthy 
     environment:
       - DB_URL=postgres://user:password%40123@postgres_db:5432/follow_db?sslmode=disable
       - KAFKA_BROKERS_URL=kafka:29092
@@ -258,7 +269,7 @@ services:
       redis:
         condition: service_started
       kafka:
-        condition: service_started
+         condition: service_healthy 
     environment:
       - DB_URL=postgres://user:password%40123@postgres_db:5432/feed_db?sslmode=disable
       - KAFKA_BROKERS_URL=kafka:29092
@@ -284,7 +295,7 @@ services:
       redis:
         condition: service_started
       kafka:
-        condition: service_started
+         condition: service_healthy 
     environment:
       - DB_URL=postgres://user:password%40123@postgres_db:5432/notification_db?sslmode=disable
       - KAFKA_BROKERS_URL=kafka:29092
@@ -301,9 +312,13 @@ services:
         - MAIN_PATH=cmd/main.go
     container_name: chat-service
     depends_on:
-      - mongodb
-      - kafka
-      - minio
+      kafka:
+         condition: service_healthy 
+      mongodb:
+        condition: service_started
+   
+      minio:
+        condition: service_started
     environment:
       - DB_URL=mongodb://mongodb_db:27017/
       - KAFKA_BROKERS_URL=kafka:29092
