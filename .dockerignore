@@ -1,0 +1,55 @@
+# Version Control
+.git
+.gitignore
+.gitattributes
+
+# Local Go Environment & Dependencies
+vendor/
+bin/
+dist/
+pkg/
+out/
+.go/
+
+# Local Dev Artifacts and Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.prof
+__debug_bin
+*myapp*
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*~
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Docker and CI Configuration (optional, usually not needed inside the image)
+Docker/
+docker-compose*.yml
+.github/
+.gitlab-ci.yml
+
+# Testing & Coverage
+coverage.txt
+coverage.out
+.cover/
+
+
+# Hot-reload and tool temporary directories
+.tmp/
+**/.tmp/
+tmp/
+**/tmp/

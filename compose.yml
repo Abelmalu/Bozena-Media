@@ -1,7 +1,5 @@
-
-
 services:
-  # ---------------- Infrastructure ----------------
+  # ---------------- Infrastructure db,redis,kafka,minio ----------------
   postgres:
     image: postgres:15-alpine
     container_name: postgres_db
@@ -14,6 +12,11 @@ services:
       - ./psql-init-script:/docker-entrypoint-initdb.d 
     networks:
       - bozena_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d user_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
 
   redis:
     image: redis:7-alpine
@@ -22,7 +25,7 @@ services:
       - bozena_network
 
   mongodb:
-    image: mongo:6.0-alpine
+    image: mongo:6.0
     container_name: mongodb_db
     environment:
       MONGO_INITDB_DATABASE: chat_db
@@ -67,6 +70,77 @@ services:
     networks:
       - bozena_network
 
+  # ----------------migration runners 
+
+  auth-migration:
+    image: migrate/migrate:v4.17.0
+    depends_on:
+      postgres:
+        condition: service_started 
+    volumes:
+      - ./Auth/migrations:/migrations:ro
+    command: ["-path=/migrations", "-database=postgres://user:password%40123@postgres_db:5432/user_db?sslmode=disable", "up"]
+    networks:
+      - bozena_network
+
+  post-migration:
+    image: migrate/migrate:v4.17.0
+    depends_on:
+      postgres:
+        condition: service_started 
+    volumes:
+      - ./post/migrations:/migrations:ro
+    command: ["-path=/migrations", "-database=postgres://user:password%40123@postgres_db:5432/post_db?sslmode=disable", "up"]
+    networks:
+      - bozena_network
+
+  
+  like-migration:
+    image: migrate/migrate:v4.17.0
+    depends_on:
+      postgres:
+        condition: service_started 
+    volumes:
+      - ./like/migrations:/migrations:ro
+    command: ["-path=/migrations", "-database=postgres://user:password%40123@postgres_db:5432/like_db?sslmode=disable", "up"]
+    networks:
+      - bozena_network
+
+
+
+  follow-migration:
+    image: migrate/migrate:v4.17.0
+    depends_on:
+      postgres:
+        condition: service_started 
+    volumes:
+      - ./follow/migrations:/migrations:ro
+    command: ["-path=/migrations", "-database=postgres://user:password%40123@postgres_db:5432/follow_db?sslmode=disable", "up"]
+    networks:
+      - bozena_network
+
+
+  feed-migration:
+    image: migrate/migrate:v4.17.0
+    depends_on:
+      postgres:
+        condition: service_started 
+    volumes:
+      - ./Feed/migrations:/migrations:ro
+    command: ["-path=/migrations", "-database=postgres://user:password%40123@postgres_db:5432/feed_db?sslmode=disable", "up"]
+    networks:
+      - bozena_network
+
+  notification-migration:
+    image: migrate/migrate:v4.17.0  
+    depends_on:
+      postgres:
+        condition: service_started 
+    volumes:
+      - ./notification/migrations:/migrations:ro
+    command: ["-path=/migrations", "-database=postgres://user:password%40123@postgres_db:5432/notification_db?sslmode=disable", "up"]
+    networks:
+      - bozena_network
   # ---------------- Microservices ----------------
   auth-service:
     build:
@@ -76,9 +150,16 @@ services:
         - MAIN_PATH=cmd/main.go
     container_name: auth_service
     depends_on:
-      - postgres
-      - redis
-      - kafka
+      postgres:
+        condition: service_healthy 
+      auth-migration:
+        condition: service_completed_successfully 
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_started
+      minio:
+        condition: service_started
     environment:
       - DB_URL=postgres://user:password%40123@postgres_db:5432/user_db?sslmode=disable
       - REDIS_URL=redis:6379
@@ -96,8 +177,17 @@ services:
         - MAIN_PATH=cmd/main.go
     container_name: post_service
     depends_on:
-      - postgres
-      - kafka
+      postgres:
+        condition: service_healthy 
+      post-migration:
+        condition: service_completed_successfully 
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_started
+      minio:
+        condition: service_started
+      
     environment:
       - DB_URL=postgres://user:password%40123@postgres_db:5432/post_db?sslmode=disable
       - KAFKA_BROKERS_URL=kafka:29092
@@ -114,8 +204,14 @@ services:
         - MAIN_PATH=cmd/main.go
     container_name: like_service
     depends_on:
-      - postgres
-      - kafka
+      postgres:
+        condition: service_healthy 
+      like-migration:
+        condition: service_completed_successfully 
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_started
     environment:
       - DB_URL=postgres://user:password%40123@postgres_db:5432/like_db?sslmode=disable
       - KAFKA_BROKERS_URL=kafka:29092
@@ -131,8 +227,14 @@ services:
         - MAIN_PATH=cmd/main.go
     container_name: follow_service
     depends_on:
-      - postgres
-      - kafka
+      postgres:
+        condition: service_healthy 
+      follow-migration:
+        condition: service_completed_successfully 
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_started
     environment:
       - DB_URL=postgres://user:password%40123@postgres_db:5432/follow_db?sslmode=disable
       - KAFKA_BROKERS_URL=kafka:29092
@@ -149,8 +251,14 @@ services:
         - MAIN_PATH=cmd/main.go
     container_name: feed_service
     depends_on:
-      - postgres
-      - kafka
+      postgres:
+        condition: service_healthy 
+      feed-migration:
+        condition: service_completed_successfully 
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_started
     environment:
       - DB_URL=postgres://user:password%40123@postgres_db:5432/feed_db?sslmode=disable
       - KAFKA_BROKERS_URL=kafka:29092
@@ -169,11 +277,17 @@ services:
         - MAIN_PATH=cmd/main.go
     container_name: notification-service
     depends_on:
-      - postgres
-      - kafka
+      postgres:
+        condition: service_healthy 
+      notification-migration:
+        condition: service_completed_successfully 
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_started
     environment:
       - DB_URL=postgres://user:password%40123@postgres_db:5432/notification_db?sslmode=disable
-      - KAFKA_BROKERS_URL=kafka:9092
+      - KAFKA_BROKERS_URL=kafka:29092
       - SERVER_PORT=8083
     networks:
       - bozena_network
@@ -189,6 +303,7 @@ services:
     depends_on:
       - mongodb
       - kafka
+      - minio
     environment:
       - DB_URL=mongodb://mongodb_db:27017/
       - KAFKA_BROKERS_URL=kafka:29092
