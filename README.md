@@ -8,13 +8,17 @@
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 ![Kafka](https://img.shields.io/badge/Apache_Kafka-231F20?style=for-the-badge&logo=apachekafka&logoColor=white)
 
-A modern, scalable social network backend built using **Microservices Architecture**. The system uses **Gin** as the public HTTP entry point, **gRPC** for service-to-service communication, and **WebSockets** for direct messaging.
+**Bozena Media** is a distributed, high-performance social media backend platform built with Go using a microservices architecture. Architected to support high-throughput real-time interactions, it integrates **gRPC** for low-latency synchronous communication, **Apache Kafka** for event-driven asynchronous streaming, and **WebSockets/SSE** for instantaneous message delivery and live notifications.
 
 ---
 
 ## 🏗️ Architecture Overview
 
-The project is built using **Clean Architecture** principles in each service to ensure scalability, testability, and a clear separation of concerns.
+The system is architected around **Clean Architecture** principles to establish a robust separation of concerns, testability, and scalability across all backend microservices. Each microservice (`Auth`, `post`, `like`, `follow`, `Feed`, `notification`, `Chat`) is decoupled, maintaining its own database and models. 
+
+Internal communication uses a hybrid topology:
+- **Synchronous RPC**: gRPC (via Protocol Buffers) provides high-performance, low-latency inter-service queries (e.g. Gateway to Auth/Post).
+- **Asynchronous Events**: Apache Kafka facilitates event-driven data propagation (e.g. `userCreated`, `postCreated`, `liked`, `followed` events) to keep decentralized read caches eventually consistent across the services.
 
 ### 🏛️ Clean Architecture Layers
 Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`, `Chat`) is structured into the following layers within the `internal/` directory:
@@ -112,7 +116,9 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`, `Chat`) 
 - [MongoDB](https://www.mongodb.com/try/download/community) (for Chat history and user cache)
 - [Redis](https://redis.io/download/) (for distributed rate limiting and token blacklisting)
 - [Apache Kafka](https://kafka.apache.org/downloads) (for event-driven communication)
+- [MinIO](https://min.io/) (for object storage of user avatars and post media)
 - [Protoc](https://grpc.io/docs/protoc-installation/) (for generating gRPC code)
+- [Air](https://github.com/air-verse/air) (optional, for live-reload development)
 
 ### Installation & Running
 
@@ -122,73 +128,82 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`, `Chat`) 
    cd golang-posts
    ```
 
-2. **Setup Environment Variables**
-   Each service (`APIGateway`, `Auth`, `post`) requires its own `.env` file. Refer to the `.env.example` in each directory.
+2. **Setup Environment Variables (For Local Execution)**
+   If running services locally directly on your host machine, each service requires its own `.env` file containing local credentials. Refer to the `.env.example` file located in each service directory.
 
 3. **Run the Services** (Open separate terminals):
+   You can run each service using the standard Go command or use **Air** for live-reloading during development (recommended, as `.air.toml` config files are provided in each directory).
 
    **Auth Service (Port 50052):**
    ```bash
    cd Auth
+   # Using Air (hot reload)
+   air
+   # Or using standard Go run
    go run cmd/main.go
    ```
 
    **Post Service (Port 50051):**
    ```bash
    cd post
-   go run cmd/main.go
+   air # or: go run cmd/main.go
    ```
 
    **Like Service (Port 50053):**
    ```bash
    cd like
-   go run cmd/main.go
+   air # or: go run cmd/main.go
    ```
 
    **Follow Service (Port 50054):**
    ```bash
    cd follow
-   go run cmd/main.go
+   air # or: go run cmd/main.go
    ```
 
    **Feed Service (Port 50055):**
    ```bash
-   cd feed
-   go run cmd/main.go
+   cd Feed
+   air # or: go run cmd/main.go
    ```
 
-   **Notification Service (Port 50056):**
+   **Notification Service (Port 8083 / Stream SSE):**
    ```bash
    cd notification
-   go run cmd/main.go
+   air # or: go run cmd/main.go
    ```
 
-   **Chat Service (Port 8084):**
+   **Chat Service (Port 8084 / WebSockets):**
    ```bash
    cd Chat
-   go run cmd/main.go
+   air # or: go run cmd/main.go
    ```
 
    **API Gateway (Port 8080):**
    ```bash
    cd APIGateway
-   go run cmd/gateway/main.go
+   air -c .air.toml # or: go run cmd/gateway/main.go
    ```
 
 ### Running with Docker Compose 🐳
 
-To run the entire microservices ecosystem (including PostgreSQL and Redis) using a single command, use Docker Compose:
+Docker Compose provides a fully self-contained environment to run the entire backend ecosystem with a single command. **There is no need to manually configure `.env` files** when running with Docker Compose, as all necessary configurations and environment variables are already baked into `compose.yml`.
 
-1. Make sure Docker and Docker Compose are installed.
-2. Ensure `.env` files are configured for each service (`APIGateway`, `Auth`, `post`, `like`, `follow`).
-   **Important**: In your `.env` files, change hostnames from `localhost` to the Docker service names:
-   - **Database Host**: `postgres` (e.g. `postgres://user:password@postgres:5432/blog...`)
-   - **Redis Host**: `redis` (e.g. `redis:6379`)
-   - **gRPC Service Addresses** (for API Gateway): `post-service:50051`, `auth-service:50052`, `like-service:50053`, `follow-service:50054`, `feed-service:50055`, `notification-service:50056`
-3. Run the stack from the root directory:
+To spin up the entire environment:
+
+1. Make sure Docker and the Docker Compose plugin are installed on your system.
+2. Run the stack from the root directory:
    ```bash
-   docker-compose up --build
+   docker compose up --build
    ```
+
+When you execute this command, Docker Compose will launch and configure:
+* **Databases & Cache**: PostgreSQL (relational DB), MongoDB (chat storage), Redis (session blacklist & rate limiting), MinIO (object storage).
+* **Message Broker**: Apache Kafka (including node controller and bootstrap setup).
+* **Migration Runners**: Dedicated migration runner containers (`auth-migration`, `post-migration`, `like-migration`, `follow-migration`, `feed-migration`, `notification-migration` using `migrate/migrate:v4.17.0`) will automatically apply all database schemas/migrations before their respective services launch.
+* **Microservices**: All backend service containers (`auth-service`, `post-service`, `like-service`, `follow-service`, `feed-service`, `notification-service`, `chat-service`, and `api-gateway`) automatically starting and wiring together.
+
+Once running, **all microservice endpoints are exposed through the API Gateway** mapped to port `8080`. You can access and interact with the entire backend system locally via `http://localhost:8080` (e.g. testing routes, consuming Server-Sent Events, or establishing WebSocket connections).
 
 ---
 
