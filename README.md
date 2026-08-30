@@ -207,6 +207,23 @@ Once running, **all microservice endpoints are exposed through the API Gateway**
 
 ---
 
+## 🧪 Testing
+
+The platform features unit tests covering the core business logic layer of the major microservices to ensure reliability and maintainability.
+
+* **Table-Driven Tests**: Service layer tests are implemented using Go's table-driven pattern to test multiple success and error scenarios comprehensively.
+* **Mocking**: External components (like repository, cache, and broker layers) are mocked using test interfaces to isolate the service layer logic.
+* **Running Tests**: Run tests for all services from the workspace root:
+  ```bash
+  go test ./...
+  ```
+  Or test a specific service:
+  ```bash
+  cd Auth && go test ./...
+  ```
+
+---
+
 ## 🔌 API Endpoints (via Gateway)
 
 ### Authentication
