@@ -118,6 +118,7 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`, `Chat`) 
 - [Apache Kafka](https://kafka.apache.org/downloads) (for event-driven communication)
 - [MinIO](https://min.io/) (for object storage of user avatars and post media)
 - [Protoc](https://grpc.io/docs/protoc-installation/) (for generating gRPC code)
+- [golang-migrate](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate) (for running database migrations)
 - [Air](https://github.com/air-verse/air) (optional, for live-reload development)
 
 ### Installation & Running
@@ -131,7 +132,20 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`, `Chat`) 
 2. **Setup Environment Variables (For Local Execution)**
    If running services locally directly on your host machine, each service requires its own `.env` file containing local credentials. Refer to the `.env.example` file located in each service directory.
 
-3. **Run the Services** (Open separate terminals):
+3. **Run Database Migrations (For Local Execution)**
+   When running without Docker, you must apply the database migrations manually before starting the services. Each PostgreSQL-backed service (`Auth`, `post`, `like`, `follow`, `Feed`, `notification`) owns its own `migrations/` folder — run [golang-migrate](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate) against each service's database:
+
+   ```bash
+   # Repeat for each service directory: Auth, post, like, follow, Feed, notification
+   cd Auth
+   migrate -path migrations -database "postgres://<user>:<password>@localhost:5432/<service_db>?sslmode=disable" up
+   ```
+
+   Use the database credentials/name configured in that service's `.env` file. The Chat service uses MongoDB and does not require migrations.
+
+   > When running with Docker Compose, this step is handled automatically by the dedicated migration runner containers.
+
+4. **Run the Services** (Open separate terminals):
    You can run each service using the standard Go command or use **Air** for live-reloading during development (recommended, as `.air.toml` config files are provided in each directory).
 
    **Auth Service (Port 50052):**
