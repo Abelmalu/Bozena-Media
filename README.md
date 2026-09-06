@@ -100,9 +100,6 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`, `Chat`) 
 ├── notification/         # Real-time notifications service (HTTP SSE Server)
 ├── Chat/                 # Real-time Chat service (HTTP/WebSocket server using MongoDB)
 ├── frontend/             # React + TypeScript web client
-├── pkg/                  # Shared utilities (JWT, etc.)
-├── migrations/           # Database migration files
-└── proto/                # Shared Protocol Buffer definitions (if applicable)
 ```
 
 ---
