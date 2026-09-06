@@ -2,6 +2,7 @@ package chatclient
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/abelmalu/golang-posts/Chat/internal/broker"
@@ -58,7 +59,15 @@ func (c *Client) ReadPump(ctx context.Context) {
 			return
 		}
 
-		c.Broker.Publish(req.ReceiverID, req.Message)
+
+		envelope, err := json.Marshal(dto.MessageEvent{SenderID: c.UserID, Message: req.Message})
+		if err != nil {
+			c.Logger.Error("Error marshalling chat message envelope", zap.Error(err))
+			cancel()
+			return
+		}
+
+		c.Broker.Publish(req.ReceiverID, string(envelope))
 		cancel()
 	}
 }

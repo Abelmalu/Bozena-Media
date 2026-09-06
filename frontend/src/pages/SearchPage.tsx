@@ -1,10 +1,11 @@
 import { FormEvent, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { searchUsers } from '../lib/api';
 import type { SearchUser } from '../types';
 import { PageFrame } from '../components/PageFrame';
 
 export function SearchPage() {
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [activeQuery, setActiveQuery] = useState('');
   const [results, setResults] = useState<SearchUser[]>([]);
@@ -68,6 +69,16 @@ export function SearchPage() {
                   <div className="user-name">{user.name}</div>
                   <div className="user-handle">@{user.username}</div>
                   <div className="user-card-hint">Open profile</div>
+                  <button
+                    type="button"
+                    className="button button-soft user-card-message"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      navigate(`/app/chat/${user.id}`, { state: { username: user.username } });
+                    }}
+                  >
+                    Message
+                  </button>
                 </Link>
               ))}
             </div>

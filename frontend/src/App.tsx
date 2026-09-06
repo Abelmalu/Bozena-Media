@@ -10,6 +10,7 @@ import { CreatePostPage } from './pages/CreatePostPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SearchPage } from './pages/SearchPage';
 import { NotificationsPage } from './pages/NotificationsPage';
+import { ChatPage } from './pages/ChatPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 function RootRedirect() {
@@ -50,6 +51,8 @@ export function App() {
         <Route path="profile/:id" element={<ProfilePage />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="chat" element={<ChatPage />} />
+        <Route path="chat/:userId" element={<ChatPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

@@ -117,6 +117,16 @@ export type SessionUser = {
   role: string | null;
 };
 
+// GET /api/auth/profile/:id — proto json tags are snake_case with omitempty
+export type UserProfile = {
+  id?: number;
+  username?: string;
+  name?: string;
+  profile_image_url?: string;
+  follower_count?: number;
+  following_count?: number;
+};
+
 export type Notification = {
   id: number;
   username: string;
@@ -147,4 +157,52 @@ export type PresignedFormData = {
 export type PresignedUploadResponse = {
   upload_url: string;
   form_data: PresignedFormData;
+};
+
+export type ChatParticipant = {
+  userId: number;
+  username: string;
+  avatar?: string;
+};
+
+export type ChatLastMessage = {
+  text: string;
+  senderId: number;
+  createdAt?: string;
+};
+
+export type Conversation = {
+  id: string;
+  participants: ChatParticipant[];
+  lastMessage?: ChatLastMessage;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type UserChatsResponse = {
+  chats: Conversation[] | null;
+  has_next?: boolean;
+  cursor?: string;
+};
+
+export type ChatMessage = {
+  id: string;
+  chatID: string;
+  senderId: number;
+  content: string;
+  status?: string;
+  createdAt?: string;
+};
+
+// Go struct field `Messages` has no json tag, so it serializes as PascalCase
+export type ChatMessagesResponse = {
+  Messages: ChatMessage[] | null;
+  has_next?: boolean;
+  cursor?: string;
+};
+
+// Payload pushed by the Chat service over the websocket
+export type ChatMessageEvent = {
+  sender_id: number;
+  message: string;
 };

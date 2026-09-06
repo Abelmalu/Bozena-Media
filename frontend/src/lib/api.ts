@@ -2,6 +2,7 @@ import type {
   ApiEnvelope,
   AuthPayload,
   AuthResponse,
+  ChatMessagesResponse,
   FeedResponse,
   FollowersResponse,
   FollowingsResponse,
@@ -11,7 +12,9 @@ import type {
   PostResponse,
   PresignedUploadResponse,
   SearchUserResponse,
+  UserChatsResponse,
   UserPostsResponse,
+  UserProfile,
 } from '../types';
 
 type AuthHooks = {
@@ -175,6 +178,10 @@ export async function searchUsers(search: string, cursor = '', limit = 10) {
   return request<SearchUserResponse>(`/api/auth/search?${params.toString()}`);
 }
 
+export async function getUserProfile(userId: number) {
+  return request<UserProfile>(`/api/auth/profile/${userId}`);
+}
+
 export async function getFeed(cursor = '', limit = 10) {
   const params = new URLSearchParams();
   params.set('limit', String(limit));
@@ -261,6 +268,26 @@ export async function getNotifications(cursor = '', limit = 10) {
     params.set('cursor', cursor);
   }
   return request<NotificationsResponse>(`/api/notification/user?${params.toString()}`);
+}
+
+// The gateway reads pagination values from query params named X-Limit / X-Last-ID
+// and forwards them to the Chat service as headers.
+export async function getUserChats(cursor = '', limit = 20) {
+  const params = new URLSearchParams();
+  params.set('X-Limit', String(limit));
+  if (cursor) {
+    params.set('X-Last-ID', cursor);
+  }
+  return request<UserChatsResponse>(`/api/chat/user/chats?${params.toString()}`);
+}
+
+export async function getChatMessages(chatId: string, cursor = '', limit = 20) {
+  const params = new URLSearchParams();
+  params.set('X-Limit', String(limit));
+  if (cursor) {
+    params.set('X-Last-ID', cursor);
+  }
+  return request<ChatMessagesResponse>(`/api/chat/${chatId}/messages?${params.toString()}`);
 }
 
 export async function getProfileUploadUrl(fileName: string, contentType: string) {

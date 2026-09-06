@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   getProfileUploadUrl,
   getUserFollowers,
   getUserFollowings,
   getUserPosts,
+  getUserProfile,
   toggleFollow,
   updatePost,
   deletePost,
   uploadFileToMinio,
   resolveImageUrl,
 } from '../lib/api';
-import type { FollowersResponse, FollowingsResponse, ProfileUser, UserPostsResponse, UserPost } from '../types';
+import type { FollowersResponse, FollowingsResponse, ProfileUser, UserPostsResponse, UserPost, UserProfile } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { PageFrame } from '../components/PageFrame';
 import { StatCard } from '../components/StatCard';
@@ -20,9 +21,11 @@ import { FEED_REFRESH_EVENT } from '../lib/events';
 
 export function ProfilePage() {
   const params = useParams();
+  const navigate = useNavigate();
   const { sessionUser, username, avatarUrl, updateAvatarUrl } = useAuth();
   const userId = params.id ? Number(params.id) : sessionUser.userId ?? NaN;
   const isOwnProfile = !params.id || (sessionUser.userId !== null && userId === sessionUser.userId);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [followers, setFollowers] = useState<FollowersResponse | null>(null);
   const [followings, setFollowings] = useState<FollowingsResponse | null>(null);
   const [posts, setPosts] = useState<UserPostsResponse | null>(null);
@@ -65,10 +68,23 @@ export function ProfilePage() {
       }
     }
 
+    async function loadProfileUser() {
+      try {
+        setProfile(await getUserProfile(userId));
+      } catch {
+        setProfile(null);
+      }
+    }
+
     if (!Number.isNaN(userId)) {
       void loadProfile();
+      if (!isOwnProfile) {
+        void loadProfileUser();
+      } else {
+        setProfile(null);
+      }
     }
-  }, [userId, username]);
+  }, [userId, username, isOwnProfile]);
 
   async function handleToggleFollow() {
     try {
@@ -208,7 +224,15 @@ export function ProfilePage() {
   return (
     <PageFrame
       eyebrow="Profile"
-      title={isOwnProfile && username ? `${username}'s profile` : userId ? `User #${userId}` : 'Profile'}
+      title={
+        isOwnProfile && username
+          ? `${username}'s profile`
+          : profile?.username
+            ? `@${profile.username}`
+            : userId
+              ? `User #${userId}`
+              : 'Profile'
+      }
       subtitle="Counts below use exactly what the backend returned, including the current page limit."
       aside={
         <div className="stack">
@@ -251,14 +275,40 @@ export function ProfilePage() {
             </div>
           ) : null}
           {!isOwnProfile && (
-            <button
-              type="button"
-              className={`button ${isFollowing ? 'button-soft' : ''}`}
-              onClick={() => void handleToggleFollow()}
-              style={{ width: '100%' }}
-            >
-              {isFollowing ? 'Unfollow' : 'Follow'}
-            </button>
+            <>
+              <button
+                type="button"
+                className={`button ${isFollowing ? 'button-soft' : ''}`}
+                onClick={() => void handleToggleFollow()}
+                style={{ width: '100%' }}
+              >
+                {isFollowing ? 'Unfollow' : 'Follow'}
+              </button>
+              <button
+                type="button"
+                className="button button-soft profile-message-button"
+                onClick={() =>
+                  navigate(`/app/chat/${userId}`, {
+                    state: { username: profile?.username },
+                  })
+                }
+                style={{ width: '100%' }}
+              >
+                <svg
+                  className="profile-message-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                </svg>
+                Message
+              </button>
+            </>
           )}
           <StatCard label="Followers" value={String(followersCount)} hint="Click to view" onClick={() => setModalOpen('followers')} />
           <StatCard label="Following" value={String(followingsCount)} hint="Click to view" onClick={() => setModalOpen('followings')} />

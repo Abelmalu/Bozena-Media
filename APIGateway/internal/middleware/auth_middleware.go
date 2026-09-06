@@ -41,6 +41,12 @@ func AuthMiddleware(logger *platform.Logger, redisclient *redis.Client) gin.Hand
 			tokenStr = strings.TrimPrefix(authHeader, "Bearer ")
 		}
 
+
+		// used by the chat websocket connection browser client to pass the token as a query parameter
+		if tokenStr == "" {
+			tokenStr = c.Query("token")
+		}
+
 		if tokenStr == "" {
 
 			err := ierrors.NewAppError(ierrors.TypeUnauthorized, ierrors.MSGUnauthorizedAccess, nil)

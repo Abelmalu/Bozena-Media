@@ -61,6 +61,9 @@ export function AppShell() {
           <NavLink to="/app/notifications" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
             Notifications
           </NavLink>
+          <NavLink to="/app/chat" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+            Chat
+          </NavLink>
         </nav>
 
         <button type="button" className="button button-ghost" onClick={() => void signOut()}>

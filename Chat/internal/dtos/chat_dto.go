@@ -10,6 +10,11 @@ type MessageRequest struct {
 	ReceiverID int    `json:"receiver_id"`
 }
 
+type MessageEvent struct {
+	SenderID int    `json:"sender_id"`
+	Message  string `json:"message"`
+}
+
 type UserChatsResponse struct {
 	Chats   []*models.Conversation `json:"chats"`
 	HasNext bool                   `json:"has_next"`
