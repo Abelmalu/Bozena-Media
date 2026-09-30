@@ -14,13 +14,15 @@
 
 ## 🏗️ Architecture Overview
 
-The system is architected around **Clean Architecture** principles to establish a robust separation of concerns, testability, and scalability across all backend microservices. Each microservice (`Auth`, `post`, `like`, `follow`, `Feed`, `notification`, `Chat`) is decoupled, maintaining its own database and models. 
+The system is architected around **Clean Architecture** principles to establish a robust separation of concerns, testability, and scalability across all backend microservices. Each microservice (`Auth`, `post`, `like`, `follow`, `Feed`, `notification`, `Chat`) is decoupled, maintaining its own database and models.
 
 Internal communication uses a hybrid topology:
+
 - **Synchronous RPC**: gRPC (via Protocol Buffers) provides high-performance, low-latency inter-service queries (e.g. Gateway to Auth/Post).
 - **Asynchronous Events**: Apache Kafka facilitates event-driven data propagation (e.g. `userCreated`, `postCreated`, `liked`, `followed` events) to keep decentralized read caches eventually consistent across the services.
 
 ### 🏛️ Clean Architecture Layers
+
 Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`, `Chat`) is structured into the following layers within the `internal/` directory:
 
 - **`internal/handlers/`**: The **Delivery/Transport Layer**. It implements the gRPC/HTTP server interfaces and WebSocket handlers, managing incoming requests and outgoing responses.
@@ -121,6 +123,7 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`, `Chat`) 
 ### Installation & Running
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/abelmalu/golang-posts.git
    cd golang-posts
@@ -146,6 +149,7 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`, `Chat`) 
    You can run each service using the standard Go command or use **Air** for live-reloading during development (recommended, as `.air.toml` config files are provided in each directory).
 
    **Auth Service (Port 50052):**
+
    ```bash
    cd Auth
    # Using Air (hot reload)
@@ -155,42 +159,49 @@ Each service (`Auth`, `post`, `like`, `follow`, `feed`, `notification`, `Chat`) 
    ```
 
    **Post Service (Port 50051):**
+
    ```bash
    cd post
    air # or: go run cmd/main.go
    ```
 
    **Like Service (Port 50053):**
+
    ```bash
    cd like
    air # or: go run cmd/main.go
    ```
 
    **Follow Service (Port 50054):**
+
    ```bash
    cd follow
    air # or: go run cmd/main.go
    ```
 
    **Feed Service (Port 50055):**
+
    ```bash
    cd Feed
    air # or: go run cmd/main.go
    ```
 
    **Notification Service (Port 8083 / Stream SSE):**
+
    ```bash
    cd notification
    air # or: go run cmd/main.go
    ```
 
    **Chat Service (Port 8084 / WebSockets):**
+
    ```bash
    cd Chat
    air # or: go run cmd/main.go
    ```
 
    **API Gateway (Port 8080):**
+
    ```bash
    cd APIGateway
    air -c .air.toml # or: go run cmd/gateway/main.go
@@ -209,10 +220,11 @@ To spin up the entire environment:
    ```
 
 When you execute this command, Docker Compose will launch and configure:
-* **Databases & Cache**: PostgreSQL (relational DB), MongoDB (chat storage), Redis (session blacklist & rate limiting), MinIO (object storage).
-* **Message Broker**: Apache Kafka (including node controller and bootstrap setup).
-* **Migration Runners**: Dedicated migration runner containers (`auth-migration`, `post-migration`, `like-migration`, `follow-migration`, `feed-migration`, `notification-migration` using `migrate/migrate:v4.17.0`) will automatically apply all database schemas/migrations before their respective services launch.
-* **Microservices**: All backend service containers (`auth-service`, `post-service`, `like-service`, `follow-service`, `feed-service`, `notification-service`, `chat-service`, and `api-gateway`) automatically starting and wiring together.
+
+- **Databases & Cache**: PostgreSQL (relational DB), MongoDB (chat storage), Redis (session blacklist & rate limiting), MinIO (object storage).
+- **Message Broker**: Apache Kafka (including node controller and bootstrap setup).
+- **Migration Runners**: Dedicated migration runner containers (`auth-migration`, `post-migration`, `like-migration`, `follow-migration`, `feed-migration`, `notification-migration` using `migrate/migrate:v4.17.0`) will automatically apply all database schemas/migrations before their respective services launch.
+- **Microservices**: All backend service containers (`auth-service`, `post-service`, `like-service`, `follow-service`, `feed-service`, `notification-service`, `chat-service`, and `api-gateway`) automatically starting and wiring together.
 
 Once running, **all microservice endpoints are exposed through the API Gateway** mapped to port `8080`. You can access and interact with the entire backend system locally via `http://localhost:8080` (e.g. testing routes, consuming Server-Sent Events, or establishing WebSocket connections).
 
@@ -222,9 +234,9 @@ Once running, **all microservice endpoints are exposed through the API Gateway**
 
 The platform features unit tests covering the core business logic layer of the major microservices to ensure reliability and maintainability.
 
-* **Table-Driven Tests**: Service layer tests are implemented using Go's table-driven pattern to test multiple success and error scenarios comprehensively.
-* **Mocking**: External components (like repository, cache, and broker layers) are mocked using test interfaces to isolate the service layer logic.
-* **Running Tests**: Run tests for all services from the workspace root:
+- **Table-Driven Tests**: Service layer tests are implemented using Go's table-driven pattern to test multiple success and error scenarios comprehensively.
+- **Mocking**: External components (like repository, cache, and broker layers) are mocked using test interfaces to isolate the service layer logic.
+- **Running Tests**: Run tests for all services from the workspace root:
   ```bash
   go test ./...
   ```
@@ -239,59 +251,59 @@ The platform features unit tests covering the core business logic layer of the m
 
 ### Authentication
 
-| Method | Endpoint              | Description                          | Auth Required |
-| :----- | :-------------------- | :----------------------------------- | :------------ |
-| `POST` | `/api/auth/register`  | Register a new user                  | ❌            |
-| `POST` | `/api/auth/login`     | Login and receive Access/Refresh JWT | ❌            |
-| `POST` | `/api/auth/refresh`   | Refresh expired access token         | ❌            |
-| `POST` | `/api/auth/logout`    | Invalidate session                   | ✅            |
-| `GET`  | `/api/auth/search`    | Search users by username             | ✅            |
+| Method | Endpoint             | Description                          | Auth Required |
+| :----- | :------------------- | :----------------------------------- | :------------ |
+| `POST` | `/api/auth/register` | Register a new user                  | ❌            |
+| `POST` | `/api/auth/login`    | Login and receive Access/Refresh JWT | ❌            |
+| `POST` | `/api/auth/refresh`  | Refresh expired access token         | ❌            |
+| `POST` | `/api/auth/logout`   | Invalidate session                   | ✅            |
+| `GET`  | `/api/auth/search`   | Search users by username             | ✅            |
 
 ### Posts
 
-| Method   | Endpoint                | Description            | Permissions          |
-| :------- | :---------------------- | :--------------------- | :------------------- |
-| `GET`    | `/api/posts/`           | List all posts         | Authenticated User   |
-| `POST`   | `/api/posts/`           | Create a new post      | Authenticated User   |
-| `GET`    | `/api/posts/user/:id`   | Get posts by a user    | Authenticated User   |
-| `PUT`    | `/api/posts/update/:id` | Update a specific post | **Owner Only**       |
-| `DELETE` | `/api/posts/delete/:id` | Delete a specific post | **Owner Only**       |
+| Method   | Endpoint                | Description            | Permissions        |
+| :------- | :---------------------- | :--------------------- | :----------------- |
+| `GET`    | `/api/posts/`           | List all posts         | Authenticated User |
+| `POST`   | `/api/posts/`           | Create a new post      | Authenticated User |
+| `GET`    | `/api/posts/user/:id`   | Get posts by a user    | Authenticated User |
+| `PUT`    | `/api/posts/update/:id` | Update a specific post | **Owner Only**     |
+| `DELETE` | `/api/posts/delete/:id` | Delete a specific post | **Owner Only**     |
 
 ### Likes
 
-| Method   | Endpoint              | Description                  | Permissions          |
-| :------- | :-------------------- | :--------------------------- | :------------------- |
-| `POST`   | `/api/posts/like/:id` | Toggle like/unlike on a post | Authenticated User   |
-| `GET`    | `/api/posts/likes/:id`| Get total likes for a post   | Authenticated User   |
+| Method | Endpoint               | Description                  | Permissions        |
+| :----- | :--------------------- | :--------------------------- | :----------------- |
+| `POST` | `/api/posts/like/:id`  | Toggle like/unlike on a post | Authenticated User |
+| `GET`  | `/api/posts/likes/:id` | Get total likes for a post   | Authenticated User |
 
 ### Follows
 
-| Method   | Endpoint                     | Description                  | Permissions          |
-| :------- | :--------------------------- | :--------------------------- | :------------------- |
-| `POST`   | `/api/follow/:id`            | Toggle follow/unfollow user  | Authenticated User   |
-| `GET`    | `/api/follow/followers/:id`  | View followers of a user     | Authenticated User   |
-| `GET`    | `/api/follow/followings/:id` | View users a user follows    | Authenticated User   |
+| Method | Endpoint                     | Description                 | Permissions        |
+| :----- | :--------------------------- | :-------------------------- | :----------------- |
+| `POST` | `/api/follow/:id`            | Toggle follow/unfollow user | Authenticated User |
+| `GET`  | `/api/follow/followers/:id`  | View followers of a user    | Authenticated User |
+| `GET`  | `/api/follow/followings/:id` | View users a user follows   | Authenticated User |
 
 ### Feeds
 
-| Method   | Endpoint              | Description                  | Permissions          |
-| :------- | :-------------------- | :--------------------------- | :------------------- |
-| `GET`    | `/api/feed/`          | Get user timeline feed       | Authenticated User   |
+| Method | Endpoint     | Description            | Permissions        |
+| :----- | :----------- | :--------------------- | :----------------- |
+| `GET`  | `/api/feed/` | Get user timeline feed | Authenticated User |
 
 ### Notifications
 
-| Method | Endpoint                    | Description                           | Permissions          |
-| :----- | :-------------------------- | :------------------------------------ | :------------------- |
-| `GET`  | `/api/notifications/stream` | Real-time SSE stream for new followers| Authenticated User   |
-| `GET`  | `/api/notification/user`    | Get past notifications for a user     | Authenticated User   |
+| Method | Endpoint                    | Description                            | Permissions        |
+| :----- | :-------------------------- | :------------------------------------- | :----------------- |
+| `GET`  | `/api/notifications/stream` | Real-time SSE stream for new followers | Authenticated User |
+| `GET`  | `/api/notification/user`    | Get past notifications for a user      | Authenticated User |
 
 ### Chat
 
-| Method | Endpoint                     | Description                           | Permissions          |
-| :----- | :--------------------------- | :------------------------------------ | :------------------- |
-| `GET`  | `/api/chat/ws`               | Establish real-time WebSocket session | Authenticated User   |
-| `GET`  | `/api/chat/user/chats`       | Get direct message history & list     | Authenticated User   |
-| `GET`  | `/api/chat/:id/messages`     | Get messages in a specific chat       | Authenticated User   |
+| Method | Endpoint                 | Description                           | Permissions        |
+| :----- | :----------------------- | :------------------------------------ | :----------------- |
+| `GET`  | `/api/chat/ws`           | Establish real-time WebSocket session | Authenticated User |
+| `GET`  | `/api/chat/user/chats`   | Get direct message history & list     | Authenticated User |
+| `GET`  | `/api/chat/:id/messages` | Get messages in a specific chat       | Authenticated User |
 
 ---
 
@@ -313,4 +325,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Frontend
 
-The React frontend  which is vibe coded lives in [`frontend/`](/home/abel/Projects/GO/Bozena-Media/frontend) and talks only to the API Gateway.
+The React frontend which is vibe coded lives in [`frontend/`](/home/abel/Projects/GO/Bozena-Media/frontend) and talks only to the API Gateway.
